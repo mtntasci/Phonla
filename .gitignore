@@ -1,0 +1,49 @@
+# Node & Web
+node_modules/
+dist/
+dist-ssr/
+.turbo/
+.npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.local
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Xcode & iOS
+build/
+DerivedData/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+*.xcuserdatad
+
+# Android & Gradle
+.gradle/
+build/
+*.apk
+*.aab
+local.properties
+.idea/
+*.iml
+.cxx/
+
+# Environment Variables
+.env
+.env*.local
