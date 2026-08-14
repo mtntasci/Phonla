@@ -7,8 +7,9 @@
 
 import SwiftUI
 import FirebaseCore
+import FirebaseAuth
 
-/// Application delegate guaranteeing Firebase initialization at the earliest possible lifecycle event.
+/// Application delegate guaranteeing Firebase initialization and URL routing at the earliest possible lifecycle event.
 final class AppDelegate: NSObject, UIApplicationDelegate {
     func application(
         _ application: UIApplication,
@@ -24,6 +25,17 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         }
         return true
     }
+    
+    func application(
+        _ app: UIApplication,
+        open url: URL,
+        options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+    ) -> Bool {
+        if Auth.auth().canHandle(url) {
+            return true
+        }
+        return false
+    }
 }
 
 @main
@@ -36,6 +48,9 @@ struct PhotonApp: App {
             RootCoordinatorView()
                 .environment(navigationState)
                 .preferredColorScheme(.light)
+                .onOpenURL { url in
+                    _ = Auth.auth().canHandle(url)
+                }
         }
     }
 }
