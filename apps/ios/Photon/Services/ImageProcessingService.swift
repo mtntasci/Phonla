@@ -112,25 +112,38 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
         }
         
         let normIntensity = CGFloat(min(max(intensity / 100.0, 0.0), 1.0))
-        let imgWidth = image.extent.width > 0 ? image.extent.width : 1920.0
+        let maxDim = max(image.extent.width, image.extent.height)
+        let scale = max(0.5, (maxDim > 0 ? maxDim : 1920.0) / 1920.0)
         
-        // 1. Calculate adaptive blur radius scaling with resolution for identical preview & export results
-        let blurRadius = max(4.0, (imgWidth / 220.0) * normIntensity)
+        // 1. Adaptive edge-preserving smoothing radius scaled for resolution parity
+        let bilateralRadius = (16.0 * normIntensity + 3.0) * scale
+        let gaussianRadius = (10.0 * normIntensity + 2.0) * scale
         
-        // 2. Low-Frequency Surface Blur (softens skin blemishes & tone unevenness)
-        let blurredSurface = image
-            .clampedToExtent()
-            .applyingFilter("CIGaussianBlur", parameters: [
-                kCIInputRadiusKey: NSNumber(value: blurRadius)
-            ])
-            .cropped(to: image.extent)
+        // 2. High-quality bilateral smoothing (smooths skin textures while preserving crisp contours)
+        var smoothedSurface: CIImage
+        if let bilateral = CIFilter(name: "CIBilateralFilter", parameters: [
+            kCIInputImageKey: image,
+            "inputRadius": NSNumber(value: bilateralRadius),
+            "inputDistanceRange": NSNumber(value: 0.12)
+        ])?.outputImage {
+            smoothedSurface = bilateral
+        } else {
+            // Fallback Gaussian blur if bilateral is unavailable
+            smoothedSurface = image
+                .clampedToExtent()
+                .applyingFilter("CIGaussianBlur", parameters: [
+                    kCIInputRadiusKey: NSNumber(value: gaussianRadius)
+                ])
+                .cropped(to: image.extent)
+        }
         
-        // 3. Frequency Separation: Blend 85% surface smooth with 15% original texture for natural skin feel
-        let blendedSmooth = blendImages(base: image, overlay: blurredSurface, alpha: Float(normIntensity * 0.85))
+        // 3. Frequency Separation: retain ~20% original micro-texture so skin never looks artificial or melted
+        let textureRetentionAlpha = Float(min(0.92, normIntensity * 0.88))
+        let naturalSkinBlend = blendImages(base: image, overlay: smoothedSurface, alpha: textureRetentionAlpha)
         
         // 4. Composite STRICTLY over skin region using Vision Mask (CIBlendWithMask)
         let maskedOutput = CIFilter(name: "CIBlendWithMask", parameters: [
-            kCIInputImageKey: blendedSmooth,
+            kCIInputImageKey: naturalSkinBlend,
             kCIInputBackgroundImageKey: image,
             kCIInputMaskImageKey: mask
         ])?.outputImage ?? image

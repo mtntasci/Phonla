@@ -149,6 +149,15 @@ public struct EditorView: View {
                                 RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous)
                                     .strokeBorder(PhotonColors.border, lineWidth: 0.5)
                             )
+                            // Face Bounding Box Overlay when Pürüzsüzleştir tool is active (strictly UI only)
+                            .overlay {
+                                if viewModel.activeCategory == .portrait && !viewModel.isComparingOriginal {
+                                    FaceBoundingBoxOverlayView(
+                                        faces: viewModel.detectedFaces,
+                                        isDetecting: viewModel.isDetectingFaces
+                                    )
+                                }
+                            }
                             // Hold anywhere on photo canvas for Before / After
                             .gesture(
                                 DragGesture(minimumDistance: 0)
@@ -161,15 +170,6 @@ public struct EditorView: View {
                                         viewModel.isComparingOriginal = false
                                     }
                             )
-                        
-                        // Face Bounding Box Overlay when Pürüzsüzleştir tool is active
-                        if viewModel.activeCategory == .portrait && !viewModel.isComparingOriginal {
-                            FaceBoundingBoxOverlayView(
-                                faces: viewModel.detectedFaces,
-                                imageSize: viewModel.loadedPhoto?.pixelSize ?? displayImage.size,
-                                canvasSize: CGSize(width: canvasWidth, height: canvasHeight)
-                            )
-                        }
                         
                         // "Orijinal" overlay tag when comparing
                         if viewModel.isComparingOriginal {

@@ -50,6 +50,7 @@ public final class EditorViewModel {
     
     // Vision Face Detection Cache
     public private(set) var detectedFaces: [VNFaceObservation] = []
+    public private(set) var isDetectingFaces: Bool = false
     private var previewSkinMask: CIImage?
     
     // Undo / Redo History Stacks
@@ -88,12 +89,14 @@ public final class EditorViewModel {
         self.activeCategory = .light
         self.detectedFaces.removeAll()
         self.previewSkinMask = nil
+        self.isDetectingFaces = true
         
         // Asynchronously perform face detection once per photo load
         Task { [faceDetectionService] in
             let faces = await faceDetectionService.detectFaces(in: photo.previewCIImage)
             await MainActor.run {
                 self.detectedFaces = faces
+                self.isDetectingFaces = false
                 if !faces.isEmpty {
                     self.previewSkinMask = self.faceDetectionService.generateSkinMask(
                         targetExtent: photo.previewCIImage.extent,

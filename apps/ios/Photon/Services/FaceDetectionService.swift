@@ -72,15 +72,15 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
         context.setFillColor(gray: 0.0, alpha: 1.0)
         context.fill(CGRect(x: 0, y: 0, width: width, height: height))
         
-        // Align CGContext coordinates (top-left origin for CGImage output) with Vision (bottom-left origin)
-        context.translateBy(x: 0, y: CGFloat(height))
-        context.scaleBy(x: 1.0, y: -1.0)
-        
+        // Both Vision VNImageRectForNormalizedRect and Core Graphics CGContext share the bottom-left origin (0,0).
         for face in faces {
             let faceRect = VNImageRectForNormalizedRect(face.boundingBox, width, height)
             
             // 2. Draw Face Base (Skin Area = White 1.0)
             context.setFillColor(gray: 1.0, alpha: 1.0)
+            
+            // Draw face ellipse to ensure forehead and temples are covered
+            drawFaceEllipse(in: context, rect: faceRect)
             
             if let landmarks = face.landmarks, let contour = landmarks.faceContour {
                 let contourPoints = convertLandmarkPoints(contour, faceRect: faceRect)
@@ -89,11 +89,7 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
                     context.addLines(between: contourPoints)
                     context.closePath()
                     context.fillPath()
-                } else {
-                    drawFaceEllipse(in: context, rect: faceRect)
                 }
-            } else {
-                drawFaceEllipse(in: context, rect: faceRect)
             }
             
             // 3. Subtract Feature Regions (Eyes, Eyebrows, Lips, Nostrils = Black 0.0)
@@ -102,36 +98,39 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
             if let landmarks = face.landmarks {
                 // Left Eye
                 if let leftEye = landmarks.leftEye {
-                    drawLandmarkPath(in: context, region: leftEye, faceRect: faceRect, expand: 1.2)
+                    drawLandmarkPath(in: context, region: leftEye, faceRect: faceRect, expand: 1.25)
                 }
                 
                 // Right Eye
                 if let rightEye = landmarks.rightEye {
-                    drawLandmarkPath(in: context, region: rightEye, faceRect: faceRect, expand: 1.2)
+                    drawLandmarkPath(in: context, region: rightEye, faceRect: faceRect, expand: 1.25)
                 }
                 
                 // Left Eyebrow
                 if let leftEyebrow = landmarks.leftEyebrow {
-                    drawLandmarkPath(in: context, region: leftEyebrow, faceRect: faceRect, expand: 1.25)
+                    drawLandmarkPath(in: context, region: leftEyebrow, faceRect: faceRect, expand: 1.30)
                 }
                 
                 // Right Eyebrow
                 if let rightEyebrow = landmarks.rightEyebrow {
-                    drawLandmarkPath(in: context, region: rightEyebrow, faceRect: faceRect, expand: 1.25)
+                    drawLandmarkPath(in: context, region: rightEyebrow, faceRect: faceRect, expand: 1.30)
                 }
                 
                 // Lips (Outer & Inner)
                 if let outerLips = landmarks.outerLips {
-                    drawLandmarkPath(in: context, region: outerLips, faceRect: faceRect, expand: 1.1)
+                    drawLandmarkPath(in: context, region: outerLips, faceRect: faceRect, expand: 1.15)
+                }
+                if let innerLips = landmarks.innerLips {
+                    drawLandmarkPath(in: context, region: innerLips, faceRect: faceRect, expand: 1.15)
                 }
                 
                 // Nostrils / Nose Tip
                 if let nose = landmarks.nose {
-                    drawLandmarkPath(in: context, region: nose, faceRect: faceRect, expand: 0.8)
+                    drawLandmarkPath(in: context, region: nose, faceRect: faceRect, expand: 0.85)
                 }
             } else {
-                // Fallback feature exclusion if detailed landmarks unavailable
-                let eyeY = faceRect.origin.y + faceRect.height * 0.55
+                // Fallback feature exclusion if detailed landmarks unavailable (bottom-left coordinate system)
+                let eyeY = faceRect.origin.y + faceRect.height * 0.58
                 let eyeW = faceRect.width * 0.22
                 let eyeH = faceRect.height * 0.12
                 
@@ -156,7 +155,7 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
         let rawMaskCI = CIImage(cgImage: maskCG)
         
         // 4. Feather Mask Edges via Soft Gaussian Blur for Natural Skin Transitions
-        let blurRadius = max(6.0, CGFloat(width) * 0.012)
+        let blurRadius = max(4.0, CGFloat(width) * 0.015)
         let blurredMask = rawMaskCI
             .clampedToExtent()
             .applyingFilter("CIGaussianBlur", parameters: [

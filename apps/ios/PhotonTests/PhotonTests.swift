@@ -217,4 +217,39 @@ struct PhotonTests {
         #expect(originalCI.extent.width == 1920)
         #expect(originalCI.extent.height == 1080)
     }
+    
+    // MARK: - Portrait & Skin Smoothing Tests
+    
+    @Test func testSkinSmoothingPipeline() async throws {
+        let processing = ImageProcessingService.shared
+        let testCI = createTestCIImage(width: 800, height: 600)
+        
+        // Generate a mock grayscale skin mask (white center rectangle)
+        let maskColor = CIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+        let mockMask = CIFilter(name: "CIConstantColorGenerator", parameters: [kCIInputColorKey: maskColor])!
+            .outputImage!
+            .cropped(to: CGRect(x: 200, y: 150, width: 400, height: 300))
+        
+        // Test varying intensity values (0, 50, 100)
+        for intensity in [0.0, 35.0, 75.0, 100.0] as [Float] {
+            var state = PhotoEditState()
+            state.skinSmoothing = intensity
+            
+            let processedWithMask = processing.processImage(testCI, state: state, skinMask: mockMask)
+            #expect(processedWithMask.extent.width == 800)
+            #expect(processedWithMask.extent.height == 600)
+            
+            let preview = processing.renderPreview(from: testCI, state: state, skinMask: mockMask)
+            #expect(preview != nil)
+        }
+    }
+    
+    @Test func testFaceDetectionMaskGenerationWithEmptyFaces() async throws {
+        let faceService = FaceDetectionService.shared
+        let extent = CGRect(x: 0, y: 0, width: 640, height: 480)
+        
+        // When no faces are present, generateSkinMask must return nil safely
+        let emptyMask = faceService.generateSkinMask(targetExtent: extent, faces: [])
+        #expect(emptyMask == nil)
+    }
 }
