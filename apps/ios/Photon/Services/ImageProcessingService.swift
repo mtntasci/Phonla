@@ -12,9 +12,9 @@ import Metal
 
 /// Contract for non-destructive Core Image rendering pipeline.
 public protocol ImageProcessingServiceProtocol: Sendable {
-    func processImage(_ input: CIImage, state: PhotoEditState) -> CIImage
-    func renderPreview(from input: CIImage, state: PhotoEditState) -> UIImage?
-    func renderFullResolution(from input: CIImage, state: PhotoEditState) -> CGImage?
+    func processImage(_ input: CIImage, state: PhotoEditState, skinMask: CIImage?) -> CIImage
+    func renderPreview(from input: CIImage, state: PhotoEditState, skinMask: CIImage?) -> UIImage?
+    func renderFullResolution(from input: CIImage, state: PhotoEditState, skinMask: CIImage?) -> CGImage?
 }
 
 /// Metal-accelerated Core Image processing engine.
@@ -41,7 +41,7 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
     // MARK: - Pipeline Application
     
     /// Chains Core Image filters based on the provided `PhotoEditState`.
-    public func processImage(_ input: CIImage, state: PhotoEditState) -> CIImage {
+    public func processImage(_ input: CIImage, state: PhotoEditState, skinMask: CIImage? = nil) -> CIImage {
         var output = input
         
         // 1. Exposure (CIExposureAdjust)
@@ -96,7 +96,46 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
             output = applyMonochromeEngine(to: output, state: state)
         }
         
+        // 8. Portrait & Skin Smoothing Engine
+        if state.skinSmoothing > 0.0 {
+            output = applySkinSmoothing(to: output, intensity: state.skinSmoothing, skinMask: skinMask)
+        }
+        
         return output
+    }
+    
+    // MARK: - Portrait & Skin Smoothing Pipeline
+    
+    private func applySkinSmoothing(to image: CIImage, intensity: Float, skinMask: CIImage?) -> CIImage {
+        guard intensity > 0.001, let mask = skinMask else {
+            return image
+        }
+        
+        let normIntensity = CGFloat(min(max(intensity / 100.0, 0.0), 1.0))
+        let imgWidth = image.extent.width > 0 ? image.extent.width : 1920.0
+        
+        // 1. Calculate adaptive blur radius scaling with resolution for identical preview & export results
+        let blurRadius = max(4.0, (imgWidth / 220.0) * normIntensity)
+        
+        // 2. Low-Frequency Surface Blur (softens skin blemishes & tone unevenness)
+        let blurredSurface = image
+            .clampedToExtent()
+            .applyingFilter("CIGaussianBlur", parameters: [
+                kCIInputRadiusKey: NSNumber(value: blurRadius)
+            ])
+            .cropped(to: image.extent)
+        
+        // 3. Frequency Separation: Blend 85% surface smooth with 15% original texture for natural skin feel
+        let blendedSmooth = blendImages(base: image, overlay: blurredSurface, alpha: Float(normIntensity * 0.85))
+        
+        // 4. Composite STRICTLY over skin region using Vision Mask (CIBlendWithMask)
+        let maskedOutput = CIFilter(name: "CIBlendWithMask", parameters: [
+            kCIInputImageKey: blendedSmooth,
+            kCIInputBackgroundImageKey: image,
+            kCIInputMaskImageKey: mask
+        ])?.outputImage ?? image
+        
+        return maskedOutput.cropped(to: image.extent)
     }
     
     // MARK: - Cinematic Look Pipeline
@@ -270,8 +309,8 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
     // MARK: - Render Outputs
     
     /// Renders the preview image for interactive 60fps UI display.
-    public func renderPreview(from input: CIImage, state: PhotoEditState) -> UIImage? {
-        let processed = processImage(input, state: state)
+    public func renderPreview(from input: CIImage, state: PhotoEditState, skinMask: CIImage? = nil) -> UIImage? {
+        let processed = processImage(input, state: state, skinMask: skinMask)
         guard let cgImage = context.createCGImage(processed, from: processed.extent) else {
             return nil
         }
@@ -279,8 +318,8 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
     }
     
     /// Renders the full resolution image for final photo library export.
-    public func renderFullResolution(from input: CIImage, state: PhotoEditState) -> CGImage? {
-        let processed = processImage(input, state: state)
+    public func renderFullResolution(from input: CIImage, state: PhotoEditState, skinMask: CIImage? = nil) -> CGImage? {
+        let processed = processImage(input, state: state, skinMask: skinMask)
         return context.createCGImage(processed, from: processed.extent)
     }
     

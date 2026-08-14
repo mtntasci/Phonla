@@ -7,11 +7,13 @@
 
 import SwiftUI
 import CoreImage
+import Vision
 
 /// Available adjustment tool categories in Photon Editor.
 public enum EditorToolCategory: String, CaseIterable, Identifiable, Sendable {
     case light = "Işık"
     case color = "Renk"
+    case portrait = "Pürüzsüzleştir"
     case cinematic = "Sinematik"
     case mono = "Siyah & Beyaz"
     
@@ -21,6 +23,7 @@ public enum EditorToolCategory: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .light: return "sun.max.fill"
         case .color: return "paintpalette.fill"
+        case .portrait: return "sparkles"
         case .cinematic: return "film.fill"
         case .mono: return "circle.lefthalf.filled"
         }
@@ -45,6 +48,10 @@ public final class EditorViewModel {
     public var exportSuccessMessage: String?
     public var exportErrorMessage: String?
     
+    // Vision Face Detection Cache
+    public private(set) var detectedFaces: [VNFaceObservation] = []
+    private var previewSkinMask: CIImage?
+    
     // Undo / Redo History Stacks
     private var undoStack: [PhotoEditState] = []
     private var redoStack: [PhotoEditState] = []
@@ -55,14 +62,17 @@ public final class EditorViewModel {
     
     private let processingService: ImageProcessingServiceProtocol
     private let photoLibraryService: PhotoLibraryServiceProtocol
+    private let faceDetectionService: FaceDetectionServiceProtocol
     private var renderTask: Task<Void, Never>?
     
     public init(
         processingService: ImageProcessingServiceProtocol = ImageProcessingService.shared,
-        photoLibraryService: PhotoLibraryServiceProtocol = PhotoLibraryService.shared
+        photoLibraryService: PhotoLibraryServiceProtocol = PhotoLibraryService.shared,
+        faceDetectionService: FaceDetectionServiceProtocol = FaceDetectionService.shared
     ) {
         self.processingService = processingService
         self.photoLibraryService = photoLibraryService
+        self.faceDetectionService = faceDetectionService
     }
     
     // MARK: - Photo Binding
@@ -76,6 +86,25 @@ public final class EditorViewModel {
         self.exportSuccessMessage = nil
         self.exportErrorMessage = nil
         self.activeCategory = .light
+        self.detectedFaces.removeAll()
+        self.previewSkinMask = nil
+        
+        // Asynchronously perform face detection once per photo load
+        Task { [faceDetectionService] in
+            let faces = await faceDetectionService.detectFaces(in: photo.previewCIImage)
+            await MainActor.run {
+                self.detectedFaces = faces
+                if !faces.isEmpty {
+                    self.previewSkinMask = self.faceDetectionService.generateSkinMask(
+                        targetExtent: photo.previewCIImage.extent,
+                        faces: faces
+                    )
+                    if self.editState.skinSmoothing > 0 {
+                        self.requestPreviewRender()
+                    }
+                }
+            }
+        }
     }
     
     // MARK: - History Snapshot (Undo / Redo Management)
@@ -132,9 +161,10 @@ public final class EditorViewModel {
         
         let targetState = self.editState
         let previewCI = photo.previewCIImage
+        let skinMask = self.previewSkinMask
         
         renderTask = Task.detached(priority: .userInitiated) { [processingService] in
-            let processedImage = processingService.renderPreview(from: previewCI, state: targetState)
+            let processedImage = processingService.renderPreview(from: previewCI, state: targetState, skinMask: skinMask)
             
             guard !Task.isCancelled else { return }
             
@@ -156,8 +186,19 @@ public final class EditorViewModel {
         exportSuccessMessage = nil
         
         do {
+            // Generate full-resolution skin mask if faces were detected
+            let fullResSkinMask: CIImage?
+            if !detectedFaces.isEmpty {
+                fullResSkinMask = faceDetectionService.generateSkinMask(
+                    targetExtent: photo.originalCIImage.extent,
+                    faces: detectedFaces
+                )
+            } else {
+                fullResSkinMask = nil
+            }
+            
             // Render on original full-resolution CIImage
-            guard let fullResCG = processingService.renderFullResolution(from: photo.originalCIImage, state: editState) else {
+            guard let fullResCG = processingService.renderFullResolution(from: photo.originalCIImage, state: editState, skinMask: fullResSkinMask) else {
                 throw PhotoLibraryError.saveFailed("Final render üretilemedi.")
             }
             

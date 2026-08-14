@@ -55,6 +55,10 @@ public struct PhotoEditState: Equatable, Codable, Sendable {
     /// Monochrome intensity blending (0.0 ... 1.0, default: 1.0)
     public var monoIntensity: Float = 1.0
     
+    // MARK: - Portrait & Skin Smoothing
+    /// Skin smoothing intensity (0.0 ... 100.0, neutral: 0.0)
+    public var skinSmoothing: Float = 0.0
+    
     // MARK: - Helpers & Identity
     
     public init() {}

@@ -132,13 +132,16 @@ public struct EditorView: View {
                     .ignoresSafeArea()
                 
                 if let displayImage = viewModel.currentDisplayImage {
+                    let canvasWidth = geometry.size.width - PhotonSpacing.md
+                    let canvasHeight = geometry.size.height - PhotonSpacing.sm
+                    
                     ZStack(alignment: .topTrailing) {
                         Image(uiImage: displayImage)
                             .resizable()
                             .scaledToFit()
                             .frame(
-                                maxWidth: geometry.size.width - PhotonSpacing.md,
-                                maxHeight: geometry.size.height - PhotonSpacing.sm
+                                maxWidth: canvasWidth,
+                                maxHeight: canvasHeight
                             )
                             .clipShape(RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous))
                             .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
@@ -158,6 +161,15 @@ public struct EditorView: View {
                                         viewModel.isComparingOriginal = false
                                     }
                             )
+                        
+                        // Face Bounding Box Overlay when Pürüzsüzleştir tool is active
+                        if viewModel.activeCategory == .portrait && !viewModel.isComparingOriginal {
+                            FaceBoundingBoxOverlayView(
+                                faces: viewModel.detectedFaces,
+                                imageSize: viewModel.loadedPhoto?.pixelSize ?? displayImage.size,
+                                canvasSize: CGSize(width: canvasWidth, height: canvasHeight)
+                            )
+                        }
                         
                         // "Orijinal" overlay tag when comparing
                         if viewModel.isComparingOriginal {
@@ -240,6 +252,8 @@ public struct EditorView: View {
                     LightToolView(viewModel: viewModel)
                 case .color:
                     ColorToolView(viewModel: viewModel)
+                case .portrait:
+                    SmoothToolView(viewModel: viewModel)
                 case .cinematic:
                     CinematicToolView(viewModel: viewModel)
                 case .mono:
