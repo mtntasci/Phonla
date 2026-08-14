@@ -115,7 +115,8 @@ class AuthService(private val context: Context) {
         isLoading = true
         lastError = null
         try {
-            auth.signInAnonymously().await()
+            val authResult = auth.signInAnonymously().await()
+            val user = authResult.user ?: throw IllegalStateException("Firebase kullanıcısı alınamadı")
             syncFirebaseCurrentUser()
             isLoading = false
             Result.success(currentSession!!)

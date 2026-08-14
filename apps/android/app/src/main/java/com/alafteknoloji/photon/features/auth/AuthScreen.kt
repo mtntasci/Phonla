@@ -41,7 +41,10 @@ import com.alafteknoloji.photon.core.navigation.NavigationState
 import com.alafteknoloji.photon.services.AuthService
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Minimalist, pure-white authentication screen with transparent branding and Firebase Auth providers.
@@ -70,7 +73,7 @@ fun AuthScreen(
                 val googleIdOption = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
                     .setServerClientId("799654898432-lq7ur1fkf2jsi6hne99ehl24jk4kg1qo.apps.googleusercontent.com")
-                    .setAutoSelectEnabled(true)
+                    .setAutoSelectEnabled(false)
                     .build()
 
                 val request = GetCredentialRequest.Builder()
@@ -89,21 +92,17 @@ fun AuthScreen(
                     val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
                     val authResult = authService.signInWithGoogle(googleIdTokenCredential.idToken)
                     if (authResult.isSuccess) {
-                        navigationState.navigateToHome()
+                        withContext(Dispatchers.Main) { navigationState.navigateToHome() }
                     } else {
-                        errorMessage = authResult.exceptionOrNull()?.localizedMessage
+                        errorMessage = authResult.exceptionOrNull()?.localizedMessage ?: "Google ile giriş yapılamadı"
                     }
+                } else {
+                    errorMessage = "Geçerli bir Google hesabı bulunamadı"
                 }
             } catch (e: GetCredentialCancellationException) {
-                // User cancelled quietly, remain on AuthScreen
+                // User cancelled quietly
             } catch (e: Exception) {
-                // Fallback to anonymous sign-in or show user message
-                val anonResult = authService.signInAnonymously()
-                if (anonResult.isSuccess) {
-                    navigationState.navigateToHome()
-                } else {
-                    errorMessage = e.localizedMessage ?: "Google ile giriş yapılırken hata oluştu"
-                }
+                errorMessage = e.localizedMessage ?: "Giriş başarısız oldu"
             } finally {
                 isGoogleLoading = false
             }
@@ -119,12 +118,12 @@ fun AuthScreen(
             try {
                 val result = authService.signInWithApple(activity)
                 if (result.isSuccess) {
-                    navigationState.navigateToHome()
+                    withContext(Dispatchers.Main) { navigationState.navigateToHome() }
                 } else {
-                    errorMessage = result.exceptionOrNull()?.localizedMessage
+                    errorMessage = result.exceptionOrNull()?.localizedMessage ?: "Apple ile giriş yapılamadı"
                 }
             } catch (e: Exception) {
-                errorMessage = e.localizedMessage
+                errorMessage = e.localizedMessage ?: "Apple ile giriş yapılamadı"
             } finally {
                 isAppleLoading = false
             }
