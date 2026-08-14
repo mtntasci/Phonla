@@ -7,15 +7,16 @@
 
 import SwiftUI
 
-struct ContentView: View {
-    var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+/// Main content root forwarding to RootCoordinatorView.
+public struct ContentView: View {
+    @State private var navigationState = NavigationState()
+    
+    public init() {}
+    
+    public var body: some View {
+        RootCoordinatorView()
+            .environment(navigationState)
+            .preferredColorScheme(.light)
     }
 }
 

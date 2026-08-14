@@ -9,9 +9,13 @@ import SwiftUI
 
 @main
 struct PhotonApp: App {
+    @State private var navigationState = NavigationState()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootCoordinatorView()
+                .environment(navigationState)
+                .preferredColorScheme(.light)
         }
     }
 }
