@@ -63,14 +63,14 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
         let effectiveSat = state.isMonoActive ? 0.0 : state.saturation
         if state.brightness != 0.0 || state.contrast != 1.0 || effectiveSat != 1.0 {
             output = output.applyingFilter("CIColorControls", parameters: [
-                kCIInputBrightnessKey: NSNumber(value: state.brightness * 0.5),
+                kCIInputBrightnessKey: NSNumber(value: state.brightness * 0.4),
                 kCIInputContrastKey: NSNumber(value: state.contrast),
                 kCIInputSaturationKey: NSNumber(value: effectiveSat)
             ])
         }
         
         // 4. Temperature & Tint (CITemperatureAndTint)
-        if state.temperature != 6500.0 || state.tint != 0.0 {
+        if (state.temperature != 6500.0 || state.tint != 0.0) && !state.isMonoActive {
             let neutral = CIVector(x: 6500.0, y: 0.0)
             let target = CIVector(x: CGFloat(state.temperature), y: CGFloat(state.tint))
             output = output.applyingFilter("CITemperatureAndTint", parameters: [
@@ -86,16 +86,185 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
             ])
         }
         
-        // 6. Monochrome Engine (Luminance matrix / Mono preset)
+        // 6. Cinematic Look Engine (Phase 6)
+        if let lookId = state.selectedLookId, lookId != "original", !state.isMonoActive {
+            output = applyCinematicLook(lookId: lookId, to: output, intensity: state.lookIntensity)
+        }
+        
+        // 7. Professional Monochrome Engine (Phase 7)
         if state.isMonoActive {
-            let monoFilter = output.applyingFilter("CIColorMonochrome", parameters: [
-                kCIInputColorKey: CIColor(red: 0.9, green: 0.9, blue: 0.9),
-                kCIInputIntensityKey: NSNumber(value: state.monoIntensity)
-            ])
-            output = monoFilter
+            output = applyMonochromeEngine(to: output, state: state)
         }
         
         return output
+    }
+    
+    // MARK: - Cinematic Look Pipeline
+    
+    private func applyCinematicLook(lookId: String, to image: CIImage, intensity: Float) -> CIImage {
+        guard intensity > 0.001 else { return image }
+        
+        var graded = image
+        
+        switch lookId {
+        case "cinema": // Teal & Orange split grading
+            let matrix = CIFilter(name: "CIColorMatrix", parameters: [
+                kCIInputImageKey: graded,
+                "inputRVector": CIVector(x: 1.15, y: 0.00, z: -0.05, w: 0.0),
+                "inputGVector": CIVector(x: -0.02, y: 1.05, z: 0.02, w: 0.0),
+                "inputBVector": CIVector(x: -0.08, y: 0.05, z: 1.15, w: 0.0),
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1.0),
+                "inputBiasVector": CIVector(x: 0.04, y: 0.01, z: 0.06, w: 0.0)
+            ])?.outputImage ?? graded
+            graded = matrix.applyingFilter("CIColorControls", parameters: [
+                kCIInputContrastKey: NSNumber(value: 1.12),
+                kCIInputSaturationKey: NSNumber(value: 1.10)
+            ])
+            
+        case "warm": // Golden Amber glow
+            graded = graded.applyingFilter("CITemperatureAndTint", parameters: [
+                "inputNeutral": CIVector(x: 6500, y: 0),
+                "inputTargetNeutral": CIVector(x: 5200, y: 10)
+            ]).applyingFilter("CIColorControls", parameters: [
+                kCIInputBrightnessKey: NSNumber(value: 0.02),
+                kCIInputSaturationKey: NSNumber(value: 1.15)
+            ])
+            
+        case "cold": // Moody Nordic Blue
+            graded = graded.applyingFilter("CITemperatureAndTint", parameters: [
+                "inputNeutral": CIVector(x: 6500, y: 0),
+                "inputTargetNeutral": CIVector(x: 8200, y: -5)
+            ]).applyingFilter("CIColorControls", parameters: [
+                kCIInputContrastKey: NSNumber(value: 1.08),
+                kCIInputSaturationKey: NSNumber(value: 0.88)
+            ])
+            
+        case "teal": // Deep Turquoise Shadows
+            let matrix = CIFilter(name: "CIColorMatrix", parameters: [
+                kCIInputImageKey: graded,
+                "inputRVector": CIVector(x: 0.90, y: 0.05, z: 0.00, w: 0.0),
+                "inputGVector": CIVector(x: 0.00, y: 1.10, z: 0.05, w: 0.0),
+                "inputBVector": CIVector(x: 0.05, y: 0.10, z: 1.20, w: 0.0),
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1.0),
+                "inputBiasVector": CIVector(x: -0.02, y: 0.03, z: 0.07, w: 0.0)
+            ])?.outputImage ?? graded
+            graded = matrix.applyingFilter("CIColorControls", parameters: [
+                kCIInputContrastKey: NSNumber(value: 1.15)
+            ])
+            
+        case "fade": // Matte Film Lifted Blacks
+            let matrix = CIFilter(name: "CIColorMatrix", parameters: [
+                kCIInputImageKey: graded,
+                "inputRVector": CIVector(x: 0.95, y: 0.0, z: 0.0, w: 0.0),
+                "inputGVector": CIVector(x: 0.0, y: 0.95, z: 0.0, w: 0.0),
+                "inputBVector": CIVector(x: 0.0, y: 0.0, z: 0.95, w: 0.0),
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1.0),
+                "inputBiasVector": CIVector(x: 0.08, y: 0.08, z: 0.08, w: 0.0)
+            ])?.outputImage ?? graded
+            graded = matrix.applyingFilter("CIColorControls", parameters: [
+                kCIInputContrastKey: NSNumber(value: 0.90),
+                kCIInputSaturationKey: NSNumber(value: 0.85)
+            ])
+            
+        case "night": // Urban Midnight
+            graded = graded.applyingFilter("CIExposureAdjust", parameters: [
+                kCIInputEVKey: NSNumber(value: -0.2)
+            ]).applyingFilter("CITemperatureAndTint", parameters: [
+                "inputNeutral": CIVector(x: 6500, y: 0),
+                "inputTargetNeutral": CIVector(x: 8800, y: 15)
+            ]).applyingFilter("CIColorControls", parameters: [
+                kCIInputContrastKey: NSNumber(value: 1.25),
+                kCIInputSaturationKey: NSNumber(value: 1.05)
+            ])
+            
+        case "forest": // Organic Emerald Greens
+            let matrix = CIFilter(name: "CIColorMatrix", parameters: [
+                kCIInputImageKey: graded,
+                "inputRVector": CIVector(x: 0.92, y: 0.08, z: 0.00, w: 0.0),
+                "inputGVector": CIVector(x: 0.05, y: 1.20, z: 0.00, w: 0.0),
+                "inputBVector": CIVector(x: 0.00, y: 0.05, z: 0.95, w: 0.0),
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1.0),
+                "inputBiasVector": CIVector(x: 0.01, y: 0.02, z: -0.02, w: 0.0)
+            ])?.outputImage ?? graded
+            graded = matrix.applyingFilter("CIColorControls", parameters: [
+                kCIInputContrastKey: NSNumber(value: 1.10),
+                kCIInputSaturationKey: NSNumber(value: 1.12)
+            ])
+            
+        case "urban": // High Contrast Architectural Monochrome-like Color
+            graded = graded.applyingFilter("CIColorControls", parameters: [
+                kCIInputContrastKey: NSNumber(value: 1.30),
+                kCIInputSaturationKey: NSNumber(value: 0.65),
+                kCIInputBrightnessKey: NSNumber(value: -0.03)
+            ])
+            
+        default:
+            break
+        }
+        
+        // Intensity Blending with Original
+        if intensity < 0.999 {
+            return blendImages(base: image, overlay: graded, alpha: intensity)
+        }
+        return graded
+    }
+    
+    // MARK: - Monochrome Engine Pipeline
+    
+    private func applyMonochromeEngine(to image: CIImage, state: PhotoEditState) -> CIImage {
+        let presetId = state.selectedMonoPresetId ?? "mono_natural"
+        let preset = MonoPreset.allPresets.first(where: { $0.id == presetId }) ?? MonoPreset.allPresets[0]
+        
+        let rw = CGFloat(preset.redWeight)
+        let gw = CGFloat(preset.greenWeight)
+        let bw = CGFloat(preset.blueWeight)
+        let bias = CGFloat(preset.brightnessOffset)
+        
+        // RGB Channel Luminance Matrix
+        let monoMatrix = CIFilter(name: "CIColorMatrix", parameters: [
+            kCIInputImageKey: image,
+            "inputRVector": CIVector(x: rw, y: gw, z: bw, w: 0.0),
+            "inputGVector": CIVector(x: rw, y: gw, z: bw, w: 0.0),
+            "inputBVector": CIVector(x: rw, y: gw, z: bw, w: 0.0),
+            "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1.0),
+            "inputBiasVector": CIVector(x: bias, y: bias, z: bias, w: 0.0)
+        ])?.outputImage ?? image
+        
+        // Tone Curve / Contrast Enhancement
+        var adjusted = monoMatrix.applyingFilter("CIColorControls", parameters: [
+            kCIInputContrastKey: NSNumber(value: preset.contrastMultiplier),
+            kCIInputSaturationKey: NSNumber(value: 0.0)
+        ])
+        
+        if preset.shadowLift != 0.0 || preset.highlightRecovery != 0.0 {
+            adjusted = adjusted.applyingFilter("CIHighlightShadowAdjust", parameters: [
+                "inputHighlightAmount": NSNumber(value: 1.0 - (preset.highlightRecovery * 0.5)),
+                "inputShadowAmount": NSNumber(value: preset.shadowLift)
+            ])
+        }
+        
+        // Intensity Blending
+        if state.monoIntensity < 0.999 {
+            return blendImages(base: image, overlay: adjusted, alpha: state.monoIntensity)
+        }
+        return adjusted
+    }
+    
+    // MARK: - Alpha Blending Helper
+    
+    private func blendImages(base: CIImage, overlay: CIImage, alpha: Float) -> CIImage {
+        let alphaClamped = max(0.0, min(1.0, alpha))
+        let alphaMatrix = CIFilter(name: "CIColorMatrix", parameters: [
+            kCIInputImageKey: overlay,
+            "inputAVector": CIVector(x: 0, y: 0, z: 0, w: CGFloat(alphaClamped))
+        ])?.outputImage ?? overlay
+        
+        let blended = CIFilter(name: "CISourceOverCompositing", parameters: [
+            kCIInputImageKey: alphaMatrix,
+            kCIInputBackgroundImageKey: base
+        ])?.outputImage ?? overlay
+        
+        return blended.cropped(to: base.extent)
     }
     
     // MARK: - Render Outputs

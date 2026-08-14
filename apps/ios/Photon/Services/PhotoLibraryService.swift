@@ -9,15 +9,18 @@ import SwiftUI
 import PhotosUI
 import CoreImage
 
-/// Contract for loading and preparing local photos from native PhotosUI.
+/// Contract for loading and saving local photos from/to native PhotosUI & Photo Library.
 public protocol PhotoLibraryServiceProtocol: Sendable {
     func loadPhoto(from item: PhotosPickerItem) async throws -> LoadedPhoto
+    func savePhotoToLibrary(renderedCGImage: CGImage) async throws
 }
 
-public enum PhotoLoadError: LocalizedError, Sendable {
+public enum PhotoLibraryError: LocalizedError, Sendable {
     case dataLoadingFailed
     case invalidImageFormat
     case downsamplingFailed
+    case permissionDenied
+    case saveFailed(String)
     
     public var errorDescription: String? {
         switch self {
@@ -27,11 +30,16 @@ public enum PhotoLoadError: LocalizedError, Sendable {
             return "Desteklenmeyen veya bozuk görsel formatı."
         case .downsamplingFailed:
             return "Önizleme görseli oluşturulamadı."
+        case .permissionDenied:
+            return "Fotoğrafı kaydetmek için galeri izni gereklidir. Lütfen Ayarlar'dan izin verin."
+        case .saveFailed(let message):
+            return "Fotoğraf kaydedilemedi: \(message)"
         }
     }
 }
 
-/// Native service handling photo selection, orientation normalization, and preview pipeline initialization.
+/// Native service handling photo selection, orientation normalization, preview pipeline initialization,
+/// and safe full-resolution non-destructive export.
 public final class PhotoLibraryService: PhotoLibraryServiceProtocol, @unchecked Sendable {
     public static let shared = PhotoLibraryService()
     
@@ -39,24 +47,26 @@ public final class PhotoLibraryService: PhotoLibraryServiceProtocol, @unchecked 
     
     public init() {}
     
+    // MARK: - Load Photo
+    
     public func loadPhoto(from item: PhotosPickerItem) async throws -> LoadedPhoto {
         guard let data = try await item.loadTransferable(type: Data.self) else {
-            throw PhotoLoadError.dataLoadingFailed
+            throw PhotoLibraryError.dataLoadingFailed
         }
         
         guard let uiImage = UIImage(data: data) else {
-            throw PhotoLoadError.invalidImageFormat
+            throw PhotoLibraryError.invalidImageFormat
         }
         
         // Ensure proper EXIF orientation
         guard let sourceCI = CIImage(image: uiImage) else {
-            throw PhotoLoadError.invalidImageFormat
+            throw PhotoLibraryError.invalidImageFormat
         }
         
         let orientedCI = sourceCI.oriented(forExifOrientation: Int32(uiImage.imageOrientation.cgOrientationRawValue))
         
         guard let (previewCI, previewUI) = processingService.generatePreview(from: orientedCI) else {
-            throw PhotoLoadError.downsamplingFailed
+            throw PhotoLibraryError.downsamplingFailed
         }
         
         return LoadedPhoto(
@@ -65,6 +75,31 @@ public final class PhotoLibraryService: PhotoLibraryServiceProtocol, @unchecked 
             previewUIImage: previewUI,
             pixelSize: orientedCI.extent.size
         )
+    }
+    
+    // MARK: - Save Photo (Phase 9 Non-Destructive Export)
+    
+    public func savePhotoToLibrary(renderedCGImage: CGImage) async throws {
+        // Request Add-Only authorization if required
+        let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+        guard status == .authorized || status == .limited else {
+            throw PhotoLibraryError.permissionDenied
+        }
+        
+        let finalUIImage = UIImage(cgImage: renderedCGImage)
+        
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            PHPhotoLibrary.shared().performChanges({
+                PHAssetCreationRequest.creationRequestForAsset(from: finalUIImage)
+            }) { success, error in
+                if success {
+                    continuation.resume()
+                } else {
+                    let err = error ?? NSError(domain: "Photon", code: -1, userInfo: [NSLocalizedDescriptionKey: "Bilinmeyen bir hata oluştu."])
+                    continuation.resume(throwing: PhotoLibraryError.saveFailed(err.localizedDescription))
+                }
+            }
+        }
     }
 }
 

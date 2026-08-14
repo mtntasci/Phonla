@@ -8,6 +8,7 @@
 import SwiftUI
 
 /// Non-destructive photo editor powered by Core Image & Metal GPU pipeline.
+/// Supports real-time Light, Color, Cinematic, Mono processing, Undo/Redo, Before/After, and full-resolution export.
 public struct EditorView: View {
     @Environment(NavigationState.self) private var navigationState
     @State private var viewModel = EditorViewModel.shared
@@ -20,7 +21,7 @@ public struct EditorView: View {
             // MARK: - Top Toolbar
             topToolbar
             
-            // MARK: - Main Canvas Area
+            // MARK: - Main Canvas Area (Photo Preview & Gestures)
             canvasArea
             
             // MARK: - Bottom Tool Section
@@ -42,11 +43,11 @@ public struct EditorView: View {
         }
     }
     
-    // MARK: - Subviews
+    // MARK: - Top Toolbar
     
     private var topToolbar: some View {
-        HStack {
-            // Close / Back
+        HStack(spacing: PhotonSpacing.sm) {
+            // Close / Back Button
             Button {
                 if viewModel.isEdited {
                     showDiscardAlert = true
@@ -62,23 +63,63 @@ public struct EditorView: View {
                     .clipShape(Circle())
             }
             
+            // Undo Button
+            Button {
+                viewModel.undo()
+            } label: {
+                Image(systemName: "arrow.uturn.backward")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(viewModel.canUndo ? PhotonColors.textPrimary : PhotonColors.textTertiary.opacity(0.5))
+                    .frame(width: 36, height: 36)
+                    .background(PhotonColors.surfaceSecondary.opacity(viewModel.canUndo ? 1.0 : 0.5))
+                    .clipShape(Circle())
+            }
+            .disabled(!viewModel.canUndo)
+            
+            // Redo Button
+            Button {
+                viewModel.redo()
+            } label: {
+                Image(systemName: "arrow.uturn.forward")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(viewModel.canRedo ? PhotonColors.textPrimary : PhotonColors.textTertiary.opacity(0.5))
+                    .frame(width: 36, height: 36)
+                    .background(PhotonColors.surfaceSecondary.opacity(viewModel.canRedo ? 1.0 : 0.5))
+                    .clipShape(Circle())
+            }
+            .disabled(!viewModel.canRedo)
+            
             Spacer()
+            
+            // Reset Button
+            if viewModel.isEdited {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        viewModel.resetState()
+                    }
+                } label: {
+                    Text("Sıfırla")
+                        .font(PhotonTypography.bodyMedium.weight(.medium))
+                        .foregroundColor(PhotonColors.textSecondary)
+                }
+                .padding(.horizontal, PhotonSpacing.xs)
+            }
             
             // Before / After Compare Button
             if viewModel.isEdited {
                 Button {
-                    // Tap toggle or hold
+                    // Tap or hold gesture
                 } label: {
-                    HStack(spacing: PhotonSpacing.xs) {
+                    HStack(spacing: PhotonSpacing.xxs) {
                         Image(systemName: "square.split.2x1")
-                            .font(.system(size: 13, weight: .medium))
-                        Text(viewModel.isComparingOriginal ? "Orijinal" : "Düzenlenen")
+                            .font(.system(size: 12, weight: .medium))
+                        Text(viewModel.isComparingOriginal ? "Orijinal" : "Kıyasla")
                             .font(PhotonTypography.caption.weight(.medium))
                     }
-                    .padding(.horizontal, PhotonSpacing.md)
-                    .padding(.vertical, PhotonSpacing.xs)
-                    .background(PhotonColors.surfaceSecondary)
-                    .foregroundColor(PhotonColors.textPrimary)
+                    .padding(.horizontal, PhotonSpacing.sm)
+                    .padding(.vertical, 6)
+                    .background(viewModel.isComparingOriginal ? PhotonColors.textPrimary : PhotonColors.surfaceSecondary)
+                    .foregroundColor(viewModel.isComparingOriginal ? PhotonColors.textInverted : PhotonColors.textPrimary)
                     .clipShape(Capsule())
                 }
                 .simultaneousGesture(
@@ -88,28 +129,24 @@ public struct EditorView: View {
                 )
             }
             
-            // Reset Button
-            if viewModel.isEdited {
-                Button {
-                    withAnimation {
-                        viewModel.resetState()
-                    }
-                } label: {
-                    Text("Sıfırla")
-                        .font(PhotonTypography.bodyMedium)
-                        .foregroundColor(PhotonColors.textSecondary)
+            // Full Resolution Export / Save Button
+            PhotonButton(
+                "Kaydet",
+                variant: .primary,
+                size: .small,
+                isFullWidth: false,
+                isLoading: viewModel.isExporting
+            ) {
+                Task {
+                    await viewModel.exportPhoto()
                 }
-                .padding(.horizontal, PhotonSpacing.sm)
-            }
-            
-            // Export / Save Action Button
-            PhotonButton("Kaydet", variant: .primary, size: .small, isFullWidth: false) {
-                // Export pipeline will be fully wired in Phase 9
             }
         }
-        .padding(.horizontal, PhotonSpacing.lg)
+        .padding(.horizontal, PhotonSpacing.md)
         .padding(.vertical, PhotonSpacing.sm)
     }
+    
+    // MARK: - Main Canvas Area
     
     private var canvasArea: some View {
         GeometryReader { geometry in
@@ -118,54 +155,130 @@ public struct EditorView: View {
                     .ignoresSafeArea()
                 
                 if let displayImage = viewModel.currentDisplayImage {
-                    Image(uiImage: displayImage)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxWidth: geometry.size.width - PhotonSpacing.lg, maxHeight: geometry.size.height - PhotonSpacing.lg)
-                        .clipShape(RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous))
-                        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous)
-                                .strokeBorder(PhotonColors.border, lineWidth: 0.5)
-                        )
+                    ZStack(alignment: .topTrailing) {
+                        Image(uiImage: displayImage)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(
+                                maxWidth: geometry.size.width - PhotonSpacing.md,
+                                maxHeight: geometry.size.height - PhotonSpacing.sm
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous))
+                            .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous)
+                                    .strokeBorder(PhotonColors.border, lineWidth: 0.5)
+                            )
+                            // Hold anywhere on photo canvas for Before / After
+                            .gesture(
+                                DragGesture(minimumDistance: 0)
+                                    .onChanged { _ in
+                                        if viewModel.isEdited {
+                                            viewModel.isComparingOriginal = true
+                                        }
+                                    }
+                                    .onEnded { _ in
+                                        viewModel.isComparingOriginal = false
+                                    }
+                            )
+                        
+                        // "Orijinal" overlay tag when comparing
+                        if viewModel.isComparingOriginal {
+                            Text("Orijinal")
+                                .font(PhotonTypography.caption.weight(.semibold))
+                                .padding(.horizontal, PhotonSpacing.sm)
+                                .padding(.vertical, PhotonSpacing.xxs)
+                                .background(PhotonColors.textPrimary.opacity(0.85))
+                                .foregroundColor(PhotonColors.textInverted)
+                                .clipShape(Capsule())
+                                .padding(PhotonSpacing.md)
+                                .transition(.opacity)
+                        }
+                    }
                 } else {
                     ProgressView()
                         .tint(PhotonColors.textPrimary)
+                }
+                
+                // Export Success Toast
+                if let successMessage = viewModel.exportSuccessMessage {
+                    VStack {
+                        HStack(spacing: PhotonSpacing.xs) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(PhotonColors.success)
+                            Text(successMessage)
+                                .font(PhotonTypography.bodyMedium.weight(.medium))
+                                .foregroundColor(PhotonColors.textPrimary)
+                        }
+                        .padding(.horizontal, PhotonSpacing.lg)
+                        .padding(.vertical, PhotonSpacing.md)
+                        .background(PhotonColors.surfacePrimary)
+                        .clipShape(Capsule())
+                        .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 6)
+                        .padding(.top, PhotonSpacing.md)
+                        
+                        Spacer()
+                    }
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .animation(.spring(duration: 0.35), value: viewModel.exportSuccessMessage)
+                }
+                
+                // Export Error Banner
+                if let errorMessage = viewModel.exportErrorMessage {
+                    VStack {
+                        HStack(spacing: PhotonSpacing.xs) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(PhotonColors.error)
+                            Text(errorMessage)
+                                .font(PhotonTypography.caption.weight(.medium))
+                                .foregroundColor(PhotonColors.textPrimary)
+                        }
+                        .padding(.horizontal, PhotonSpacing.lg)
+                        .padding(.vertical, PhotonSpacing.sm)
+                        .background(PhotonColors.surfacePrimary)
+                        .clipShape(Capsule())
+                        .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 6)
+                        .padding(.top, PhotonSpacing.md)
+                        
+                        Spacer()
+                    }
+                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
     
+    // MARK: - Bottom Tool Section
+    
     private var bottomToolSection: some View {
         VStack(spacing: 0) {
             Divider()
                 .foregroundColor(PhotonColors.divider)
             
-            // Active Tool Info / Parameter Preview Placeholder (Foundation for Phase 5)
-            VStack(spacing: PhotonSpacing.xs) {
-                HStack {
-                    Image(systemName: viewModel.activeCategory.systemIcon)
-                        .font(.system(size: 14, weight: .medium))
-                    Text(categoryDescription(for: viewModel.activeCategory))
-                        .font(PhotonTypography.caption)
-                    Spacer()
-                    if viewModel.isEdited {
-                        Text("Aktif Düzenleme")
-                            .font(PhotonTypography.caption)
-                            .foregroundColor(PhotonColors.textTertiary)
-                    }
+            // Active Tool Adjustment Panel (Height fixed for stability)
+            Group {
+                switch viewModel.activeCategory {
+                case .light:
+                    LightToolView(viewModel: viewModel)
+                case .color:
+                    ColorToolView(viewModel: viewModel)
+                case .cinematic:
+                    CinematicToolView(viewModel: viewModel)
+                case .mono:
+                    MonoToolView(viewModel: viewModel)
                 }
-                .foregroundColor(PhotonColors.textSecondary)
-                .padding(.horizontal, PhotonSpacing.lg)
-                .padding(.top, PhotonSpacing.sm)
             }
+            .frame(height: 144)
+            
+            Divider()
+                .foregroundColor(PhotonColors.divider)
             
             // Category Tabs Bar
             HStack(spacing: PhotonSpacing.xs) {
                 ForEach(EditorToolCategory.allCases) { category in
                     Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
+                        withAnimation(.easeInOut(duration: 0.18)) {
                             viewModel.activeCategory = category
                         }
                     } label: {
@@ -184,24 +297,11 @@ public struct EditorView: View {
                     }
                 }
             }
-            .padding(.horizontal, PhotonSpacing.md)
-            .padding(.top, PhotonSpacing.xs)
+            .padding(.horizontal, PhotonSpacing.sm)
+            .padding(.top, PhotonSpacing.xxs)
             .padding(.bottom, PhotonSpacing.lg)
         }
         .background(PhotonColors.surfacePrimary)
-    }
-    
-    private func categoryDescription(for category: EditorToolCategory) -> String {
-        switch category {
-        case .light:
-            return "Pozlama, Parlaklık, Kontrast, Açık Tonlar, Gölgeler"
-        case .color:
-            return "Sıcaklık, Ton, Doygunluk, Canlılık"
-        case .cinematic:
-            return "Sinematik LUT ve Renk Derecelendirme"
-        case .mono:
-            return "Luminance ve RGB Tabanlı Monochrome Motoru"
-        }
     }
 }
 
