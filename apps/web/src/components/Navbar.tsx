@@ -31,9 +31,9 @@ export const Navbar: React.FC = () => {
       }}
     >
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {/* Brand Official App Icon & Title */}
+        {/* Brand Transparent White Vector Logo & Title */}
         <a href="#" style={{ textDecoration: 'none' }}>
-          <PhotonLogo size={36} showText={true} variant="app-icon" />
+          <PhotonLogo size={28} showText={true} />
         </a>
 
         {/* Desktop Nav Links */}

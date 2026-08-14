@@ -23,7 +23,7 @@ export const Footer: React.FC = () => {
           }}
         >
           {/* Brand */}
-          <PhotonLogo size={32} showText={true} variant="app-icon" />
+          <PhotonLogo size={28} showText={true} />
 
           {/* Slogan */}
           <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
