@@ -74,6 +74,8 @@ public final class AuthService: NSObject, AuthServiceProtocol {
     public private(set) var isLoading: Bool = false
     public private(set) var lastError: String?
     
+    private var appleSignInHandler: AppleSignInHandler?
+    
     public var isAuthenticated: Bool {
         currentSession != nil
     }
@@ -117,6 +119,7 @@ public final class AuthService: NSObject, AuthServiceProtocol {
                 uid: firebaseUser.uid,
                 email: firebaseUser.email,
                 displayName: firebaseUser.displayName ?? (firebaseUser.email?.components(separatedBy: "@").first?.capitalized ?? "Photon Üyesi"),
+                photoURL: firebaseUser.photoURL,
                 isAnonymous: firebaseUser.isAnonymous
             )
         } else {
@@ -142,43 +145,73 @@ public final class AuthService: NSObject, AuthServiceProtocol {
             throw AuthError.missingConfiguration("Firebase yapılandırılmamış.")
         }
         
-        let providerID: String
-        var scopes: [String] = []
-        
-        switch provider {
-        case .apple:
-            providerID = "apple.com"
-            scopes = ["email", "name"]
-        case .google:
-            providerID = "google.com"
-            scopes = ["email", "profile"]
-        case .facebook:
-            providerID = "facebook.com"
-            scopes = ["email", "public_profile"]
-        }
-        
-        let oAuthProvider = OAuthProvider(providerID: providerID)
-        oAuthProvider.scopes = scopes
-        
         do {
-            let credential = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<AuthCredential, Error>) in
-                oAuthProvider.getCredentialWith(nil) { credential, error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else if let credential = credential {
-                        continuation.resume(returning: credential)
-                    } else {
-                        continuation.resume(throwing: AuthError.cancelled)
+            let authResult: AuthDataResult
+            
+            switch provider {
+            case .apple:
+                // Native Apple Sign In flow with cryptographic nonce & Apple ID Provider
+                let handler = AppleSignInHandler()
+                self.appleSignInHandler = handler
+                let credential = try await handler.startSignInWithAppleFlow()
+                authResult = try await Auth.auth().signIn(with: credential)
+                self.appleSignInHandler = nil
+                
+            case .google:
+                // Google OAuth Provider
+                let oAuthProvider = OAuthProvider(providerID: "google.com")
+                oAuthProvider.scopes = ["email", "profile"]
+                let credential = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<AuthCredential, Error>) in
+                    oAuthProvider.getCredentialWith(nil) { credential, error in
+                        if let error = error {
+                            continuation.resume(throwing: error)
+                        } else if let credential = credential {
+                            continuation.resume(returning: credential)
+                        } else {
+                            continuation.resume(throwing: AuthError.cancelled)
+                        }
                     }
+                }
+                authResult = try await Auth.auth().signIn(with: credential)
+                
+            case .facebook:
+                // Facebook OAuth Provider
+                let oAuthProvider = OAuthProvider(providerID: "facebook.com")
+                oAuthProvider.scopes = ["email", "public_profile"]
+                let credential = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<AuthCredential, Error>) in
+                    oAuthProvider.getCredentialWith(nil) { credential, error in
+                        if let error = error {
+                            continuation.resume(throwing: error)
+                        } else if let credential = credential {
+                            continuation.resume(returning: credential)
+                        } else {
+                            continuation.resume(throwing: AuthError.cancelled)
+                        }
+                    }
+                }
+                authResult = try await Auth.auth().signIn(with: credential)
+            }
+            
+            let user = authResult.user
+            
+            // Extract display name from user profile or fallback
+            var resolvedDisplayName = user.displayName
+            if (resolvedDisplayName == nil || resolvedDisplayName?.isEmpty == true),
+               let additionalProfile = authResult.additionalUserInfo?.profile,
+               let nameDict = additionalProfile["name"] as? [String: Any] {
+                let firstName = nameDict["firstName"] as? String ?? ""
+                let lastName = nameDict["lastName"] as? String ?? ""
+                let full = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
+                if !full.isEmpty {
+                    resolvedDisplayName = full
                 }
             }
             
-            let authResult = try await Auth.auth().signIn(with: credential)
-            let user = authResult.user
             let session = UserSession(
                 uid: user.uid,
                 email: user.email,
-                displayName: user.displayName ?? (user.email?.components(separatedBy: "@").first?.capitalized ?? "Photon Üyesi"),
+                displayName: resolvedDisplayName ?? (user.email?.components(separatedBy: "@").first?.capitalized ?? "Photon Üyesi"),
+                photoURL: user.photoURL,
                 isAnonymous: user.isAnonymous
             )
             

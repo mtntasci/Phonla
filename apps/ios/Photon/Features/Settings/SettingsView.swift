@@ -50,12 +50,35 @@ public struct SettingsView: View {
                 VStack(alignment: .leading, spacing: PhotonSpacing.xl) {
                     // Account Session Card
                     if let session = authService.currentSession {
-                        VStack(alignment: .leading, spacing: PhotonSpacing.sm) {
+                        VStack(alignment: .leading, spacing: PhotonSpacing.md) {
                             Text("Oturum")
                                 .font(PhotonTypography.caption)
                                 .foregroundColor(PhotonColors.textTertiary)
                             
-                            HStack {
+                            HStack(spacing: PhotonSpacing.md) {
+                                // User Avatar / Monogram
+                                ZStack {
+                                    Circle()
+                                        .fill(PhotonColors.surfaceSecondary)
+                                        .frame(width: 48, height: 48)
+                                    
+                                    if let photoURL = session.photoURL {
+                                        AsyncImage(url: photoURL) { phase in
+                                            if let image = phase.image {
+                                                image
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(width: 48, height: 48)
+                                                    .clipShape(Circle())
+                                            } else {
+                                                fallbackAvatar(for: session)
+                                            }
+                                        }
+                                    } else {
+                                        fallbackAvatar(for: session)
+                                    }
+                                }
+                                
                                 VStack(alignment: .leading, spacing: PhotonSpacing.xxs) {
                                     Text(session.displayName ?? "Photon Kullanıcısı")
                                         .font(PhotonTypography.headline)
@@ -63,7 +86,7 @@ public struct SettingsView: View {
                                     
                                     if let email = session.email {
                                         Text(email)
-                                            .font(PhotonTypography.bodyMedium)
+                                            .font(PhotonTypography.caption)
                                             .foregroundColor(PhotonColors.textSecondary)
                                     }
                                 }
@@ -118,6 +141,19 @@ public struct SettingsView: View {
             }
         }
         .photonBackground()
+    }
+    
+    @ViewBuilder
+    private func fallbackAvatar(for session: UserSession) -> some View {
+        if let initial = session.displayName?.prefix(1).uppercased(), !initial.isEmpty {
+            Text(initial)
+                .font(PhotonTypography.headline)
+                .foregroundColor(PhotonColors.textPrimary)
+        } else {
+            Image(systemName: "person.fill")
+                .font(.system(size: 20))
+                .foregroundColor(PhotonColors.textSecondary)
+        }
     }
     
     private func infoRow(label: String, value: String) -> some View {

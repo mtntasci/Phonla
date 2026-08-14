@@ -7,22 +7,25 @@
 
 import Foundation
 
-/// Represents the active user authentication state and minimal profile metadata.
+/// Represents the active user authentication state and profile metadata.
 public struct UserSession: Equatable, Codable, Sendable {
     public let uid: String
     public let email: String?
     public let displayName: String?
+    public let photoURL: URL?
     public let isAnonymous: Bool
     
     public init(
         uid: String,
         email: String? = nil,
         displayName: String? = nil,
+        photoURL: URL? = nil,
         isAnonymous: Bool = false
     ) {
         self.uid = uid
         self.email = email
         self.displayName = displayName
+        self.photoURL = photoURL
         self.isAnonymous = isAnonymous
     }
 }

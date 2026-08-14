@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AuthenticationServices
 
 /// Minimalist, pure-white authentication screen with transparent branding and Firebase Auth providers.
 public struct AuthView: View {
@@ -48,7 +49,7 @@ public struct AuthView: View {
                         .padding(.horizontal, PhotonSpacing.md)
                 }
                 
-                // Sign in with Apple (Primary)
+                // Sign in with Apple (Native Primary)
                 PhotonButton(
                     "Apple ile Giriş Yap",
                     systemImage: "apple.logo",
@@ -93,8 +94,16 @@ public struct AuthView: View {
             do {
                 _ = try await authService.signIn(with: provider)
                 navigationState.navigateToHome()
+            } catch AuthError.cancelled {
+                // User cancelled Apple or Google sign in sheet; remain on AuthView quietly
             } catch {
-                errorMessage = error.localizedDescription
+                let nsError = error as NSError
+                if nsError.domain == ASAuthorizationError.errorDomain &&
+                    nsError.code == ASAuthorizationError.canceled.rawValue {
+                    // User cancelled Apple authorization
+                } else {
+                    errorMessage = error.localizedDescription
+                }
             }
         }
     }
