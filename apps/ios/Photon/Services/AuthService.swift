@@ -79,7 +79,8 @@ public final class AuthService: NSObject, AuthServiceProtocol {
     }
     
     public var isFirebaseConfigured: Bool {
-        FirebaseApp.app() != nil
+        ensureFirebaseConfigured()
+        return FirebaseApp.app() != nil
     }
     
     public override init() {
@@ -88,10 +89,25 @@ public final class AuthService: NSObject, AuthServiceProtocol {
         self.syncFirebaseCurrentUser()
     }
     
+    // MARK: - Safe Firebase Configuration Guard
+    
+    @discardableResult
+    private func ensureFirebaseConfigured() -> Bool {
+        if FirebaseApp.app() == nil {
+            if let plistPath = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+               let options = FirebaseOptions(contentsOfFile: plistPath) {
+                FirebaseApp.configure(options: options)
+            } else {
+                FirebaseApp.configure()
+            }
+        }
+        return FirebaseApp.app() != nil
+    }
+    
     // MARK: - Synchronize Session
     
     private func syncFirebaseCurrentUser() {
-        guard isFirebaseConfigured else {
+        guard ensureFirebaseConfigured() else {
             self.currentSession = nil
             return
         }
@@ -122,7 +138,7 @@ public final class AuthService: NSObject, AuthServiceProtocol {
         lastError = nil
         defer { isLoading = false }
         
-        guard isFirebaseConfigured else {
+        guard ensureFirebaseConfigured() else {
             throw AuthError.missingConfiguration("Firebase yapılandırılmamış.")
         }
         
@@ -179,6 +195,11 @@ public final class AuthService: NSObject, AuthServiceProtocol {
     public func signOut() async throws {
         isLoading = true
         defer { isLoading = false }
+        
+        guard ensureFirebaseConfigured() else {
+            self.currentSession = nil
+            return
+        }
         
         do {
             try Auth.auth().signOut()
