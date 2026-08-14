@@ -1,5 +1,6 @@
 import React from 'react';
 import { Smartphone, Heart } from 'lucide-react';
+import { PhotonLogo } from './PhotonLogo';
 
 export const Footer: React.FC = () => {
   return (
@@ -22,22 +23,7 @@ export const Footer: React.FC = () => {
           }}
         >
           {/* Brand */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <img
-              src="/assets/logo.png"
-              alt="Photon Logo"
-              style={{
-                width: '30px',
-                height: '30px',
-                borderRadius: '6px',
-                objectFit: 'contain',
-                flexShrink: 0,
-              }}
-            />
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '18px', letterSpacing: '2px', color: '#ffffff' }}>
-              PHOTON
-            </span>
-          </div>
+          <PhotonLogo size={32} showText={true} variant="app-icon" />
 
           {/* Slogan */}
           <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
