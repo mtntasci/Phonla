@@ -17,12 +17,12 @@ public final class ServiceContainer {
     public let photoLibraryService: PhotoLibraryServiceProtocol
     
     public init(
-        authService: AuthServiceProtocol = AuthService.shared,
-        imageProcessingService: ImageProcessingServiceProtocol = ImageProcessingService.shared,
-        photoLibraryService: PhotoLibraryServiceProtocol = PhotoLibraryService.shared
+        authService: AuthServiceProtocol? = nil,
+        imageProcessingService: ImageProcessingServiceProtocol? = nil,
+        photoLibraryService: PhotoLibraryServiceProtocol? = nil
     ) {
-        self.authService = authService
-        self.imageProcessingService = imageProcessingService
-        self.photoLibraryService = photoLibraryService
+        self.authService = authService ?? AuthService.shared
+        self.imageProcessingService = imageProcessingService ?? ImageProcessingService.shared
+        self.photoLibraryService = photoLibraryService ?? PhotoLibraryService.shared
     }
 }

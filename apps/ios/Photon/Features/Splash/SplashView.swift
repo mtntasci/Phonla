@@ -7,54 +7,35 @@
 
 import SwiftUI
 
-/// Minimalist pure-white splash screen showing brand identity and initiating session check.
+/// Minimalist pure-white splash screen featuring the official Photon logo and session verification.
 public struct SplashView: View {
     @Environment(NavigationState.self) private var navigationState
     @State private var authService = AuthService.shared
-    @State private var isAnimating: Bool = false
     
     public init() {}
     
     public var body: some View {
-        VStack(spacing: PhotonSpacing.xxl) {
+        VStack(spacing: PhotonSpacing.md) {
             Spacer()
             
-            // Brand Logo & Title
-            VStack(spacing: PhotonSpacing.md) {
-                Image(systemName: "camera.filters")
-                    .font(.system(size: 56, weight: .light))
-                    .foregroundColor(PhotonColors.textPrimary)
-                    .scaleEffect(isAnimating ? 1.0 : 0.9)
-                    .opacity(isAnimating ? 1.0 : 0.0)
-                
-                Text("PHOTON")
-                    .font(PhotonTypography.hero)
-                    .tracking(6)
-                    .foregroundColor(PhotonColors.textPrimary)
-                    .opacity(isAnimating ? 1.0 : 0.0)
-                
-                Text("Light • Cinematic • Monochrome")
-                    .font(PhotonTypography.bodyMedium)
-                    .foregroundColor(PhotonColors.textSecondary)
-                    .opacity(isAnimating ? 0.8 : 0.0)
-            }
+            // Official Photon App Logo
+            Image("PhotonLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 96, height: 96)
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
+            
+            Text("Photon")
+                .font(PhotonTypography.bodyMedium)
+                .foregroundColor(PhotonColors.textSecondary)
+                .padding(.top, PhotonSpacing.xs)
             
             Spacer()
-            
-            // Subtle loading indicator during initial session verification
-            ProgressView()
-                .tint(PhotonColors.textPrimary)
-                .scaleEffect(0.9)
-                .opacity(isAnimating ? 1.0 : 0.0)
-                .padding(.bottom, PhotonSpacing.xxxl)
         }
         .photonBackground()
         .task {
-            withAnimation(.easeOut(duration: 0.5)) {
-                isAnimating = true
-            }
-            
-            // Verify session and transition accordingly
+            // Verify session and transition smoothly
             let session = await authService.checkCurrentSession()
             if session != nil {
                 navigationState.navigateToHome()

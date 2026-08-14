@@ -20,18 +20,15 @@ public struct AuthView: View {
             Spacer()
             
             // Top / Center Branding Area
-            VStack(spacing: PhotonSpacing.lg) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: PhotonCornerRadius.xl, style: .continuous)
-                        .fill(PhotonColors.surfaceSecondary)
-                        .frame(width: 80, height: 80)
-                    
-                    Image(systemName: "camera.filters")
-                        .font(.system(size: 36, weight: .light))
-                        .foregroundColor(PhotonColors.textPrimary)
-                }
+            VStack(spacing: PhotonSpacing.md) {
+                Image("PhotonLogo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 80, height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
                 
-                VStack(spacing: PhotonSpacing.xs) {
+                VStack(spacing: PhotonSpacing.xxs) {
                     Text("PHOTON")
                         .font(PhotonTypography.titleLarge)
                         .tracking(4)
