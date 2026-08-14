@@ -104,20 +104,20 @@ export const InteractiveComparison: React.FC = () => {
   }, [isDragging]);
 
   return (
-    <section id="comparison" style={{ padding: '100px 0', position: 'relative' }}>
+    <section id="comparison" style={{ padding: '80px 0', position: 'relative' }}>
       <div className="container">
         
         {/* Section Header */}
-        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-          <div className="badge-pill badge-pill-cyan" style={{ marginBottom: '16px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+          <div className="badge-pill badge-pill-cyan" style={{ marginBottom: '14px' }}>
             <Sliders size={14} />
             <span>İnteraktif Kıyaslama Stüdyosu</span>
           </div>
-          <h2 style={{ fontSize: 'clamp(32px, 4vw, 48px)', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', marginBottom: '14px' }}>
             Orijinal vs <span className="gradient-text-cyan">Photon Grade</span>
           </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '16px', maxWidth: '600px', margin: '0 auto' }}>
-            Çizgiyi sağa sola sürükleyin ve Photon'un analog tonlama motorunun ham fotoğrafları nasıl sinematik bir başyapıta dönüştürdüğünü görün.
+          <p style={{ color: 'var(--text-secondary)', fontSize: '15px', maxWidth: '580px', margin: '0 auto' }}>
+            Çizgiyi parmağınızla veya fareyle sağa sola kaydırın ve Photon analog tonlama motorunun ham fotoğrafları nasıl işlediğini görün.
           </p>
         </div>
 
@@ -126,11 +126,15 @@ export const InteractiveComparison: React.FC = () => {
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: '10px',
-            flexWrap: 'wrap',
-            marginBottom: '32px',
+            justifyContent: 'flex-start',
+            gap: '8px',
+            overflowX: 'auto',
+            paddingBottom: '12px',
+            marginBottom: '24px',
+            scrollbarWidth: 'none',
+            WebkitOverflowScrolling: 'touch',
           }}
+          className="presets-scroll-bar"
         >
           {presets.map((p) => {
             const isSelected = activePreset.id === p.id;
@@ -142,19 +146,21 @@ export const InteractiveComparison: React.FC = () => {
                   background: isSelected ? '#ffffff' : 'rgba(255, 255, 255, 0.06)',
                   color: isSelected ? '#000000' : '#ffffff',
                   border: isSelected ? '1px solid #ffffff' : '1px solid rgba(255, 255, 255, 0.1)',
-                  padding: '10px 18px',
+                  padding: '8px 16px',
                   borderRadius: 'var(--radius-full)',
-                  fontSize: '13px',
+                  fontSize: '12px',
                   fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                   transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                   boxShadow: isSelected ? '0 4px 16px rgba(255, 255, 255, 0.25)' : 'none',
                 }}
               >
-                {isSelected && <Check size={14} />}
+                {isSelected && <Check size={13} />}
                 <span>{p.name}</span>
               </button>
             );
@@ -168,7 +174,7 @@ export const InteractiveComparison: React.FC = () => {
           onMouseDown={handleMouseDown}
           onTouchStart={handleMouseDown}
           onClick={(e) => handleMove(e.clientX)}
-          style={{ cursor: 'ew-resize' }}
+          style={{ cursor: 'ew-resize', touchAction: 'none' }}
         >
           <div className="comparison-image-container">
             {/* Before (Original Raw Photo) */}
@@ -183,14 +189,15 @@ export const InteractiveComparison: React.FC = () => {
             <div
               style={{
                 position: 'absolute',
-                top: '20px',
-                left: '20px',
+                top: '14px',
+                left: '14px',
                 background: 'rgba(0, 0, 0, 0.75)',
                 backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
                 color: '#ffffff',
-                padding: '6px 14px',
+                padding: '4px 10px',
                 borderRadius: 'var(--radius-full)',
-                fontSize: '12px',
+                fontSize: '10px',
                 fontWeight: 600,
                 letterSpacing: '1px',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -222,14 +229,15 @@ export const InteractiveComparison: React.FC = () => {
               <div
                 style={{
                   position: 'absolute',
-                  top: '20px',
-                  right: '20px',
-                  background: 'rgba(0, 240, 255, 0.2)',
+                  top: '14px',
+                  right: '14px',
+                  background: 'rgba(0, 240, 255, 0.25)',
                   backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
                   color: 'var(--accent-cyan)',
-                  padding: '6px 14px',
+                  padding: '4px 10px',
                   borderRadius: 'var(--radius-full)',
-                  fontSize: '12px',
+                  fontSize: '10px',
                   fontWeight: 700,
                   letterSpacing: '1px',
                   border: '1px solid rgba(0, 240, 255, 0.4)',
@@ -247,23 +255,24 @@ export const InteractiveComparison: React.FC = () => {
               style={{ left: `${sliderPosition}%` }}
             >
               <div className="comparison-slider-button">
-                <MoveHorizontal size={18} />
+                <MoveHorizontal size={16} />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Sample Image Thumbnails Switcher below Canvas */}
+        {/* Sample Image Switcher */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '16px',
-            marginTop: '24px',
+            gap: '8px',
+            marginTop: '20px',
+            flexWrap: 'wrap',
           }}
         >
-          <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Örnek Fotoğraf Seç:</span>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Örnek:</span>
           {[
             { src: '/assets/portrait_sample.jpg', label: 'Portre' },
             { src: '/assets/mono_sample.jpg', label: 'Mimari' },
@@ -278,9 +287,9 @@ export const InteractiveComparison: React.FC = () => {
                 background: selectedImage === item.src ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                 border: selectedImage === item.src ? '1px solid #ffffff' : '1px solid rgba(255, 255, 255, 0.1)',
                 color: selectedImage === item.src ? '#ffffff' : 'var(--text-secondary)',
-                padding: '6px 14px',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '12px',
+                padding: '5px 12px',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: '11px',
                 fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'all 0.2s',
@@ -292,6 +301,18 @@ export const InteractiveComparison: React.FC = () => {
         </div>
 
       </div>
+
+      <style>{`
+        .presets-scroll-bar::-webkit-scrollbar {
+          display: none;
+        }
+        @media (min-width: 768px) {
+          .presets-scroll-bar {
+            justify-content: center !important;
+            flex-wrap: wrap !important;
+          }
+        }
+      `}</style>
     </section>
   );
 };

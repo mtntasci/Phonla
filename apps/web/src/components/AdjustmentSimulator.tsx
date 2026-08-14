@@ -41,19 +41,19 @@ export const AdjustmentSimulator: React.FC = () => {
     brightness !== 1;
 
   return (
-    <section id="simulator" style={{ padding: '100px 0', background: 'rgba(12, 12, 16, 0.6)' }}>
+    <section id="simulator" style={{ padding: '80px 0', background: 'rgba(12, 12, 16, 0.6)' }}>
       <div className="container">
         
         {/* Section Header */}
-        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-          <div className="badge-pill badge-pill-cyan" style={{ marginBottom: '16px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+          <div className="badge-pill badge-pill-cyan" style={{ marginBottom: '14px' }}>
             <SlidersHorizontal size={14} />
             <span>Canlı Ayar Motoru</span>
           </div>
-          <h2 style={{ fontSize: 'clamp(32px, 4vw, 48px)', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', marginBottom: '14px' }}>
             Photon <span className="gradient-text-amber">Adjustment Deck</span>
           </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '16px', maxWidth: '600px', margin: '0 auto' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '15px', maxWidth: '580px', margin: '0 auto' }}>
             Aşağıdaki sürgüleri hareket ettirerek Photon'un anlık renk ve ışık işleme tepkisini tarayıcınızda deneyimleyin.
           </p>
         </div>
@@ -63,14 +63,14 @@ export const AdjustmentSimulator: React.FC = () => {
           style={{
             display: 'grid',
             gridTemplateColumns: '1.2fr 0.8fr',
-            gap: '40px',
+            gap: '32px',
             alignItems: 'center',
           }}
           className="deck-grid"
         >
           {/* Live Preview Screen */}
-          <div className="glass-panel" style={{ padding: '16px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', borderRadius: '16px', overflow: 'hidden' }}>
+          <div className="glass-panel" style={{ padding: '14px', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', borderRadius: '14px', overflow: 'hidden' }}>
               <img
                 src={selectedImage}
                 alt="Simulator Live Output"
@@ -87,24 +87,25 @@ export const AdjustmentSimulator: React.FC = () => {
               <div
                 style={{
                   position: 'absolute',
-                  top: '16px',
-                  left: '16px',
+                  top: '12px',
+                  left: '12px',
                   background: 'rgba(0, 0, 0, 0.75)',
                   backdropFilter: 'blur(10px)',
-                  padding: '6px 12px',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  padding: '4px 10px',
                   borderRadius: 'var(--radius-full)',
-                  fontSize: '11px',
+                  fontSize: '10px',
                   fontWeight: 600,
                   color: 'var(--accent-cyan)',
                   border: '1px solid rgba(255, 255, 255, 0.1)',
                 }}
               >
-                ● 60 FPS Metal GPU Simülatörü
+                ● 60 FPS Native GPU Simülatörü
               </div>
             </div>
 
             {/* Photo Selector */}
-            <div style={{ display: 'flex', gap: '8px', marginTop: '14px', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '6px', marginTop: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
               {[
                 { src: '/assets/portrait_sample.jpg', label: 'Portre' },
                 { src: '/assets/cinema.jpg', label: 'Sinema' },
@@ -118,8 +119,8 @@ export const AdjustmentSimulator: React.FC = () => {
                     background: selectedImage === p.src ? '#ffffff' : 'rgba(255, 255, 255, 0.08)',
                     color: selectedImage === p.src ? '#000000' : '#ffffff',
                     border: 'none',
-                    padding: '4px 12px',
-                    borderRadius: '10px',
+                    padding: '4px 10px',
+                    borderRadius: '8px',
                     fontSize: '11px',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -133,10 +134,10 @@ export const AdjustmentSimulator: React.FC = () => {
           </div>
 
           {/* Interactive Sliders Panel */}
-          <div className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div className="glass-panel" style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 700 }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: '17px', fontWeight: 700 }}>
                 Işık & Renk Kontrolleri
               </span>
               
@@ -147,27 +148,27 @@ export const AdjustmentSimulator: React.FC = () => {
                     background: 'rgba(255, 255, 255, 0.1)',
                     border: '1px solid rgba(255, 255, 255, 0.2)',
                     color: '#ffffff',
-                    padding: '6px 14px',
+                    padding: '4px 12px',
                     borderRadius: 'var(--radius-full)',
-                    fontSize: '12px',
+                    fontSize: '11px',
                     fontWeight: 600,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
+                    gap: '4px',
                   }}
                 >
-                  <RotateCcw size={12} />
+                  <RotateCcw size={11} />
                   <span>Sıfırla</span>
                 </button>
               )}
             </div>
 
             {/* Pozlama (Exposure) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
-                  <Sun size={14} color="var(--accent-amber)" /> Pozlama (Exposure)
+                  <Sun size={14} color="var(--accent-amber)" /> Pozlama
                 </span>
                 <span style={{ fontWeight: 600 }}>{exposure > 0 ? `+${exposure.toFixed(2)} EV` : `${exposure.toFixed(2)} EV`}</span>
               </div>
@@ -183,12 +184,12 @@ export const AdjustmentSimulator: React.FC = () => {
             </div>
 
             {/* Sıcaklık (Temperature) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
-                  <Thermometer size={14} color="var(--accent-cyan)" /> Sıcaklık (Kelvin)
+                  <Thermometer size={14} color="var(--accent-cyan)" /> Sıcaklık
                 </span>
-                <span style={{ fontWeight: 600 }}>{temperature}K {temperature === 6500 ? '(Nötr)' : ''}</span>
+                <span style={{ fontWeight: 600 }}>{temperature}K</span>
               </div>
               <input
                 type="range"
@@ -202,10 +203,10 @@ export const AdjustmentSimulator: React.FC = () => {
             </div>
 
             {/* Kontrast (Contrast) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
-                  <Contrast size={14} /> Kontrast (Contrast)
+                  <Contrast size={14} /> Kontrast
                 </span>
                 <span style={{ fontWeight: 600 }}>{Math.round((contrast - 1) * 100)}%</span>
               </div>
@@ -221,10 +222,10 @@ export const AdjustmentSimulator: React.FC = () => {
             </div>
 
             {/* Doygunluk (Saturation) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
-                  <Droplet size={14} color="var(--accent-purple)" /> Doygunluk (Saturation)
+                  <Droplet size={14} color="var(--accent-purple)" /> Doygunluk
                 </span>
                 <span style={{ fontWeight: 600 }}>{Math.round((saturation - 1) * 100)}%</span>
               </div>
@@ -249,7 +250,7 @@ export const AdjustmentSimulator: React.FC = () => {
         @media (max-width: 900px) {
           .deck-grid {
             grid-template-columns: 1fr !important;
-            gap: 28px !important;
+            gap: 24px !important;
           }
         }
       `}</style>

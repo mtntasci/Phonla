@@ -5,10 +5,10 @@ const features = [
   {
     icon: Cpu,
     color: 'var(--accent-cyan)',
-    tag: 'Core Image & Metal',
-    title: '60 FPS Donanım Hızlandırmalı GPU Pipeline',
+    tag: 'iOS & Android Native GPU',
+    title: '60 FPS Donanım Hızlandırmalı Pipeline',
     description:
-      'Her slider hareketinde iPhone GPU çekirdeklerini doğrudan kullanarak sıfır gecikmeyle anlık 60 FPS önizleme sunar. Bellek dostu mimarisiyle cihazınızı yormaz.',
+      'Her slider hareketinde mobil GPU çekirdeklerini doğrudan kullanarak sıfır gecikmeyle anlık 60 FPS önizleme sunar. Bellek dostu mimarisiyle cihazınızı yormaz.',
   },
   {
     icon: Film,
@@ -38,20 +38,20 @@ const features = [
 
 export const FeaturesSection: React.FC = () => {
   return (
-    <section id="features" style={{ padding: '100px 0', position: 'relative' }}>
+    <section id="features" style={{ padding: '80px 0', position: 'relative' }}>
       <div className="container">
         
         {/* Section Title */}
-        <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-          <div className="badge-pill badge-pill-cyan" style={{ marginBottom: '16px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <div className="badge-pill badge-pill-cyan" style={{ marginBottom: '14px' }}>
             <Layers size={14} />
             <span>Mühendislik ve Tasarım</span>
           </div>
-          <h2 style={{ fontSize: 'clamp(32px, 4vw, 48px)', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', marginBottom: '14px' }}>
             Photon'u Benzersiz Kılan <span className="gradient-text">4 Temel İlke</span>
           </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '16px', maxWidth: '600px', margin: '0 auto' }}>
-            Native Apple teknolojileriyle sıfırdan geliştirilen Photon, masaüstü sınıfı renk derecelendirme gücünü iPhone'unuza getiriyor.
+          <p style={{ color: 'var(--text-secondary)', fontSize: '15px', maxWidth: '580px', margin: '0 auto' }}>
+            Native mobil teknolojileriyle (Swift & Kotlin) sıfırdan geliştirilen Photon, masaüstü sınıfı renk derecelendirme gücünü cebinize getiriyor.
           </p>
         </div>
 
@@ -59,8 +59,8 @@ export const FeaturesSection: React.FC = () => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))',
-            gap: '24px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gap: '20px',
           }}
         >
           {features.map((item, idx) => {
@@ -70,17 +70,17 @@ export const FeaturesSection: React.FC = () => {
                 key={idx}
                 className="glass-card"
                 style={{
-                  padding: '32px 28px',
+                  padding: '28px 22px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '16px',
+                  gap: '14px',
                 }}
               >
                 <div
                   style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '14px',
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '12px',
                     background: 'rgba(255, 255, 255, 0.05)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     display: 'flex',
@@ -88,18 +88,18 @@ export const FeaturesSection: React.FC = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <Icon size={24} color={item.color} />
+                  <Icon size={22} color={item.color} />
                 </div>
 
-                <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: item.color }}>
+                <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: item.color }}>
                   {item.tag}
                 </div>
 
-                <h3 style={{ fontSize: '20px', lineHeight: 1.3, color: '#ffffff' }}>
+                <h3 style={{ fontSize: '18px', lineHeight: 1.3, color: '#ffffff' }}>
                   {item.title}
                 </h3>
 
-                <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                   {item.description}
                 </p>
               </div>

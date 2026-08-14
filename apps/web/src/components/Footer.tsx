@@ -1,5 +1,5 @@
 import React from 'react';
-import { Apple, Heart } from 'lucide-react';
+import { Smartphone, Heart } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
@@ -7,7 +7,7 @@ export const Footer: React.FC = () => {
       style={{
         background: '#060608',
         borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-        padding: '60px 0 40px 0',
+        padding: '50px 0 32px 0',
       }}
     >
       <div className="container">
@@ -17,12 +17,12 @@ export const Footer: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: '24px',
-            marginBottom: '40px',
+            gap: '20px',
+            marginBottom: '32px',
           }}
         >
           {/* Brand */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div
               style={{
                 width: '32px',
@@ -33,6 +33,7 @@ export const Footer: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                flexShrink: 0,
               }}
             >
               <svg width="18" height="18" viewBox="0 0 100 100" fill="none">
@@ -47,15 +48,13 @@ export const Footer: React.FC = () => {
 
           {/* Slogan */}
           <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-            Işık • Sinematik • Siyah & Beyaz — Native iOS Fotoğraf Editörü
+            Işık • Sinematik • Siyah & Beyaz — Native iOS & Android Fotoğraf Editörü
           </div>
 
           {/* Download Link */}
           <div>
             <a
-              href="https://apps.apple.com"
-              target="_blank"
-              rel="noreferrer"
+              href="#pricing"
               style={{
                 color: '#ffffff',
                 textDecoration: 'none',
@@ -66,8 +65,8 @@ export const Footer: React.FC = () => {
                 gap: '6px',
               }}
             >
-              <Apple size={16} />
-              <span>App Store</span>
+              <Smartphone size={16} />
+              <span>iOS & Android</span>
             </a>
           </div>
         </div>
@@ -79,15 +78,15 @@ export const Footer: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: '16px',
-            paddingTop: '24px',
+            gap: '12px',
+            paddingTop: '20px',
             borderTop: '1px solid rgba(255, 255, 255, 0.05)',
             fontSize: '12px',
             color: 'var(--text-muted)',
           }}
         >
           <div>
-            © 2026 Photon. Tüm hakları saklıdır. Swift & Metal ile geliştirildi.
+            © 2026 Photon. Tüm hakları saklıdır. Swift & Kotlin native mimari.
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

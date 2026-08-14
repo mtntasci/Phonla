@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Apple, Play, Sun, Palette, Film, CircleDot, ShieldCheck, Zap } from 'lucide-react';
+import { Smartphone, Play, Sun, Palette, Film, CircleDot, ShieldCheck, Zap } from 'lucide-react';
 
 export const HeroSection: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'light' | 'color' | 'cinematic' | 'mono'>('cinematic');
@@ -25,8 +25,8 @@ export const HeroSection: React.FC = () => {
     <section
       style={{
         position: 'relative',
-        paddingTop: '140px',
-        paddingBottom: '100px',
+        paddingTop: '120px',
+        paddingBottom: '80px',
         overflow: 'hidden',
       }}
     >
@@ -37,8 +37,8 @@ export const HeroSection: React.FC = () => {
           top: '10%',
           left: '50%',
           transform: 'translateX(-50%)',
-          width: '700px',
-          height: '400px',
+          width: 'min(700px, 90vw)',
+          height: '350px',
           background: 'radial-gradient(circle, rgba(0, 240, 255, 0.15) 0%, rgba(255, 122, 0, 0.08) 50%, transparent 80%)',
           filter: 'blur(80px)',
           zIndex: 0,
@@ -48,15 +48,15 @@ export const HeroSection: React.FC = () => {
       />
 
       <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '60px', alignItems: 'center' }} className="hero-grid">
+        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '48px', alignItems: 'center' }} className="hero-grid">
           
           {/* Left Text & CTA Column */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* Pill Tag */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <div className="badge-pill badge-pill-cyan">
                 <Zap size={14} />
-                <span>Apple Metal GPU Hızlandırmalı</span>
+                <span>Native GPU Hızlandırmalı</span>
               </div>
               <div className="badge-pill">
                 <ShieldCheck size={14} color="#10b981" />
@@ -65,35 +65,33 @@ export const HeroSection: React.FC = () => {
             </div>
 
             {/* Main Headline */}
-            <h1 style={{ fontSize: 'clamp(38px, 5.5vw, 64px)', letterSpacing: '-0.03em', lineHeight: 1.08 }}>
+            <h1 style={{ fontSize: 'clamp(32px, 5vw, 60px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
               Işığın, Sinemanın ve <span className="gradient-text-cyan">Siyah-Beyazın</span> Saf Hali.
             </h1>
 
             {/* Subtitle */}
-            <p style={{ fontSize: '18px', color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: '540px' }}>
-              Fotoğraflarınızı buluta yüklemeden, iPhone'unuzun Metal GPU donanımıyla anlık 60 FPS hızında işleyin. 
+            <p style={{ fontSize: '16px', color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: '520px' }}>
+              Fotoğraflarınızı buluta yüklemeden, cihazınızın yerel GPU donanımıyla anlık 60 FPS hızında işleyin. 
               35mm analog film tonları ve gümüş baskı hissi parmaklarınızın ucunda.
             </p>
 
             {/* Call to Actions */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', paddingTop: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', paddingTop: '4px' }}>
               <a
-                href="https://apps.apple.com"
-                target="_blank"
-                rel="noreferrer"
+                href="#pricing"
                 className="btn btn-primary"
-                style={{ padding: '16px 32px', fontSize: '16px' }}
+                style={{ padding: '14px 28px', fontSize: '15px' }}
               >
-                <Apple size={20} />
-                <span>App Store'dan İndir</span>
+                <Smartphone size={18} />
+                <span>Uygulamayı İndir (iOS & Android)</span>
               </a>
 
               <a
                 href="#comparison"
                 className="btn btn-secondary"
-                style={{ padding: '16px 28px', fontSize: '15px' }}
+                style={{ padding: '14px 24px', fontSize: '14px' }}
               >
-                <Play size={16} fill="currentColor" />
+                <Play size={15} fill="currentColor" />
                 <span>Canlı Stüdyoyu Dene</span>
               </a>
             </div>
@@ -103,36 +101,36 @@ export const HeroSection: React.FC = () => {
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '20px',
-                paddingTop: '28px',
+                gap: '16px',
+                paddingTop: '24px',
                 borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                marginTop: '12px',
+                marginTop: '8px',
               }}
             >
               <div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: 800, color: '#ffffff' }}>60 FPS</div>
-                <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Gerçek Zamanlı GPU Render</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px, 3vw, 28px)', fontWeight: 800, color: '#ffffff' }}>60 FPS</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Gerçek Zamanlı GPU Render</div>
               </div>
               <div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: 800, color: 'var(--accent-cyan)' }}>%100</div>
-                <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Cihaz Üzerinde Gizlilik</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px, 3vw, 28px)', fontWeight: 800, color: 'var(--accent-cyan)' }}>%100</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Cihaz Üzerinde Gizlilik</div>
               </div>
               <div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: 800, color: 'var(--accent-amber)' }}>Tam</div>
-                <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Kayıpsız 48MP+ Çözünürlük</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px, 3vw, 28px)', fontWeight: 800, color: 'var(--accent-amber)' }}>Tam</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Kayıpsız 48MP+ Çözünürlük</div>
               </div>
             </div>
           </div>
 
           {/* Right Column: Interactive Phone Mockup */}
-          <div style={{ display: 'flex', justifyContent: 'center', position: 'relative' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', position: 'relative', width: '100%' }}>
             {/* Background Halo */}
             <div
               style={{
                 position: 'absolute',
-                inset: '-20px',
-                background: 'linear-gradient(180deg, rgba(0, 240, 255, 0.15) 0%, rgba(255, 122, 0, 0.1) 100%)',
-                borderRadius: '60px',
+                inset: '-10px',
+                background: 'linear-gradient(180deg, rgba(0, 240, 255, 0.12) 0%, rgba(255, 122, 0, 0.08) 100%)',
+                borderRadius: '50px',
                 filter: 'blur(30px)',
                 zIndex: 0,
               }}
@@ -149,7 +147,7 @@ export const HeroSection: React.FC = () => {
                 {/* Simulated App Header */}
                 <div
                   style={{
-                    padding: '38px 18px 12px 18px',
+                    padding: '34px 16px 10px 16px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -158,7 +156,7 @@ export const HeroSection: React.FC = () => {
                     zIndex: 20,
                   }}
                 >
-                  <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '2px', color: '#fff' }}>PHOTON</span>
+                  <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: '#fff' }}>PHOTON</span>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <span style={{ fontSize: '11px', color: '#a1a1aa' }}>Sıfırla</span>
                     <span style={{ fontSize: '11px', fontWeight: 600, color: '#000', background: '#fff', padding: '2px 8px', borderRadius: '10px' }}>Kaydet</span>
@@ -166,7 +164,7 @@ export const HeroSection: React.FC = () => {
                 </div>
 
                 {/* Main Photo Canvas */}
-                <div style={{ flex: 1, position: 'relative', overflow: 'hidden', margin: '8px', borderRadius: '16px' }}>
+                <div style={{ flex: 1, position: 'relative', overflow: 'hidden', margin: '6px', borderRadius: '14px' }}>
                   <img
                     src={activeBg}
                     alt="Photon Live Preview"
@@ -183,13 +181,13 @@ export const HeroSection: React.FC = () => {
                   <div
                     style={{
                       position: 'absolute',
-                      top: '12px',
-                      right: '12px',
-                      background: 'rgba(0, 0, 0, 0.7)',
+                      top: '10px',
+                      right: '10px',
+                      background: 'rgba(0, 0, 0, 0.75)',
                       backdropFilter: 'blur(8px)',
-                      padding: '4px 10px',
-                      borderRadius: '20px',
-                      fontSize: '10px',
+                      padding: '4px 8px',
+                      borderRadius: '16px',
+                      fontSize: '9px',
                       fontWeight: 600,
                       color: 'var(--accent-cyan)',
                       border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -205,15 +203,17 @@ export const HeroSection: React.FC = () => {
                   <div
                     style={{
                       position: 'absolute',
-                      bottom: '12px',
+                      bottom: '10px',
                       left: '50%',
                       transform: 'translateX(-50%)',
                       display: 'flex',
-                      gap: '6px',
-                      background: 'rgba(0, 0, 0, 0.65)',
-                      padding: '4px',
-                      borderRadius: '20px',
+                      gap: '4px',
+                      background: 'rgba(0, 0, 0, 0.7)',
+                      padding: '3px',
+                      borderRadius: '18px',
                       backdropFilter: 'blur(8px)',
+                      maxWidth: '90%',
+                      overflowX: 'auto',
                     }}
                   >
                     {[
@@ -229,11 +229,12 @@ export const HeroSection: React.FC = () => {
                           background: activeBg === item.src ? '#ffffff' : 'transparent',
                           color: activeBg === item.src ? '#000000' : '#ffffff',
                           border: 'none',
-                          padding: '3px 8px',
-                          borderRadius: '12px',
-                          fontSize: '10px',
+                          padding: '3px 7px',
+                          borderRadius: '10px',
+                          fontSize: '9px',
                           fontWeight: 600,
                           cursor: 'pointer',
+                          whiteSpace: 'nowrap',
                           transition: 'all 0.2s',
                         }}
                       >
@@ -248,10 +249,10 @@ export const HeroSection: React.FC = () => {
                   style={{
                     background: 'rgba(18, 18, 24, 0.95)',
                     borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                    padding: '12px 10px 24px 10px',
+                    padding: '10px 8px 18px 8px',
                   }}
                 >
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
                     {[
                       { id: 'light', label: 'Işık', icon: Sun },
                       { id: 'color', label: 'Renk', icon: Palette },
@@ -267,19 +268,19 @@ export const HeroSection: React.FC = () => {
                           style={{
                             background: isSelected ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
                             border: isSelected ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid transparent',
-                            borderRadius: '12px',
-                            padding: '8px 4px',
+                            borderRadius: '10px',
+                            padding: '6px 2px',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
-                            gap: '4px',
+                            gap: '3px',
                             color: isSelected ? '#ffffff' : 'var(--text-secondary)',
                             cursor: 'pointer',
                             transition: 'all 0.2s',
                           }}
                         >
-                          <Icon size={16} color={isSelected ? 'var(--accent-cyan)' : 'currentColor'} />
-                          <span style={{ fontSize: '10px', fontWeight: isSelected ? 700 : 500 }}>{tab.label}</span>
+                          <Icon size={14} color={isSelected ? 'var(--accent-cyan)' : 'currentColor'} />
+                          <span style={{ fontSize: '9px', fontWeight: isSelected ? 700 : 500 }}>{tab.label}</span>
                         </button>
                       );
                     })}
@@ -297,7 +298,7 @@ export const HeroSection: React.FC = () => {
         @media (max-width: 960px) {
           .hero-grid {
             grid-template-columns: 1fr !important;
-            gap: 40px !important;
+            gap: 36px !important;
             text-align: center;
           }
           .hero-grid > div:first-child {

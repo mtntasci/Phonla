@@ -1,21 +1,21 @@
 import React from 'react';
-import { Check, Sparkles, Crown, Apple } from 'lucide-react';
+import { Check, Sparkles, Crown, Smartphone } from 'lucide-react';
 
 export const PricingSection: React.FC = () => {
   return (
-    <section id="pricing" style={{ padding: '100px 0', background: 'rgba(12, 12, 16, 0.5)' }}>
+    <section id="pricing" style={{ padding: '80px 0', background: 'rgba(12, 12, 16, 0.5)' }}>
       <div className="container">
         
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-          <div className="badge-pill badge-pill-cyan" style={{ marginBottom: '16px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <div className="badge-pill badge-pill-cyan" style={{ marginBottom: '14px' }}>
             <Crown size={14} />
             <span>Şeffaf Model</span>
           </div>
-          <h2 style={{ fontSize: 'clamp(32px, 4vw, 48px)', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', marginBottom: '14px' }}>
             Photon <span className="gradient-text">Üyelik Planları</span>
           </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '16px', maxWidth: '600px', margin: '0 auto' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '15px', maxWidth: '580px', margin: '0 auto' }}>
             Temel profesyonel fotoğraf düzenleme araçları her zaman ücretsiz.
           </p>
         </div>
@@ -24,9 +24,9 @@ export const PricingSection: React.FC = () => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '32px',
-            maxWidth: '900px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '24px',
+            maxWidth: '860px',
             margin: '0 auto',
             alignItems: 'stretch',
           }}
@@ -35,7 +35,7 @@ export const PricingSection: React.FC = () => {
           <div
             className="glass-card"
             style={{
-              padding: '40px 32px',
+              padding: 'clamp(24px, 5vw, 36px) clamp(20px, 4vw, 28px)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
@@ -43,14 +43,14 @@ export const PricingSection: React.FC = () => {
             }}
           >
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <h3 style={{ fontSize: '24px', color: '#ffffff' }}>Photon Standart</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <h3 style={{ fontSize: '22px', color: '#ffffff' }}>Photon Standart</h3>
                 <span
                   style={{
                     background: 'rgba(255, 255, 255, 0.1)',
-                    padding: '4px 12px',
+                    padding: '3px 10px',
                     borderRadius: 'var(--radius-full)',
-                    fontSize: '12px',
+                    fontSize: '11px',
                     fontWeight: 600,
                     color: '#ffffff',
                   }}
@@ -59,25 +59,25 @@ export const PricingSection: React.FC = () => {
                 </span>
               </div>
 
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
-                Her fotoğraf meraklısı için eksiksiz ve güçlü Core Image düzenleme paketi.
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '20px' }}>
+                Her fotoğraf meraklısı için eksiksiz ve güçlü native düzenleme paketi.
               </p>
 
-              <div style={{ fontSize: '36px', fontWeight: 800, color: '#ffffff', marginBottom: '28px' }}>
+              <div style={{ fontSize: '32px', fontWeight: 800, color: '#ffffff', marginBottom: '24px' }}>
                 Ücretsiz
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '32px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px' }}>
                 {[
                   'Işık & Renk ayarları (Pozlama, Sıcaklık vb.)',
                   '9 Adet Küratörlü Sinematik Görünüm Preseti',
                   '6 Adet Profesyonel Monochrome Önayarı',
                   'Tam çözünürlüklü kayıpsız dışa aktarma',
-                  'Metal GPU ile 60 FPS akıcı önizleme',
+                  'GPU ile 60 FPS akıcı canlı önizleme',
                   '%100 On-Device cihaz üzerinde gizlilik',
                 ].map((feature, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: 'var(--text-secondary)' }}>
-                    <Check size={16} color="var(--accent-cyan)" />
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                    <Check size={15} color="var(--accent-cyan)" style={{ flexShrink: 0 }} />
                     <span>{feature}</span>
                   </div>
                 ))}
@@ -85,13 +85,11 @@ export const PricingSection: React.FC = () => {
             </div>
 
             <a
-              href="https://apps.apple.com"
-              target="_blank"
-              rel="noreferrer"
+              href="#pricing"
               className="btn btn-secondary"
               style={{ width: '100%' }}
             >
-              <Apple size={16} />
+              <Smartphone size={15} />
               <span>Hemen Kullanmaya Başla</span>
             </a>
           </div>
@@ -99,7 +97,7 @@ export const PricingSection: React.FC = () => {
           {/* Pro Tier (Upcoming) */}
           <div
             style={{
-              padding: '40px 32px',
+              padding: 'clamp(24px, 5vw, 36px) clamp(20px, 4vw, 28px)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
@@ -124,18 +122,18 @@ export const PricingSection: React.FC = () => {
             />
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <h3 style={{ fontSize: '24px', color: '#ffffff' }}>Photon Pro</h3>
-                  <Sparkles size={18} color="var(--accent-amber)" />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <h3 style={{ fontSize: '22px', color: '#ffffff' }}>Photon Pro</h3>
+                  <Sparkles size={16} color="var(--accent-amber)" />
                 </div>
                 <span
                   style={{
                     background: 'var(--accent-amber)',
                     color: '#000000',
-                    padding: '4px 12px',
+                    padding: '3px 10px',
                     borderRadius: 'var(--radius-full)',
-                    fontSize: '12px',
+                    fontSize: '11px',
                     fontWeight: 700,
                   }}
                 >
@@ -143,15 +141,15 @@ export const PricingSection: React.FC = () => {
                 </span>
               </div>
 
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '20px' }}>
                 Yakında: AI Otomatik Düzenleme ve gelişmiş özellikler
               </p>
 
-              <div style={{ fontSize: '36px', fontWeight: 800, color: 'var(--accent-cyan)', marginBottom: '28px' }}>
-                Geliştiriliyor
+              <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--accent-cyan)', marginBottom: '24px' }}>
+                Yakında
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '32px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px' }}>
                 {[
                   'Yapay Zeka ile Otomatik Renk Dengesi & İyileştirme',
                   'Özel 3D LUT ve Film Emülasyonu Desteği',
@@ -159,8 +157,8 @@ export const PricingSection: React.FC = () => {
                   'Bölgesel Maskeleme & Seçici Düzenleme Fırçaları',
                   'Yeni Özelliklere ve Presetlere Öncelikli Erişim',
                 ].map((feature, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: '#ffffff' }}>
-                    <Check size={16} color="var(--accent-amber)" />
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#ffffff' }}>
+                    <Check size={15} color="var(--accent-amber)" style={{ flexShrink: 0 }} />
                     <span>{feature}</span>
                   </div>
                 ))}
