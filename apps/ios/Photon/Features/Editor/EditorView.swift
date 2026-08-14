@@ -14,6 +14,12 @@ public struct EditorView: View {
     @State private var viewModel = EditorViewModel.shared
     @State private var showDiscardAlert: Bool = false
     
+    // MARK: - Zoom & Pan States
+    @State private var zoomScale: CGFloat = 1.0
+    @State private var lastZoomScale: CGFloat = 1.0
+    @State private var panOffset: CGSize = .zero
+    @State private var lastPanOffset: CGSize = .zero
+    
     public init() {}
     
     public var body: some View {
@@ -28,18 +34,32 @@ public struct EditorView: View {
             bottomToolSection
         }
         .photonBackground()
+        .ignoresSafeArea(edges: .bottom)
         .confirmationDialog(
             "Değişiklikleri Sil",
             isPresented: $showDiscardAlert,
             titleVisibility: .visible
         ) {
             Button("Değişiklikleri Sil ve Çık", role: .destructive) {
+                resetZoom()
                 viewModel.resetState()
                 navigationState.navigateToHome()
             }
             Button("İptal", role: .cancel) {}
         } message: {
             Text("Kaydedilmemiş düzenlemeleriniz kaybolacak.")
+        }
+        .onChange(of: viewModel.loadedPhoto?.id) { _, _ in
+            resetZoom()
+        }
+    }
+    
+    private func resetZoom() {
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+            zoomScale = 1.0
+            lastZoomScale = 1.0
+            panOffset = .zero
+            lastPanOffset = .zero
         }
     }
     
@@ -132,8 +152,8 @@ public struct EditorView: View {
                     .ignoresSafeArea()
                 
                 if let displayImage = viewModel.currentDisplayImage {
-                    let canvasWidth = geometry.size.width - PhotonSpacing.xs
-                    let canvasHeight = geometry.size.height - PhotonSpacing.xs
+                    let canvasWidth = geometry.size.width - PhotonSpacing.xxs
+                    let canvasHeight = geometry.size.height - PhotonSpacing.xxs
                     
                     ZStack(alignment: .topTrailing) {
                         Image(uiImage: displayImage)
@@ -149,7 +169,7 @@ public struct EditorView: View {
                                 RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous)
                                     .strokeBorder(PhotonColors.border, lineWidth: 0.5)
                             )
-                            // Face Bounding Box Overlay when Pürüzsüzleştir tool is active (strictly UI only)
+                            // Face Bounding Box Overlay when Yumuşat tool is active (strictly UI only)
                             .overlay {
                                 if viewModel.activeCategory == .portrait && !viewModel.isComparingOriginal {
                                     FaceBoundingBoxOverlayView(
@@ -158,16 +178,54 @@ public struct EditorView: View {
                                     )
                                 }
                             }
-                            // Hold anywhere on photo canvas for Before / After
+                            // Zoom & Pan transforms
+                            .scaleEffect(zoomScale)
+                            .offset(panOffset)
+                            // Gestures: Pinch to Zoom, Pan when zoomed, Before/After when at 1.0, and Double Tap to reset/zoom
                             .gesture(
+                                MagnificationGesture()
+                                    .onChanged { scale in
+                                        let newScale = lastZoomScale * scale
+                                        zoomScale = min(max(newScale, 1.0), 5.0)
+                                    }
+                                    .onEnded { _ in
+                                        lastZoomScale = zoomScale
+                                        if zoomScale <= 1.05 {
+                                            resetZoom()
+                                        }
+                                    }
+                            )
+                            .simultaneousGesture(
                                 DragGesture(minimumDistance: 0)
-                                    .onChanged { _ in
-                                        if viewModel.isEdited {
+                                    .onChanged { value in
+                                        if zoomScale > 1.05 {
+                                            panOffset = CGSize(
+                                                width: lastPanOffset.width + value.translation.width,
+                                                height: lastPanOffset.height + value.translation.height
+                                            )
+                                        } else if viewModel.isEdited {
                                             viewModel.isComparingOriginal = true
                                         }
                                     }
                                     .onEnded { _ in
-                                        viewModel.isComparingOriginal = false
+                                        if zoomScale > 1.05 {
+                                            lastPanOffset = panOffset
+                                        } else {
+                                            viewModel.isComparingOriginal = false
+                                        }
+                                    }
+                            )
+                            .simultaneousGesture(
+                                TapGesture(count: 2)
+                                    .onEnded {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                            if zoomScale > 1.05 {
+                                                resetZoom()
+                                            } else {
+                                                zoomScale = 2.5
+                                                lastZoomScale = 2.5
+                                            }
+                                        }
                                     }
                             )
                         
@@ -235,6 +293,7 @@ public struct EditorView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipped()
         }
     }
     
@@ -260,7 +319,7 @@ public struct EditorView: View {
                     MonoToolView(viewModel: viewModel)
                 }
             }
-            .frame(height: 116)
+            .frame(height: 104)
             
             Divider()
                 .foregroundColor(PhotonColors.divider)
@@ -289,10 +348,10 @@ public struct EditorView: View {
                 }
             }
             .padding(.horizontal, PhotonSpacing.xs)
-            .padding(.top, 4)
-            .padding(.bottom, 2)
+            .padding(.top, 3)
+            .padding(.bottom, 12)
         }
-        .background(PhotonColors.surfacePrimary)
+        .background(PhotonColors.surfacePrimary.ignoresSafeArea(edges: .bottom))
     }
 }
 

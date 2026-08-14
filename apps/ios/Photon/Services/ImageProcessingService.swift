@@ -111,7 +111,9 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
             return image
         }
         
-        let normIntensity = CGFloat(min(max(intensity / 100.0, 0.0), 1.0))
+        // Scale 0..100 UI range to 0..60 max smoothing intensity for natural look
+        let effectiveIntensity = intensity * 0.60
+        let normIntensity = CGFloat(min(max(effectiveIntensity / 100.0, 0.0), 1.0))
         let maxDim = max(image.extent.width, image.extent.height)
         let scale = max(0.5, (maxDim > 0 ? maxDim : 1920.0) / 1920.0)
         
