@@ -12,8 +12,17 @@ import Foundation
 public final class ServiceContainer {
     public static let shared = ServiceContainer()
     
-    private init() {}
+    public let authService: AuthServiceProtocol
+    public let imageProcessingService: ImageProcessingServiceProtocol
+    public let photoLibraryService: PhotoLibraryServiceProtocol
     
-    // Future service instances (AuthService, RenderEngine, PhotoLibraryService)
-    // will be lazily registered and accessed from here.
+    public init(
+        authService: AuthServiceProtocol = AuthService.shared,
+        imageProcessingService: ImageProcessingServiceProtocol = ImageProcessingService.shared,
+        photoLibraryService: PhotoLibraryServiceProtocol = PhotoLibraryService.shared
+    ) {
+        self.authService = authService
+        self.imageProcessingService = imageProcessingService
+        self.photoLibraryService = photoLibraryService
+    }
 }

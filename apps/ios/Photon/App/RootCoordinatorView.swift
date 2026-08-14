@@ -19,13 +19,13 @@ public struct RootCoordinatorView: View {
             case .splash:
                 SplashView()
             case .auth:
-                AuthPlaceholderView()
+                AuthView()
             case .home:
-                HomePlaceholderView()
+                HomeView()
             case .editor:
-                EditorPlaceholderView()
+                EditorView()
             case .settings:
-                SettingsPlaceholderView()
+                SettingsView()
             }
         }
         .animation(.easeInOut(duration: 0.25), value: navigationState.currentRoot)

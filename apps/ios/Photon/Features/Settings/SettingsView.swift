@@ -1,5 +1,5 @@
 //
-//  SettingsPlaceholderView.swift
+//  SettingsView.swift
 //  Photon
 //
 //  Created by Metin TASCI on 14.08.2026.
@@ -7,9 +7,10 @@
 
 import SwiftUI
 
-/// Minimalist pure-white Settings screen displaying app and privacy information.
-public struct SettingsPlaceholderView: View {
+/// Minimalist pure-white Settings screen displaying account status, app info, and privacy commitments.
+public struct SettingsView: View {
     @Environment(NavigationState.self) private var navigationState
+    @State private var authService = AuthService.shared
     
     public init() {}
     
@@ -47,6 +48,40 @@ public struct SettingsPlaceholderView: View {
             
             ScrollView {
                 VStack(alignment: .leading, spacing: PhotonSpacing.xl) {
+                    // Account Session Card
+                    if let session = authService.currentSession {
+                        VStack(alignment: .leading, spacing: PhotonSpacing.sm) {
+                            Text("Oturum")
+                                .font(PhotonTypography.caption)
+                                .foregroundColor(PhotonColors.textTertiary)
+                            
+                            HStack {
+                                VStack(alignment: .leading, spacing: PhotonSpacing.xxs) {
+                                    Text(session.displayName ?? "Photon Kullanıcısı")
+                                        .font(PhotonTypography.headline)
+                                        .foregroundColor(PhotonColors.textPrimary)
+                                    
+                                    if let email = session.email {
+                                        Text(email)
+                                            .font(PhotonTypography.bodyMedium)
+                                            .foregroundColor(PhotonColors.textSecondary)
+                                    }
+                                }
+                                
+                                Spacer()
+                                
+                                PhotonButton("Çıkış Yap", variant: .outline, size: .small, isFullWidth: false) {
+                                    Task {
+                                        try? await authService.signOut()
+                                        navigationState.navigateToAuth()
+                                    }
+                                }
+                            }
+                        }
+                        .padding(PhotonSpacing.lg)
+                        .photonCard()
+                    }
+                    
                     // Privacy Info Card
                     VStack(alignment: .leading, spacing: PhotonSpacing.sm) {
                         HStack(spacing: PhotonSpacing.sm) {
@@ -54,12 +89,12 @@ public struct SettingsPlaceholderView: View {
                                 .font(.system(size: 20))
                                 .foregroundColor(PhotonColors.textPrimary)
                             
-                            Text("Gizlilik Odaklı İşleme")
+                            Text("Gizlilik & Donanım Hızlandırma")
                                 .font(PhotonTypography.titleMedium)
                                 .foregroundColor(PhotonColors.textPrimary)
                         }
                         
-                        Text("Tüm fotoğraf düzenleme işlemleri doğrudan iPhone'unuzun donanımında gerçekleştirilir. Görselleriniz hiçbir sunucuya yüklenmez.")
+                        Text("Tüm fotoğraf düzenleme ve render işlemleri doğrudan iPhone'unuzun Metal GPU donanımında gerçekleştirilir. Fotoğraflarınız hiçbir sunucuya yüklenmez.")
                             .font(PhotonTypography.bodyMedium)
                             .foregroundColor(PhotonColors.textSecondary)
                     }
@@ -70,11 +105,11 @@ public struct SettingsPlaceholderView: View {
                     VStack(spacing: 0) {
                         infoRow(label: "Uygulama", value: "Photon")
                         Divider().foregroundColor(PhotonColors.divider)
-                        infoRow(label: "Bundle ID", value: "com.alafteknoloji.Photon")
+                        infoRow(label: "Bundle ID", value: "com.alafteknoloji.photon")
                         Divider().foregroundColor(PhotonColors.divider)
                         infoRow(label: "Sürüm", value: "1.0.0 (MVP)")
                         Divider().foregroundColor(PhotonColors.divider)
-                        infoRow(label: "Motor", value: "Core Image & Metal")
+                        infoRow(label: "Render Motoru", value: "Core Image & Metal")
                     }
                     .padding(.horizontal, PhotonSpacing.md)
                     .photonCard()
@@ -100,6 +135,6 @@ public struct SettingsPlaceholderView: View {
 }
 
 #Preview {
-    SettingsPlaceholderView()
+    SettingsView()
         .environment(NavigationState())
 }

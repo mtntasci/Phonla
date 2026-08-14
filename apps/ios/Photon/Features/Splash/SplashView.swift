@@ -10,6 +10,7 @@ import SwiftUI
 /// Minimalist pure-white splash screen showing brand identity and initiating session check.
 public struct SplashView: View {
     @Environment(NavigationState.self) private var navigationState
+    @State private var authService = AuthService.shared
     @State private var isAnimating: Bool = false
     
     public init() {}
@@ -40,19 +41,25 @@ public struct SplashView: View {
             
             Spacer()
             
-            // Temporary manual entry CTA for phase 1 validation
-            VStack(spacing: PhotonSpacing.md) {
-                PhotonButton("Devam Et", systemImage: "arrow.right", variant: .primary) {
-                    navigationState.navigateToAuth()
-                }
-            }
-            .padding(.horizontal, PhotonSpacing.xxl)
-            .padding(.bottom, PhotonSpacing.xxxl)
+            // Subtle loading indicator during initial session verification
+            ProgressView()
+                .tint(PhotonColors.textPrimary)
+                .scaleEffect(0.9)
+                .opacity(isAnimating ? 1.0 : 0.0)
+                .padding(.bottom, PhotonSpacing.xxxl)
         }
         .photonBackground()
-        .onAppear {
-            withAnimation(.easeOut(duration: 0.6)) {
+        .task {
+            withAnimation(.easeOut(duration: 0.5)) {
                 isAnimating = true
+            }
+            
+            // Verify session and transition accordingly
+            let session = await authService.checkCurrentSession()
+            if session != nil {
+                navigationState.navigateToHome()
+            } else {
+                navigationState.navigateToAuth()
             }
         }
     }
