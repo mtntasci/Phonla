@@ -91,7 +91,7 @@ public struct EditorView: View {
             
             Spacer()
             
-            // Reset Button
+            // Reset Button (Right aligned next to Kaydet)
             if viewModel.isEdited {
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -103,30 +103,7 @@ public struct EditorView: View {
                         .foregroundColor(PhotonColors.textSecondary)
                 }
                 .padding(.horizontal, PhotonSpacing.xs)
-            }
-            
-            // Before / After Compare Button
-            if viewModel.isEdited {
-                Button {
-                    // Tap or hold gesture
-                } label: {
-                    HStack(spacing: PhotonSpacing.xxs) {
-                        Image(systemName: "square.split.2x1")
-                            .font(.system(size: 12, weight: .medium))
-                        Text(viewModel.isComparingOriginal ? "Orijinal" : "Kıyasla")
-                            .font(PhotonTypography.caption.weight(.medium))
-                    }
-                    .padding(.horizontal, PhotonSpacing.sm)
-                    .padding(.vertical, 6)
-                    .background(viewModel.isComparingOriginal ? PhotonColors.textPrimary : PhotonColors.surfaceSecondary)
-                    .foregroundColor(viewModel.isComparingOriginal ? PhotonColors.textInverted : PhotonColors.textPrimary)
-                    .clipShape(Capsule())
-                }
-                .simultaneousGesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { _ in viewModel.isComparingOriginal = true }
-                        .onEnded { _ in viewModel.isComparingOriginal = false }
-                )
+                .transition(.opacity)
             }
             
             // Full Resolution Export / Save Button
