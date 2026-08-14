@@ -13,7 +13,7 @@ import Vision
 public enum EditorToolCategory: String, CaseIterable, Identifiable, Sendable {
     case light = "Işık"
     case color = "Renk"
-    case portrait = "Pürüzsüzleştir"
+    case portrait = "Yumuşat"
     case cinematic = "Sinematik"
     case mono = "Siyah & Beyaz"
     

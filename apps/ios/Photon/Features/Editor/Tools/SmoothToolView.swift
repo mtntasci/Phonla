@@ -21,7 +21,7 @@ public struct SmoothToolView: View {
             
             // Main Portrait Skin Smoothing Slider (0 - 100)
             PhotonSlider(
-                title: "Pürüzsüzleştir",
+                title: "Yumuşat",
                 value: Binding(
                     get: { viewModel.editState.skinSmoothing },
                     set: { newVal in

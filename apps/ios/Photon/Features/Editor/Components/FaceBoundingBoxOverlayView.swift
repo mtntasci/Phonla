@@ -8,7 +8,7 @@
 import SwiftUI
 import Vision
 
-/// Interactive UI overlay displaying face bounding boxes detected by Vision when Pürüzsüzleştir tool is active.
+/// Interactive UI overlay displaying face bounding boxes detected by Vision when Yumuşat tool is active.
 /// Does not affect rendered / exported pixels.
 public struct FaceBoundingBoxOverlayView: View {
     public let faces: [VNFaceObservation]
