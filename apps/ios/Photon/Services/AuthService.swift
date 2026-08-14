@@ -61,6 +61,7 @@ public protocol AuthServiceProtocol: Sendable {
     func checkCurrentSession() async -> UserSession?
     func signIn(with provider: AuthProvider) async throws -> UserSession
     func signOut() async throws
+    func savePhoneNumber(_ phoneNumber: String)
 }
 
 /// Production authentication service backed by Firebase Auth.
@@ -70,7 +71,7 @@ public protocol AuthServiceProtocol: Sendable {
 public final class AuthService: NSObject, AuthServiceProtocol {
     public static let shared = AuthService()
     
-    public private(set) var currentSession: UserSession?
+    public var currentSession: UserSession?
     public private(set) var isLoading: Bool = false
     public private(set) var lastError: String?
     
@@ -115,16 +116,44 @@ public final class AuthService: NSObject, AuthServiceProtocol {
         }
         
         if let firebaseUser = Auth.auth().currentUser {
+            let storedPhone = UserDefaults.standard.string(forKey: "photon_user_phone_\(firebaseUser.uid)")
+            let resolvedPhone = firebaseUser.phoneNumber ?? storedPhone
+            
             self.currentSession = UserSession(
                 uid: firebaseUser.uid,
                 email: firebaseUser.email,
                 displayName: firebaseUser.displayName ?? (firebaseUser.email?.components(separatedBy: "@").first?.capitalized ?? "Photon Üyesi"),
                 photoURL: firebaseUser.photoURL,
+                phoneNumber: resolvedPhone,
+                providerId: resolveProviderName(from: firebaseUser),
                 isAnonymous: firebaseUser.isAnonymous
             )
         } else {
             self.currentSession = nil
         }
+    }
+    
+    private func resolveProviderName(from user: User) -> String {
+        if let primary = user.providerData.first?.providerID {
+            switch primary {
+            case "apple.com": return "Apple"
+            case "google.com": return "Google"
+            case "facebook.com": return "Facebook"
+            case "password": return "E-posta"
+            case "phone": return "Telefon"
+            default: return primary
+            }
+        }
+        return user.isAnonymous ? "Misafir" : "Firebase"
+    }
+    
+    // MARK: - Phone Number Management
+    
+    public func savePhoneNumber(_ phoneNumber: String) {
+        guard let session = currentSession else { return }
+        let trimmed = phoneNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+        UserDefaults.standard.set(trimmed, forKey: "photon_user_phone_\(session.uid)")
+        self.currentSession?.phoneNumber = trimmed.isEmpty ? nil : trimmed
     }
     
     // MARK: - Session Verification
@@ -207,11 +236,14 @@ public final class AuthService: NSObject, AuthServiceProtocol {
                 }
             }
             
+            let storedPhone = UserDefaults.standard.string(forKey: "photon_user_phone_\(user.uid)")
             let session = UserSession(
                 uid: user.uid,
                 email: user.email,
                 displayName: resolvedDisplayName ?? (user.email?.components(separatedBy: "@").first?.capitalized ?? "Photon Üyesi"),
                 photoURL: user.photoURL,
+                phoneNumber: user.phoneNumber ?? storedPhone,
+                providerId: resolveProviderName(from: user),
                 isAnonymous: user.isAnonymous
             )
             

@@ -13,6 +13,8 @@ public struct UserSession: Equatable, Codable, Sendable {
     public let email: String?
     public let displayName: String?
     public let photoURL: URL?
+    public var phoneNumber: String?
+    public let providerId: String?
     public let isAnonymous: Bool
     
     public init(
@@ -20,12 +22,16 @@ public struct UserSession: Equatable, Codable, Sendable {
         email: String? = nil,
         displayName: String? = nil,
         photoURL: URL? = nil,
+        phoneNumber: String? = nil,
+        providerId: String? = nil,
         isAnonymous: Bool = false
     ) {
         self.uid = uid
         self.email = email
         self.displayName = displayName
         self.photoURL = photoURL
+        self.phoneNumber = phoneNumber
+        self.providerId = providerId
         self.isAnonymous = isAnonymous
     }
 }

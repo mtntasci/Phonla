@@ -99,14 +99,20 @@ public struct HomeView: View {
                                 .fill(.ultraThinMaterial)
                                 .frame(width: 38, height: 38)
                             
-                            if let initial = authService.currentSession?.displayName?.prefix(1).uppercased(), !initial.isEmpty {
-                                Text(initial)
-                                    .font(PhotonTypography.caption.weight(.bold))
-                                    .foregroundColor(.white)
+                            if let photoURL = authService.currentSession?.photoURL {
+                                AsyncImage(url: photoURL) { phase in
+                                    if let image = phase.image {
+                                        image
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 38, height: 38)
+                                            .clipShape(Circle())
+                                    } else {
+                                        avatarFallback
+                                    }
+                                }
                             } else {
-                                Image(systemName: "person.crop.circle")
-                                    .font(.system(size: 18, weight: .medium))
-                                    .foregroundColor(.white)
+                                avatarFallback
                             }
                         }
                         .overlay(
@@ -203,6 +209,19 @@ public struct HomeView: View {
             }
             isLoadingPhoto = false
             selectedItem = nil
+        }
+    }
+    
+    @ViewBuilder
+    private var avatarFallback: some View {
+        if let initial = authService.currentSession?.displayName?.prefix(1).uppercased(), !initial.isEmpty {
+            Text(initial)
+                .font(PhotonTypography.caption.weight(.bold))
+                .foregroundColor(.white)
+        } else {
+            Image(systemName: "person.crop.circle")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(.white)
         }
     }
 }
