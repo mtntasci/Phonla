@@ -18,9 +18,9 @@ public struct LightToolView: View {
     public var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(spacing: PhotonSpacing.sm) {
-                // Exposure
+                // Exposure -> Pozlama
                 PhotonSlider(
-                    title: "Pozlama (Exposure)",
+                    title: "Pozlama",
                     value: Binding(
                         get: { viewModel.editState.exposure },
                         set: { newVal in
@@ -38,9 +38,9 @@ public struct LightToolView: View {
                     }
                 )
                 
-                // Brightness
+                // Brightness -> Parlaklık
                 PhotonSlider(
-                    title: "Parlaklık (Brightness)",
+                    title: "Parlaklık",
                     value: Binding(
                         get: { viewModel.editState.brightness },
                         set: { newVal in
@@ -59,9 +59,9 @@ public struct LightToolView: View {
                     }
                 )
                 
-                // Contrast
+                // Contrast -> Kontrast
                 PhotonSlider(
-                    title: "Kontrast (Contrast)",
+                    title: "Kontrast",
                     value: Binding(
                         get: { viewModel.editState.contrast },
                         set: { newVal in
@@ -80,9 +80,9 @@ public struct LightToolView: View {
                     }
                 )
                 
-                // Highlights
+                // Highlights -> Parlak Alanlar
                 PhotonSlider(
-                    title: "Açık Tonlar (Highlights)",
+                    title: "Parlak Alanlar",
                     value: Binding(
                         get: { viewModel.editState.highlights },
                         set: { newVal in
@@ -101,9 +101,9 @@ public struct LightToolView: View {
                     }
                 )
                 
-                // Shadows
+                // Shadows -> Gölgeler
                 PhotonSlider(
-                    title: "Gölgeler (Shadows)",
+                    title: "Gölgeler",
                     value: Binding(
                         get: { viewModel.editState.shadows },
                         set: { newVal in

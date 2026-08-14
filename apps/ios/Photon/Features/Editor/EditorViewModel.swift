@@ -10,10 +10,10 @@ import CoreImage
 
 /// Available adjustment tool categories in Photon Editor.
 public enum EditorToolCategory: String, CaseIterable, Identifiable, Sendable {
-    case light = "Light"
-    case color = "Color"
-    case cinematic = "Cinematic"
-    case mono = "Mono"
+    case light = "Işık"
+    case color = "Renk"
+    case cinematic = "Sinematik"
+    case mono = "Siyah & Beyaz"
     
     public var id: String { rawValue }
     
@@ -65,88 +65,87 @@ public final class EditorViewModel {
         self.photoLibraryService = photoLibraryService
     }
     
-    // MARK: - Photo Loading
+    // MARK: - Photo Binding
     
     public func setPhoto(_ photo: LoadedPhoto) {
         self.loadedPhoto = photo
         self.editState = .identity
         self.renderedPreview = photo.previewUIImage
-        self.activeCategory = .light
-        self.isComparingOriginal = false
         self.undoStack.removeAll()
         self.redoStack.removeAll()
         self.exportSuccessMessage = nil
         self.exportErrorMessage = nil
+        self.activeCategory = .light
     }
     
-    // MARK: - History Snapshot (Undo / Redo)
+    // MARK: - History Snapshot (Undo / Redo Management)
     
-    /// Records the current state into the undo stack before applying a new adjustment.
     public func recordHistorySnapshot() {
-        if undoStack.last != editState {
-            undoStack.append(editState)
-            if undoStack.count > maxHistoryDepth {
-                undoStack.removeFirst()
-            }
-            redoStack.removeAll()
+        undoStack.append(editState)
+        if undoStack.count > maxHistoryDepth {
+            undoStack.removeFirst()
         }
+        redoStack.removeAll()
     }
     
     public func undo() {
         guard let previousState = undoStack.popLast() else { return }
         redoStack.append(editState)
         self.editState = previousState
-        triggerRender()
+        requestPreviewRender()
     }
     
     public func redo() {
         guard let nextState = redoStack.popLast() else { return }
         undoStack.append(editState)
         self.editState = nextState
-        triggerRender()
-    }
-    
-    // MARK: - State Adjustments & Realtime Render
-    
-    public func updateStateDirectly(_ modifier: (inout PhotoEditState) -> Void) {
-        modifier(&editState)
-        triggerRender()
-    }
-    
-    public func applyPresetUpdate(action: () -> Void) {
-        recordHistorySnapshot()
-        action()
-        triggerRender()
+        requestPreviewRender()
     }
     
     public func resetState() {
-        guard isEdited else { return }
+        guard editState.isEdited else { return }
         recordHistorySnapshot()
-        editState.reset()
-        if let loadedPhoto {
-            renderedPreview = loadedPhoto.previewUIImage
-        }
+        self.editState = .identity
+        requestPreviewRender()
     }
     
-    /// Triggers an asynchronous Core Image render pass on the downsampled preview CIImage.
-    public func triggerRender() {
+    // MARK: - State Mutators
+    
+    public func updateStateDirectly(_ mutate: (inout PhotoEditState) -> Void) {
+        mutate(&editState)
+        requestPreviewRender()
+    }
+    
+    public func applyPresetUpdate(_ mutate: () -> Void) {
+        recordHistorySnapshot()
+        mutate()
+        requestPreviewRender()
+    }
+    
+    // MARK: - Asynchronous Metal / Core Image Preview Render
+    
+    public func requestPreviewRender() {
         guard let photo = loadedPhoto else { return }
         
-        isRendering = true
         renderTask?.cancel()
-        renderTask = Task.detached(priority: .userInitiated) { [processingService, state = self.editState, previewCI = photo.previewCIImage] in
-            let result = processingService.renderPreview(from: previewCI, state: state)
+        isRendering = true
+        
+        let targetState = self.editState
+        let previewCI = photo.previewCIImage
+        
+        renderTask = Task.detached(priority: .userInitiated) { [processingService] in
+            let processedImage = processingService.renderPreview(from: previewCI, state: targetState)
+            
+            guard !Task.isCancelled else { return }
             
             await MainActor.run {
-                if !Task.isCancelled {
-                    self.renderedPreview = result
-                    self.isRendering = false
-                }
+                self.renderedPreview = processedImage
+                self.isRendering = false
             }
         }
     }
     
-    // MARK: - Full Resolution Export Pipeline (Phase 9)
+    // MARK: - Full Resolution Non-Destructive Export
     
     public func exportPhoto() async {
         guard let photo = loadedPhoto else { return }

@@ -18,9 +18,9 @@ public struct ColorToolView: View {
     public var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(spacing: PhotonSpacing.sm) {
-                // Temperature
+                // Temperature -> Sıcaklık
                 PhotonSlider(
-                    title: "Sıcaklık (Temperature)",
+                    title: "Sıcaklık",
                     value: Binding(
                         get: { viewModel.editState.temperature },
                         set: { newVal in
@@ -45,9 +45,9 @@ public struct ColorToolView: View {
                     }
                 )
                 
-                // Tint
+                // Tint -> Renk Tonu
                 PhotonSlider(
-                    title: "Renk Tonu (Tint)",
+                    title: "Renk Tonu",
                     value: Binding(
                         get: { viewModel.editState.tint },
                         set: { newVal in
@@ -66,9 +66,9 @@ public struct ColorToolView: View {
                     }
                 )
                 
-                // Saturation
+                // Saturation -> Doygunluk
                 PhotonSlider(
-                    title: "Doygunluk (Saturation)",
+                    title: "Doygunluk",
                     value: Binding(
                         get: { viewModel.editState.saturation },
                         set: { newVal in
@@ -87,9 +87,9 @@ public struct ColorToolView: View {
                     }
                 )
                 
-                // Vibrance
+                // Vibrance -> Canlılık
                 PhotonSlider(
-                    title: "Canlılık (Vibrance)",
+                    title: "Canlılık",
                     value: Binding(
                         get: { viewModel.editState.vibrance },
                         set: { newVal in

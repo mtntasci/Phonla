@@ -29,7 +29,7 @@ public struct AuthView: View {
                         .tracking(4)
                         .foregroundColor(PhotonColors.textPrimary)
                     
-                    Text("Işık, Sinematik Renk & Mono")
+                    Text("Işık, Sinematik Renk & Siyah-Beyaz")
                         .font(PhotonTypography.bodyMedium)
                         .foregroundColor(PhotonColors.textSecondary)
                 }

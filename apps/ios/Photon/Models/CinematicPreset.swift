@@ -33,63 +33,63 @@ public struct CinematicPreset: Identifiable, Equatable, Hashable, Sendable {
     public static let allPresets: [CinematicPreset] = [
         CinematicPreset(
             id: "original",
-            name: "Original",
+            name: "Orijinal",
             subtitle: "Doğal Renkler",
             systemIcon: "slash.circle",
             accentTint: Color.gray
         ),
         CinematicPreset(
             id: "cinema",
-            name: "Cinema",
+            name: "Sinema",
             subtitle: "Teal & Orange Sinema",
             systemIcon: "film",
             accentTint: Color(hex: "#E08A46")
         ),
         CinematicPreset(
             id: "warm",
-            name: "Warm",
+            name: "Sıcak",
             subtitle: "Altın Saat Sıcaklığı",
             systemIcon: "sun.horizon.fill",
             accentTint: Color(hex: "#E5A93C")
         ),
         CinematicPreset(
             id: "cold",
-            name: "Cold",
+            name: "Soğuk",
             subtitle: "Kuzey Mavi Tonları",
             systemIcon: "snowflake",
             accentTint: Color(hex: "#5B92E5")
         ),
         CinematicPreset(
             id: "teal",
-            name: "Teal",
+            name: "Turkuaz",
             subtitle: "Turkuaz & Cyan Gölge",
             systemIcon: "drop.fill",
             accentTint: Color(hex: "#2FA4A9")
         ),
         CinematicPreset(
             id: "fade",
-            name: "Fade",
+            name: "Soluk",
             subtitle: "Matte Film Kontrastı",
             systemIcon: "smoke.fill",
             accentTint: Color(hex: "#9C9288")
         ),
         CinematicPreset(
             id: "night",
-            name: "Night",
+            name: "Gece",
             subtitle: "Gece Şehri Atmosferi",
             systemIcon: "moon.stars.fill",
             accentTint: Color(hex: "#3B4A7A")
         ),
         CinematicPreset(
             id: "forest",
-            name: "Forest",
+            name: "Orman",
             subtitle: "Zümrüt Yeşil & Toprak",
             systemIcon: "leaf.fill",
             accentTint: Color(hex: "#3D8249")
         ),
         CinematicPreset(
             id: "urban",
-            name: "Urban",
+            name: "Şehir",
             subtitle: "Sert Sokak & Doku",
             systemIcon: "building.2.fill",
             accentTint: Color(hex: "#7A7E85")

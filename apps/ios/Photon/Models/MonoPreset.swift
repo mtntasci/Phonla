@@ -55,7 +55,7 @@ public struct MonoPreset: Identifiable, Equatable, Hashable, Sendable {
     public static let allPresets: [MonoPreset] = [
         MonoPreset(
             id: "mono_natural",
-            name: "Natural",
+            name: "Doğal",
             subtitle: "Dengeli Doğal Gri Ton",
             systemIcon: "circle.lefthalf.filled",
             redWeight: 0.299,
@@ -65,7 +65,7 @@ public struct MonoPreset: Identifiable, Equatable, Hashable, Sendable {
         ),
         MonoPreset(
             id: "mono_portrait",
-            name: "Portrait",
+            name: "Portre",
             subtitle: "Pürüzsüz Ten & Yumuşak Ton",
             systemIcon: "person.crop.circle.fill",
             redWeight: 0.600,
@@ -76,7 +76,7 @@ public struct MonoPreset: Identifiable, Equatable, Hashable, Sendable {
         ),
         MonoPreset(
             id: "mono_high_contrast",
-            name: "High Contrast",
+            name: "Yüksek Kontrast",
             subtitle: "Derin Siyahlar & Gümüş",
             systemIcon: "circle.circle.fill",
             redWeight: 0.350,
@@ -87,7 +87,7 @@ public struct MonoPreset: Identifiable, Equatable, Hashable, Sendable {
         ),
         MonoPreset(
             id: "mono_soft",
-            name: "Soft",
+            name: "Yumuşak",
             subtitle: "İpeksi Düşük Kontrast",
             systemIcon: "cloud.fill",
             redWeight: 0.333,
@@ -99,7 +99,7 @@ public struct MonoPreset: Identifiable, Equatable, Hashable, Sendable {
         ),
         MonoPreset(
             id: "mono_street",
-            name: "Street",
+            name: "Sokak",
             subtitle: "Sert Sokak & Doku",
             systemIcon: "road.lanes",
             redWeight: 0.400,
@@ -110,7 +110,7 @@ public struct MonoPreset: Identifiable, Equatable, Hashable, Sendable {
         ),
         MonoPreset(
             id: "mono_dramatic",
-            name: "Dramatic",
+            name: "Dramatik",
             subtitle: "Kırmızı Filtre Gökyüzü",
             systemIcon: "bolt.circle.fill",
             redWeight: 0.780,

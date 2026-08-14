@@ -74,7 +74,7 @@ public struct CinematicToolView: View {
                     .padding(.horizontal, PhotonSpacing.md)
                 
                 PhotonSlider(
-                    title: "Görünüm Yoğunluğu (Intensity)",
+                    title: "Yoğunluk",
                     value: Binding(
                         get: { viewModel.editState.lookIntensity },
                         set: { newVal in

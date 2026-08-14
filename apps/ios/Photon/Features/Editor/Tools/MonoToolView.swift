@@ -92,7 +92,7 @@ public struct MonoToolView: View {
                     .padding(.horizontal, PhotonSpacing.md)
                 
                 PhotonSlider(
-                    title: "Siyah-Beyaz Yoğunluğu (Intensity)",
+                    title: "Yoğunluk",
                     value: Binding(
                         get: { viewModel.editState.monoIntensity },
                         set: { newVal in

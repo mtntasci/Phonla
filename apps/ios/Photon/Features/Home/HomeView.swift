@@ -126,7 +126,7 @@ public struct HomeView: View {
                 VStack(spacing: PhotonSpacing.md) {
                     // Typography directly above CTA
                     VStack(spacing: PhotonSpacing.xxs) {
-                        Text("Işık • Sinematik • Monochrome")
+                        Text("Işık • Sinematik • Siyah & Beyaz")
                             .font(PhotonTypography.headline)
                             .tracking(2)
                             .foregroundColor(.white.opacity(0.95))
