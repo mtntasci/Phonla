@@ -30,39 +30,31 @@ export const Navbar: React.FC = () => {
       }}
     >
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {/* Brand Logo */}
-        <a href="#" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-          <div
+        {/* Brand Logo & Name */}
+        <a href="#" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
+          <img
+            src="/assets/logo.png"
+            alt="Photon Logo"
             style={{
               width: '36px',
               height: '36px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #181822 0%, #282836 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+              borderRadius: '8px',
+              objectFit: 'contain',
               flexShrink: 0,
+              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
+            }}
+          />
+          <span
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 800,
+              fontSize: '20px',
+              letterSpacing: '2.5px',
+              color: '#ffffff',
             }}
           >
-            <svg width="20" height="20" viewBox="0 0 100 100" fill="none">
-              <circle cx="50" cy="50" r="42" stroke="white" strokeWidth="6" opacity="0.9" />
-              <circle cx="50" cy="50" r="22" stroke="var(--accent-cyan)" strokeWidth="6" />
-              <path d="M50 8 L50 28" stroke="white" strokeWidth="5" strokeLinecap="round" />
-              <path d="M50 72 L50 92" stroke="white" strokeWidth="5" strokeLinecap="round" />
-              <path d="M8 50 L28 50" stroke="white" strokeWidth="5" strokeLinecap="round" />
-              <path d="M72 50 L92 50" stroke="white" strokeWidth="5" strokeLinecap="round" />
-            </svg>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '18px', letterSpacing: '2.5px', color: '#ffffff' }}>
-              PHOTON
-            </span>
-            <span style={{ fontSize: '9px', color: 'var(--accent-cyan)', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 600 }}>
-              iOS & Android Native
-            </span>
-          </div>
+            PHOTON
+          </span>
         </a>
 
         {/* Desktop Nav Links */}

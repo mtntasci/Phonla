@@ -23,24 +23,17 @@ export const Footer: React.FC = () => {
         >
           {/* Brand */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
+            <img
+              src="/assets/logo.png"
+              alt="Photon Logo"
               style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
-                background: 'linear-gradient(135deg, #181822 0%, #282836 100%)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                width: '30px',
+                height: '30px',
+                borderRadius: '6px',
+                objectFit: 'contain',
                 flexShrink: 0,
               }}
-            >
-              <svg width="18" height="18" viewBox="0 0 100 100" fill="none">
-                <circle cx="50" cy="50" r="42" stroke="white" strokeWidth="6" opacity="0.9" />
-                <circle cx="50" cy="50" r="22" stroke="var(--accent-cyan)" strokeWidth="6" />
-              </svg>
-            </div>
+            />
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '18px', letterSpacing: '2px', color: '#ffffff' }}>
               PHOTON
             </span>
@@ -48,7 +41,7 @@ export const Footer: React.FC = () => {
 
           {/* Slogan */}
           <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-            Işık • Sinematik • Siyah & Beyaz — Native iOS & Android Fotoğraf Editörü
+            Işık • Sinematik • Siyah & Beyaz — Native Mobil Fotoğraf Editörü
           </div>
 
           {/* Download Link */}
