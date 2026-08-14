@@ -65,20 +65,15 @@ struct PhotonTests {
     
     // MARK: - Auth & Session Tests
     
-    @Test func testAuthServiceSignInAndSignOut() async throws {
+    @Test func testAuthServiceSignOutAndSessionState() async throws {
         let auth = await AuthService.shared
         
         try await auth.signOut()
         #expect(await !auth.isAuthenticated)
-        
-        let appleSession = try await auth.signIn(with: .apple)
-        #expect(appleSession.uid.contains("apple"))
-        #expect(await auth.isAuthenticated)
-        #expect(await auth.currentSession?.uid == appleSession.uid)
-        
-        try await auth.signOut()
-        #expect(await !auth.isAuthenticated)
         #expect(await auth.currentSession == nil)
+        
+        let session = await auth.checkCurrentSession()
+        #expect(session == nil)
     }
     
     // MARK: - Phase 5: Light & Color Adjustments

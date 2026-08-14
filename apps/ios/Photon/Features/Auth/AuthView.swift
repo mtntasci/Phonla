@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// Minimalist, pure-white authentication screen with Apple and Google sign-in options.
+/// Minimalist, pure-white authentication screen with transparent branding and Firebase Auth providers.
 public struct AuthView: View {
     @Environment(NavigationState.self) private var navigationState
     @State private var authService = AuthService.shared
@@ -20,13 +20,8 @@ public struct AuthView: View {
             Spacer()
             
             // Top / Center Branding Area
-            VStack(spacing: PhotonSpacing.md) {
-                Image("PhotonLogo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 84, height: 84)
-                    .clipShape(RoundedRectangle(cornerRadius: 19, style: .continuous))
-                    .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
+            VStack(spacing: PhotonSpacing.lg) {
+                PhotonLogoMark(size: 72, color: PhotonColors.textPrimary)
                 
                 VStack(spacing: PhotonSpacing.xxs) {
                     Text("PHOTON")

@@ -7,12 +7,15 @@
 
 import Foundation
 import SwiftUI
+import FirebaseAuth
+import FirebaseCore
 import AuthenticationServices
 
 /// Authentication providers supported by Photon.
 public enum AuthProvider: String, CaseIterable, Identifiable, Sendable {
     case apple = "Apple"
     case google = "Google"
+    case facebook = "Facebook"
     
     public var id: String { rawValue }
     
@@ -20,6 +23,7 @@ public enum AuthProvider: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .apple: return "apple.logo"
         case .google: return "globe"
+        case .facebook: return "f.circle"
         }
     }
 }
@@ -29,6 +33,7 @@ public enum AuthError: LocalizedError, Sendable {
     case providerUnavailable(String)
     case missingConfiguration(String)
     case cancelled
+    case notAuthenticated
     case unknown(String)
     
     public var errorDescription: String? {
@@ -39,6 +44,8 @@ public enum AuthError: LocalizedError, Sendable {
             return "Kimlik doğrulama yapılandırması eksik: \(reason)"
         case .cancelled:
             return "Giriş işlemi iptal edildi."
+        case .notAuthenticated:
+            return "Aktif bir oturum bulunamadı."
         case .unknown(let message):
             return message
         }
@@ -56,39 +63,56 @@ public protocol AuthServiceProtocol: Sendable {
     func signOut() async throws
 }
 
-/// Production and simulation ready authentication service.
-/// Observes Firebase when configured and maintains secure, persistent session state.
+/// Production authentication service backed by Firebase Auth.
+/// Manages real currentUser lifecycle, persistent tokens, and secure sign-out.
 @MainActor
 @Observable
-public final class AuthService: AuthServiceProtocol {
+public final class AuthService: NSObject, AuthServiceProtocol {
     public static let shared = AuthService()
     
     public private(set) var currentSession: UserSession?
     public private(set) var isLoading: Bool = false
     public private(set) var lastError: String?
     
-    private let sessionDefaultsKey = "com.alafteknoloji.photon.user_session"
-    
     public var isAuthenticated: Bool {
         currentSession != nil
     }
     
     public var isFirebaseConfigured: Bool {
-        Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil
+        FirebaseApp.app() != nil
     }
     
-    public init() {
-        // Restore existing local session persistence
-        self.currentSession = loadPersistedSession()
+    public override init() {
+        super.init()
+        // Synchronize with Firebase Auth currentUser on launch
+        self.syncFirebaseCurrentUser()
+    }
+    
+    // MARK: - Synchronize Session
+    
+    private func syncFirebaseCurrentUser() {
+        guard isFirebaseConfigured else {
+            self.currentSession = nil
+            return
+        }
+        
+        if let firebaseUser = Auth.auth().currentUser {
+            self.currentSession = UserSession(
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+                displayName: firebaseUser.displayName ?? (firebaseUser.email?.components(separatedBy: "@").first?.capitalized ?? "Photon Üyesi"),
+                isAnonymous: firebaseUser.isAnonymous
+            )
+        } else {
+            self.currentSession = nil
+        }
     }
     
     // MARK: - Session Verification
     
     public func checkCurrentSession() async -> UserSession? {
-        try? await Task.sleep(nanoseconds: 300_000_000) // Smooth splash display (300ms)
-        let session = loadPersistedSession()
-        self.currentSession = session
-        return session
+        syncFirebaseCurrentUser()
+        return self.currentSession
     }
     
     // MARK: - Sign In Flows
@@ -98,53 +122,70 @@ public final class AuthService: AuthServiceProtocol {
         lastError = nil
         defer { isLoading = false }
         
-        let session: UserSession
-        switch provider {
-        case .apple:
-            session = UserSession(
-                uid: "apple_\(UUID().uuidString.prefix(8))",
-                email: "apple.user@icloud.com",
-                displayName: "Apple User",
-                isAnonymous: false
-            )
-        case .google:
-            session = UserSession(
-                uid: "google_\(UUID().uuidString.prefix(8))",
-                email: "google.user@gmail.com",
-                displayName: "Google User",
-                isAnonymous: false
-            )
+        guard isFirebaseConfigured else {
+            throw AuthError.missingConfiguration("Firebase yapılandırılmamış.")
         }
         
-        persistSession(session)
-        self.currentSession = session
-        return session
+        let providerID: String
+        var scopes: [String] = []
+        
+        switch provider {
+        case .apple:
+            providerID = "apple.com"
+            scopes = ["email", "name"]
+        case .google:
+            providerID = "google.com"
+            scopes = ["email", "profile"]
+        case .facebook:
+            providerID = "facebook.com"
+            scopes = ["email", "public_profile"]
+        }
+        
+        let oAuthProvider = OAuthProvider(providerID: providerID)
+        oAuthProvider.scopes = scopes
+        
+        do {
+            let credential = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<AuthCredential, Error>) in
+                oAuthProvider.getCredentialWith(nil) { credential, error in
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    } else if let credential = credential {
+                        continuation.resume(returning: credential)
+                    } else {
+                        continuation.resume(throwing: AuthError.cancelled)
+                    }
+                }
+            }
+            
+            let authResult = try await Auth.auth().signIn(with: credential)
+            let user = authResult.user
+            let session = UserSession(
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName ?? (user.email?.components(separatedBy: "@").first?.capitalized ?? "Photon Üyesi"),
+                isAnonymous: user.isAnonymous
+            )
+            
+            self.currentSession = session
+            return session
+        } catch {
+            self.lastError = error.localizedDescription
+            throw error
+        }
     }
     
     // MARK: - Sign Out
     
     public func signOut() async throws {
-        clearPersistedSession()
-        self.currentSession = nil
-    }
-    
-    // MARK: - Local Persistence Helpers
-    
-    private func persistSession(_ session: UserSession) {
-        if let encoded = try? JSONEncoder().encode(session) {
-            UserDefaults.standard.set(encoded, forKey: sessionDefaultsKey)
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            try Auth.auth().signOut()
+            self.currentSession = nil
+        } catch {
+            self.lastError = error.localizedDescription
+            throw error
         }
-    }
-    
-    private func loadPersistedSession() -> UserSession? {
-        guard let data = UserDefaults.standard.data(forKey: sessionDefaultsKey),
-              let session = try? JSONDecoder().decode(UserSession.self, from: data) else {
-            return nil
-        }
-        return session
-    }
-    
-    private func clearPersistedSession() {
-        UserDefaults.standard.removeObject(forKey: sessionDefaultsKey)
     }
 }

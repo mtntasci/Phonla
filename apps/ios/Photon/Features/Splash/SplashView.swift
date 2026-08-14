@@ -7,10 +7,11 @@
 
 import SwiftUI
 
-/// Minimalist pure-white splash screen featuring the official Photon logo and session verification.
+/// Minimalist pure-white splash screen with transparent Photon brandmark and Firebase session verification.
 public struct SplashView: View {
     @Environment(NavigationState.self) private var navigationState
     @State private var authService = AuthService.shared
+    @State private var opacity: Double = 0.0
     
     public init() {}
     
@@ -18,24 +19,28 @@ public struct SplashView: View {
         VStack(spacing: PhotonSpacing.md) {
             Spacer()
             
-            // Official Photon App Logo
-            Image("PhotonLogo")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 96, height: 96)
-                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
+            // Transparent Photon Vector Brandmark
+            PhotonLogoMark(size: 76, color: PhotonColors.textPrimary)
             
-            Text("Photon")
-                .font(PhotonTypography.bodyMedium)
-                .foregroundColor(PhotonColors.textSecondary)
+            Text("PHOTON")
+                .font(PhotonTypography.titleMedium)
+                .tracking(5)
+                .foregroundColor(PhotonColors.textPrimary)
                 .padding(.top, PhotonSpacing.xs)
             
             Spacer()
         }
+        .opacity(opacity)
         .photonBackground()
         .task {
-            // Verify session and transition smoothly
+            withAnimation(.easeIn(duration: 0.3)) {
+                opacity = 1.0
+            }
+            
+            // Allow splash to be visible for a smooth 1.0s brand moment while initializing
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            
+            // Verify real Firebase Auth session
             let session = await authService.checkCurrentSession()
             if session != nil {
                 navigationState.navigateToHome()
