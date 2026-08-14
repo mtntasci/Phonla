@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// Minimalist, pure-white authentication screen with Apple, Google, and Facebook sign-in options.
+/// Minimalist, pure-white authentication screen with Apple and Google sign-in options.
 public struct AuthView: View {
     @Environment(NavigationState.self) private var navigationState
     @State private var authService = AuthService.shared
@@ -24,9 +24,9 @@ public struct AuthView: View {
                 Image("PhotonLogo")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 80, height: 80)
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
+                    .frame(width: 84, height: 84)
+                    .clipShape(RoundedRectangle(cornerRadius: 19, style: .continuous))
+                    .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
                 
                 VStack(spacing: PhotonSpacing.xxs) {
                     Text("PHOTON")
@@ -58,6 +58,7 @@ public struct AuthView: View {
                     "Apple ile Giriş Yap",
                     systemImage: "apple.logo",
                     variant: .primary,
+                    size: .large,
                     isLoading: authService.isLoading
                 ) {
                     performSignIn(provider: .apple)
@@ -68,26 +69,22 @@ public struct AuthView: View {
                     "Google ile Devam Et",
                     systemImage: "globe",
                     variant: .outline,
+                    size: .large,
                     isLoading: authService.isLoading
                 ) {
                     performSignIn(provider: .google)
                 }
                 
-                // Facebook Sign In
-                PhotonButton(
-                    "Facebook ile Devam Et",
-                    systemImage: "f.circle",
-                    variant: .outline,
-                    isLoading: authService.isLoading
-                ) {
-                    performSignIn(provider: .facebook)
+                // Privacy Footnote
+                HStack(spacing: PhotonSpacing.xxs) {
+                    Image(systemName: "lock.shield.fill")
+                        .font(.system(size: 11))
+                    Text("Giriş yaparak fotoğraflarınızı cihazınızda güvenle işleyebilirsiniz.")
+                        .font(PhotonTypography.caption)
                 }
-                
-                Text("Giriş yaparak fotoğraflarınızı cihazınızda güvenle işleyebilirsiniz.")
-                    .font(PhotonTypography.caption)
-                    .foregroundColor(PhotonColors.textTertiary)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, PhotonSpacing.xs)
+                .foregroundColor(PhotonColors.textTertiary)
+                .multilineTextAlignment(.center)
+                .padding(.top, PhotonSpacing.xs)
             }
             .padding(.horizontal, PhotonSpacing.xl)
             .padding(.bottom, PhotonSpacing.xxxl)

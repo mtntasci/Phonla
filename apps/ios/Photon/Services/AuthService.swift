@@ -13,7 +13,6 @@ import AuthenticationServices
 public enum AuthProvider: String, CaseIterable, Identifiable, Sendable {
     case apple = "Apple"
     case google = "Google"
-    case facebook = "Facebook"
     
     public var id: String { rawValue }
     
@@ -21,7 +20,6 @@ public enum AuthProvider: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .apple: return "apple.logo"
         case .google: return "globe"
-        case .facebook: return "f.circle"
         }
     }
 }
@@ -87,8 +85,6 @@ public final class AuthService: AuthServiceProtocol {
     // MARK: - Session Verification
     
     public func checkCurrentSession() async -> UserSession? {
-        // In full Firebase mode, this verifies currentUser token;
-        // In local mode, verifies persisted local session without remote delay
         try? await Task.sleep(nanoseconds: 300_000_000) // Smooth splash display (300ms)
         let session = loadPersistedSession()
         self.currentSession = session
@@ -102,7 +98,6 @@ public final class AuthService: AuthServiceProtocol {
         lastError = nil
         defer { isLoading = false }
         
-        // Simulation / Fallback for development if Firebase credentials are not yet bundled
         let session: UserSession
         switch provider {
         case .apple:
@@ -117,13 +112,6 @@ public final class AuthService: AuthServiceProtocol {
                 uid: "google_\(UUID().uuidString.prefix(8))",
                 email: "google.user@gmail.com",
                 displayName: "Google User",
-                isAnonymous: false
-            )
-        case .facebook:
-            session = UserSession(
-                uid: "facebook_\(UUID().uuidString.prefix(8))",
-                email: "fb.user@facebook.com",
-                displayName: "Facebook User",
                 isAnonymous: false
             )
         }
