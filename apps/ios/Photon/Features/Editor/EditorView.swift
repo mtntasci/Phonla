@@ -56,7 +56,7 @@ public struct EditorView: View {
                 }
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(PhotonColors.textPrimary)
                     .frame(width: 36, height: 36)
                     .background(PhotonColors.surfaceSecondary)
@@ -68,7 +68,7 @@ public struct EditorView: View {
                 viewModel.undo()
             } label: {
                 Image(systemName: "arrow.uturn.backward")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(viewModel.canUndo ? PhotonColors.textPrimary : PhotonColors.textTertiary.opacity(0.5))
                     .frame(width: 36, height: 36)
                     .background(PhotonColors.surfaceSecondary.opacity(viewModel.canUndo ? 1.0 : 0.5))
@@ -81,7 +81,7 @@ public struct EditorView: View {
                 viewModel.redo()
             } label: {
                 Image(systemName: "arrow.uturn.forward")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(viewModel.canRedo ? PhotonColors.textPrimary : PhotonColors.textTertiary.opacity(0.5))
                     .frame(width: 36, height: 36)
                     .background(PhotonColors.surfaceSecondary.opacity(viewModel.canRedo ? 1.0 : 0.5))
@@ -120,7 +120,7 @@ public struct EditorView: View {
             }
         }
         .padding(.horizontal, PhotonSpacing.md)
-        .padding(.vertical, PhotonSpacing.sm)
+        .padding(.vertical, 4)
     }
     
     // MARK: - Main Canvas Area
@@ -132,8 +132,8 @@ public struct EditorView: View {
                     .ignoresSafeArea()
                 
                 if let displayImage = viewModel.currentDisplayImage {
-                    let canvasWidth = geometry.size.width - PhotonSpacing.md
-                    let canvasHeight = geometry.size.height - PhotonSpacing.sm
+                    let canvasWidth = geometry.size.width - PhotonSpacing.xs
+                    let canvasHeight = geometry.size.height - PhotonSpacing.xs
                     
                     ZStack(alignment: .topTrailing) {
                         Image(uiImage: displayImage)
@@ -245,7 +245,7 @@ public struct EditorView: View {
             Divider()
                 .foregroundColor(PhotonColors.divider)
             
-            // Active Tool Adjustment Panel (Height fixed for stability)
+            // Active Tool Adjustment Panel (Compact height for maximum photo canvas area)
             Group {
                 switch viewModel.activeCategory {
                 case .light:
@@ -260,7 +260,7 @@ public struct EditorView: View {
                     MonoToolView(viewModel: viewModel)
                 }
             }
-            .frame(height: 144)
+            .frame(height: 116)
             
             Divider()
                 .foregroundColor(PhotonColors.divider)
@@ -273,24 +273,24 @@ public struct EditorView: View {
                             viewModel.activeCategory = category
                         }
                     } label: {
-                        VStack(spacing: PhotonSpacing.xxs) {
+                        VStack(spacing: 3) {
                             Image(systemName: category.systemIcon)
-                                .font(.system(size: 16, weight: viewModel.activeCategory == category ? .semibold : .regular))
+                                .font(.system(size: 15, weight: viewModel.activeCategory == category ? .semibold : .regular))
                             
                             Text(category.rawValue)
                                 .font(PhotonTypography.caption.weight(viewModel.activeCategory == category ? .semibold : .regular))
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, PhotonSpacing.sm)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .padding(.vertical, 4)
                         .background(viewModel.activeCategory == category ? PhotonColors.surfaceSecondary : Color.clear)
                         .foregroundColor(viewModel.activeCategory == category ? PhotonColors.textPrimary : PhotonColors.textSecondary)
                         .clipShape(RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous))
                     }
                 }
             }
-            .padding(.horizontal, PhotonSpacing.sm)
-            .padding(.top, PhotonSpacing.xxs)
-            .padding(.bottom, PhotonSpacing.lg)
+            .padding(.horizontal, PhotonSpacing.xs)
+            .padding(.top, 4)
+            .padding(.bottom, 2)
         }
         .background(PhotonColors.surfacePrimary)
     }
