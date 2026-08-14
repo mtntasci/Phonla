@@ -31,7 +31,7 @@ export const Navbar: React.FC = () => {
       }}
     >
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {/* Brand Transparent White Vector Logo & Title */}
+        {/* Brand Logo & Title */}
         <a href="#" style={{ textDecoration: 'none' }}>
           <PhotonLogo size={28} showText={true} />
         </a>
@@ -41,7 +41,7 @@ export const Navbar: React.FC = () => {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '28px',
+            gap: '32px',
           }}
           className="desktop-nav"
         >
@@ -49,19 +49,16 @@ export const Navbar: React.FC = () => {
             Özellikler
           </a>
           <a href="#comparison" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '14px', fontWeight: 500, transition: 'color 0.2s' }}>
-            Kıyaslama Stüdyosu
+            Kıyaslama
           </a>
           <a href="#simulator" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '14px', fontWeight: 500, transition: 'color 0.2s' }}>
-            Canlı Simülatör
+            Canlı
           </a>
           <a href="#presets" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '14px', fontWeight: 500, transition: 'color 0.2s' }}>
-            Presetler
+            Koleksiyon
           </a>
           <a href="#privacy" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '14px', fontWeight: 500, transition: 'color 0.2s' }}>
-            Gizlilik & Donanım
-          </a>
-          <a href="#pricing" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '14px', fontWeight: 500, transition: 'color 0.2s' }}>
-            Üyelikler
+            Teknoloji
           </a>
         </nav>
 
@@ -125,35 +122,28 @@ export const Navbar: React.FC = () => {
             onClick={() => setMobileMenuOpen(false)}
             style={{ color: '#ffffff', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}
           >
-            Kıyaslama Stüdyosu
+            Kıyaslama
           </a>
           <a
             href="#simulator"
             onClick={() => setMobileMenuOpen(false)}
             style={{ color: '#ffffff', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}
           >
-            Canlı Simülatör
+            Canlı
           </a>
           <a
             href="#presets"
             onClick={() => setMobileMenuOpen(false)}
             style={{ color: '#ffffff', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}
           >
-            Presetler
+            Koleksiyon
           </a>
           <a
             href="#privacy"
             onClick={() => setMobileMenuOpen(false)}
             style={{ color: '#ffffff', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}
           >
-            Gizlilik & Donanım
-          </a>
-          <a
-            href="#pricing"
-            onClick={() => setMobileMenuOpen(false)}
-            style={{ color: '#ffffff', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}
-          >
-            Üyelikler
+            Teknoloji
           </a>
         </div>
       )}

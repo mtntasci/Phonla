@@ -30,7 +30,7 @@ export const PresetsShowcase: React.FC = () => {
       <div className="container">
         
         {/* Section Header */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
           <div className="badge-pill badge-pill-cyan" style={{ marginBottom: '14px' }}>
             <Sparkles size={14} />
             <span>Küratörlü Önayarlar</span>
@@ -60,7 +60,7 @@ export const PresetsShowcase: React.FC = () => {
                 background: collection === 'cinematic' ? '#ffffff' : 'transparent',
                 color: collection === 'cinematic' ? '#000000' : 'var(--text-secondary)',
                 border: 'none',
-                padding: '8px 18px',
+                padding: '8px 20px',
                 borderRadius: 'var(--radius-full)',
                 fontSize: '13px',
                 fontWeight: 600,
@@ -81,7 +81,7 @@ export const PresetsShowcase: React.FC = () => {
                 background: collection === 'mono' ? '#ffffff' : 'transparent',
                 color: collection === 'mono' ? '#000000' : 'var(--text-secondary)',
                 border: 'none',
-                padding: '8px 18px',
+                padding: '8px 20px',
                 borderRadius: 'var(--radius-full)',
                 fontSize: '13px',
                 fontWeight: 600,
@@ -98,24 +98,18 @@ export const PresetsShowcase: React.FC = () => {
           </div>
         </div>
 
-        {/* Presets Grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
-            gap: '16px',
-          }}
-        >
+        {/* Presets Grid: Exactly 3 items per row */}
+        <div className="presets-3-column-grid">
           {collection === 'cinematic'
             ? cinematicPresets.map((item, idx) => (
                 <div
                   key={idx}
                   className="glass-card"
                   style={{
-                    padding: '14px',
+                    padding: '16px',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '10px',
+                    gap: '12px',
                   }}
                 >
                   <div
@@ -123,7 +117,7 @@ export const PresetsShowcase: React.FC = () => {
                       position: 'relative',
                       width: '100%',
                       aspectRatio: '16/10',
-                      borderRadius: '10px',
+                      borderRadius: '12px',
                       overflow: 'hidden',
                     }}
                   >
@@ -140,13 +134,13 @@ export const PresetsShowcase: React.FC = () => {
                     <div
                       style={{
                         position: 'absolute',
-                        top: '6px',
-                        right: '6px',
-                        background: 'rgba(0, 0, 0, 0.65)',
+                        top: '8px',
+                        right: '8px',
+                        background: 'rgba(0, 0, 0, 0.7)',
                         backdropFilter: 'blur(6px)',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        fontSize: '9px',
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        fontSize: '10px',
                         fontWeight: 700,
                         color: item.accent,
                       }}
@@ -156,8 +150,8 @@ export const PresetsShowcase: React.FC = () => {
                   </div>
 
                   <div>
-                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#ffffff' }}>{item.name}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>{item.desc}</div>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: '#ffffff' }}>{item.name}</div>
+                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>{item.desc}</div>
                   </div>
                 </div>
               ))
@@ -166,10 +160,10 @@ export const PresetsShowcase: React.FC = () => {
                   key={idx}
                   className="glass-card"
                   style={{
-                    padding: '14px',
+                    padding: '16px',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '10px',
+                    gap: '12px',
                   }}
                 >
                   <div
@@ -177,7 +171,7 @@ export const PresetsShowcase: React.FC = () => {
                       position: 'relative',
                       width: '100%',
                       aspectRatio: '16/10',
-                      borderRadius: '10px',
+                      borderRadius: '12px',
                       overflow: 'hidden',
                     }}
                   >
@@ -194,13 +188,13 @@ export const PresetsShowcase: React.FC = () => {
                     <div
                       style={{
                         position: 'absolute',
-                        top: '6px',
-                        right: '6px',
+                        top: '8px',
+                        right: '8px',
                         background: 'rgba(0, 0, 0, 0.75)',
                         backdropFilter: 'blur(6px)',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        fontSize: '9px',
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        fontSize: '10px',
                         fontWeight: 700,
                         color: '#ffffff',
                       }}
@@ -210,9 +204,9 @@ export const PresetsShowcase: React.FC = () => {
                   </div>
 
                   <div>
-                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#ffffff' }}>{item.name}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>{item.desc}</div>
-                    <div style={{ fontSize: '10px', color: 'var(--accent-cyan)', marginTop: '3px', fontFamily: 'monospace' }}>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: '#ffffff' }}>{item.name}</div>
+                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>{item.desc}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--accent-cyan)', marginTop: '4px', fontFamily: 'monospace' }}>
                       {item.rgb}
                     </div>
                   </div>
@@ -221,6 +215,28 @@ export const PresetsShowcase: React.FC = () => {
         </div>
 
       </div>
+
+      <style>{`
+        .presets-3-column-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+          .presets-3-column-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+          }
+        }
+
+        @media (max-width: 580px) {
+          .presets-3-column-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+        }
+      `}</style>
     </section>
   );
 };
