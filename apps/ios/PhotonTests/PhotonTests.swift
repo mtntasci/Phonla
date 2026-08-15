@@ -10,6 +10,7 @@ import CoreGraphics
 import CoreImage
 import UIKit
 import Testing
+import AppTrackingTransparency
 @testable import Photon
 
 struct PhotonTests {
@@ -380,10 +381,12 @@ struct PhotonTests {
     
     // MARK: - Consent & ATT Tests
     
-    @Test func testConsentManagerInitialState() async throws {
-        let manager = await ConsentManager.shared
-        #expect(await manager.trackingStatus == .notDetermined || manager.trackingStatus == .denied || manager.trackingStatus == .authorized || manager.trackingStatus == .restricted)
+    @Test @MainActor func testConsentManagerInitialState() async throws {
+        let manager = ConsentManager.shared
+        let status = manager.trackingStatus
+        #expect(status == .notDetermined || status == .denied || status == .authorized || status == .restricted)
     }
 }
+
 
 
