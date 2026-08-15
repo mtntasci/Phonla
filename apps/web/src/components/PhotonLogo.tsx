@@ -79,7 +79,7 @@ export const PhotonLogo: React.FC<PhotonLogoProps> = ({
             lineHeight: 1,
           }}
         >
-          PHOTON
+          PHONLA
         </span>
       )}
     </div>

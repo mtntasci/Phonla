@@ -65,7 +65,7 @@ export const Footer: React.FC = () => {
           }}
         >
           <div>
-            © 2026 Photon. Tüm hakları saklıdır. Swift & Kotlin native mimari.
+            © 2026 Phonla. Tüm hakları saklıdır. Swift & Kotlin native mimari.
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

@@ -173,7 +173,7 @@ public struct SettingsView: View {
                 }
                 
                 VStack(alignment: .leading, spacing: PhotonSpacing.xxs) {
-                    Text(session.displayName ?? "Photon Kullanıcısı")
+                    Text(session.displayName ?? "Phonla Kullanıcısı")
                         .font(PhotonTypography.headline)
                         .foregroundColor(PhotonColors.textPrimary)
                     

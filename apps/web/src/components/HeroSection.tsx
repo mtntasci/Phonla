@@ -156,7 +156,7 @@ export const HeroSection: React.FC = () => {
                     zIndex: 20,
                   }}
                 >
-                  <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: '#fff' }}>PHOTON</span>
+                  <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: '#fff' }}>PHONLA</span>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <span style={{ fontSize: '11px', color: '#a1a1aa' }}>Sıfırla</span>
                     <span style={{ fontSize: '11px', fontWeight: 600, color: '#000', background: '#fff', padding: '2px 8px', borderRadius: '10px' }}>Kaydet</span>
@@ -167,7 +167,7 @@ export const HeroSection: React.FC = () => {
                 <div style={{ flex: 1, position: 'relative', overflow: 'hidden', margin: '6px', borderRadius: '14px' }}>
                   <img
                     src={activeBg}
-                    alt="Photon Live Preview"
+                    alt="Phonla Live Preview"
                     style={{
                       width: '100%',
                       height: '100%',

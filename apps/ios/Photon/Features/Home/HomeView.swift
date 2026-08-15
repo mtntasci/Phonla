@@ -82,7 +82,7 @@ public struct HomeView: View {
                     PhotonLogoMark(size: 26, color: .white)
                         .shadow(color: Color.black.opacity(0.6), radius: 4, x: 0, y: 1)
                     
-                    Text("PHOTON")
+                    Text("PHONLA")
                         .font(PhotonTypography.headline)
                         .tracking(3.5)
                         .foregroundColor(.white)

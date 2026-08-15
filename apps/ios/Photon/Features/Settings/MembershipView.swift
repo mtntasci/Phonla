@@ -19,7 +19,7 @@ public struct MembershipView: View {
                 VStack(spacing: PhotonSpacing.xl) {
                     // Header Description
                     VStack(spacing: PhotonSpacing.xs) {
-                        Text("Photon Üyelikleri")
+                        Text("Phonla Üyelikleri")
                             .font(PhotonTypography.titleLarge)
                             .foregroundColor(PhotonColors.textPrimary)
                         
@@ -34,7 +34,7 @@ public struct MembershipView: View {
                     VStack(alignment: .leading, spacing: PhotonSpacing.md) {
                         HStack {
                             VStack(alignment: .leading, spacing: PhotonSpacing.xxs) {
-                                Text("Photon Standart")
+                                Text("Phonla Standart")
                                     .font(PhotonTypography.titleMedium)
                                     .foregroundColor(PhotonColors.textPrimary)
                                 
@@ -72,7 +72,7 @@ public struct MembershipView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: PhotonSpacing.xxs) {
                                 HStack(spacing: PhotonSpacing.xs) {
-                                    Text("Photon Pro")
+                                    Text("Phonla Pro")
                                         .font(PhotonTypography.titleMedium)
                                         .foregroundColor(PhotonColors.textInverted)
                                     

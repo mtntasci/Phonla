@@ -122,7 +122,7 @@ public final class AuthService: NSObject, AuthServiceProtocol {
             self.currentSession = UserSession(
                 uid: firebaseUser.uid,
                 email: firebaseUser.email,
-                displayName: firebaseUser.displayName ?? (firebaseUser.email?.components(separatedBy: "@").first?.capitalized ?? "Photon Üyesi"),
+                displayName: firebaseUser.displayName ?? (firebaseUser.email?.components(separatedBy: "@").first?.capitalized ?? "Phonla Üyesi"),
                 photoURL: firebaseUser.photoURL,
                 phoneNumber: resolvedPhone,
                 providerId: resolveProviderName(from: firebaseUser),
@@ -240,7 +240,7 @@ public final class AuthService: NSObject, AuthServiceProtocol {
             let session = UserSession(
                 uid: user.uid,
                 email: user.email,
-                displayName: resolvedDisplayName ?? (user.email?.components(separatedBy: "@").first?.capitalized ?? "Photon Üyesi"),
+                displayName: resolvedDisplayName ?? (user.email?.components(separatedBy: "@").first?.capitalized ?? "Phonla Üyesi"),
                 photoURL: user.photoURL,
                 phoneNumber: user.phoneNumber ?? storedPhone,
                 providerId: resolveProviderName(from: user),

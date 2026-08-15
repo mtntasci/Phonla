@@ -114,10 +114,10 @@ export const InteractiveComparison: React.FC = () => {
             <span>İnteraktif Kıyaslama Stüdyosu</span>
           </div>
           <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', marginBottom: '14px' }}>
-            Orijinal vs <span className="gradient-text-cyan">Photon Grade</span>
+            Orijinal vs <span className="gradient-text-cyan">Phonla Grade</span>
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '15px', maxWidth: '580px', margin: '0 auto' }}>
-            Çizgiyi parmağınızla veya fareyle sağa sola kaydırın ve Photon analog tonlama motorunun ham fotoğrafları nasıl işlediğini görün.
+            Çizgiyi parmağınızla veya fareyle sağa sola kaydırın ve Phonla analog tonlama motorunun ham fotoğrafları nasıl işlediğini görün.
           </p>
         </div>
 
@@ -208,7 +208,7 @@ export const InteractiveComparison: React.FC = () => {
               ORİJİNAL
             </div>
 
-            {/* After (Photon Graded Photo) */}
+            {/* After (Phonla Graded Photo) */}
             <div
               className="comparison-image-after"
               style={{
@@ -217,7 +217,7 @@ export const InteractiveComparison: React.FC = () => {
             >
               <img
                 src={selectedImage}
-                alt="Photon Graded Fotoğraf"
+                alt="Phonla Graded Fotoğraf"
                 className="comparison-image"
                 style={{
                   filter: activePreset.cssFilter,
@@ -225,7 +225,7 @@ export const InteractiveComparison: React.FC = () => {
                 }}
               />
 
-              {/* "Photon Grade" Badge */}
+              {/* "Phonla Grade" Badge */}
               <div
                 style={{
                   position: 'absolute',
@@ -245,7 +245,7 @@ export const InteractiveComparison: React.FC = () => {
                   pointerEvents: 'none',
                 }}
               >
-                PHOTON • {activePreset.name.toUpperCase()}
+                PHONLA • {activePreset.name.toUpperCase()}
               </div>
             </div>
 
