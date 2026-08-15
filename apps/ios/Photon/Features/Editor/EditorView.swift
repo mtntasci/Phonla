@@ -225,14 +225,15 @@ public struct EditorView: View {
                     .ignoresSafeArea()
                 
                 if let displayImage = viewModel.currentDisplayImage {
+                    let imgSize = displayImage.size
+                    let fitScale = min(availableWidth / max(imgSize.width, 1), availableHeight / max(imgSize.height, 1))
+                    let fittedWidth = imgSize.width * fitScale
+                    let fittedHeight = imgSize.height * fitScale
+                    
                     ZStack(alignment: .topTrailing) {
                         Image(uiImage: displayImage)
                             .resizable()
-                            .scaledToFit()
-                            .frame(
-                                maxWidth: availableWidth,
-                                maxHeight: availableHeight
-                            )
+                            .frame(width: fittedWidth, height: fittedHeight)
                             .clipShape(RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous))
                             .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
                             .overlay(
@@ -254,16 +255,16 @@ public struct EditorView: View {
                                                 viewModel.addHealedSpot(x: normX, y: normY)
                                             }
                                             .overlay {
-                                                // Render highly visible visual markers on healed spots
+                                                // Render clean visual circular markers on healed spots
                                                 ForEach(viewModel.editState.healedSpots) { spot in
                                                     let spotX = spot.x * imgGeo.size.width
                                                     let spotY = spot.y * imgGeo.size.height
-                                                    let spotPx = max(24, spot.radius * max(imgGeo.size.width, imgGeo.size.height) * 2)
+                                                    let spotPx = max(20, spot.radius * max(imgGeo.size.width, imgGeo.size.height) * 2)
                                                     
                                                     Circle()
-                                                        .strokeBorder(Color.white, lineWidth: 2.0)
-                                                        .background(Circle().fill(Color.white.opacity(0.25)))
-                                                        .shadow(color: Color.black.opacity(0.6), radius: 3, x: 0, y: 2)
+                                                        .strokeBorder(Color.white.opacity(0.9), lineWidth: 1.5)
+                                                        .background(Circle().fill(Color.white.opacity(0.08)))
+                                                        .shadow(color: Color.black.opacity(0.5), radius: 2, x: 0, y: 1)
                                                         .frame(width: spotPx, height: spotPx)
                                                         .position(x: spotX, y: spotY)
                                                         .allowsHitTesting(false)
