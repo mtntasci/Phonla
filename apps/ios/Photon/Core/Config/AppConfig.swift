@@ -30,24 +30,23 @@ public enum AppConfig {
     // MARK: - Google AdMob
     public enum AdMob {
         /// AdMob Application ID configured in Google AdMob Console.
-        /// Defaults to Google's official iOS Test App ID.
-        /// TODO: CONFIG_REQUIRED - Replace with your production AdMob Application ID (e.g. ca-app-pub-XXXXXXXX~YYYYYYYY) in Release builds.
         #if DEBUG
-        public static let appID: String = "ca-app-pub-3940256099942544~1458002511"
+        public static let appID: String = "ca-app-pub-3940256099942544~1458002511" // Google Official Test App ID
         #else
-        public static let appID: String = "ca-app-pub-3940256099942544~1458002511" // TODO: CONFIG_REQUIRED (Production App ID)
+        public static let appID: String = "ca-app-pub-9243885367570645~5136524567" // Production App ID
         #endif
         
         /// AdMob Rewarded Ad Unit ID shown to Free users before photo export.
-        /// Defaults to Google's official iOS Rewarded Video Test Ad Unit ID.
-        /// TODO: CONFIG_REQUIRED - Replace with your production Rewarded Ad Unit ID (e.g. ca-app-pub-XXXXXXXX/YYYYYYYY) in Release builds.
+        /// In DEBUG builds, uses Google's official Rewarded test unit ID to prevent invalid traffic.
+        /// In RELEASE builds, uses the production Rewarded Ad Unit ID.
         #if DEBUG
-        public static let rewardedExportAdUnitID: String = "ca-app-pub-3940256099942544/1712485313"
+        public static let rewardedExportAdUnitID: String = "ca-app-pub-3940256099942544/1712485313" // Google Official Rewarded Test ID
         #else
-        public static let rewardedExportAdUnitID: String = "ca-app-pub-3940256099942544/1712485313" // TODO: CONFIG_REQUIRED (Production Ad Unit ID)
+        public static let rewardedExportAdUnitID: String = "ca-app-pub-9243885367570645/6395238093" // Production Rewarded Ad Unit ID
         #endif
         
         /// Tag for Child-Directed Treatment (COPPA) & Conservative / Non-Personalized Ad Serving.
         public static let isConservativePrivacyEnabled: Bool = true
     }
 }
+
