@@ -341,11 +341,32 @@ public struct EditorView: View {
                             }
                             .padding(.horizontal, PhotonSpacing.sm)
                             .padding(.vertical, PhotonSpacing.xxs)
-                            .background(PhotonColors.textPrimary.opacity(0.88))
-                            .foregroundColor(PhotonColors.textInverted)
+                            .background(Color.black.opacity(0.65))
+                            .foregroundColor(.white)
                             .clipShape(Capsule())
-                            .padding(PhotonSpacing.md)
-                            .transition(.opacity)
+                            .padding()
+                        }
+                        
+                        // "Lekeye dokunun" floating hint
+                        if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing && viewModel.editState.healedSpots.isEmpty {
+                            VStack {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "hand.tap.fill")
+                                        .font(.system(size: 13))
+                                    Text("Lekeye dokunun")
+                                        .font(.system(size: 13, weight: .semibold))
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Capsule())
+                                .foregroundColor(.white)
+                                .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
+                                .padding(.top, 16)
+                                
+                                Spacer()
+                            }
+                            .allowsHitTesting(false)
                         }
                     }
                 } else {

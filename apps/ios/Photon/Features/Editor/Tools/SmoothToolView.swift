@@ -125,19 +125,6 @@ public struct SmoothToolView: View {
                                 .clipShape(Circle())
                         }
                         .buttonStyle(.plain)
-                    } else {
-                        // Tap hint
-                        HStack(spacing: 3) {
-                            Image(systemName: "hand.tap")
-                                .font(.system(size: 11))
-                            Text("Lekeye dokunun")
-                                .font(.system(size: 11, weight: .medium))
-                        }
-                        .padding(.horizontal, 9)
-                        .padding(.vertical, 6)
-                        .background(PhotonColors.surfaceSecondary.opacity(0.8))
-                        .foregroundColor(PhotonColors.textSecondary)
-                        .clipShape(Capsule())
                     }
                 }
             }
