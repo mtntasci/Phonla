@@ -65,6 +65,22 @@ struct PhotonTests {
     
     // MARK: - Auth & Session Tests
     
+    @Test func testUserSessionModel() async throws {
+        let session = UserSession(
+            uid: "test-uid-123",
+            email: "test@phonla.app",
+            displayName: "Test User",
+            photoURL: URL(string: "https://phonla.app/avatar.jpg"),
+            providerId: "Apple",
+            isAnonymous: false
+        )
+        
+        #expect(session.uid == "test-uid-123")
+        #expect(session.email == "test@phonla.app")
+        #expect(session.displayName == "Test User")
+        #expect(session.providerId == "Apple")
+    }
+    
     @Test func testAuthServiceSignOutAndSessionState() async throws {
         let auth = await AuthService.shared
         
@@ -74,6 +90,14 @@ struct PhotonTests {
         
         let session = await auth.checkCurrentSession()
         #expect(session == nil)
+    }
+    
+    @Test func testAuthErrorDescriptions() async throws {
+        let recentLoginErr = AuthError.requiresRecentLogin
+        #expect(recentLoginErr.errorDescription?.contains("yeniden giriş") == true)
+        
+        let notAuthErr = AuthError.notAuthenticated
+        #expect(notAuthErr.errorDescription?.contains("oturum") == true)
     }
     
     // MARK: - Phase 5: Light & Color Adjustments

@@ -7,21 +7,19 @@
 
 import SwiftUI
 import UserNotifications
+import Photos
 
-/// Profile and Settings screen managing user profile data, notification permissions,
-/// membership tiers, privacy commitments, and the special dedicated Easter Egg.
+/// Profile and Settings screen managing user profile data, runtime permissions,
+/// membership tiers, privacy commitments, Easter Egg, and real account deletion.
 public struct SettingsView: View {
     @Environment(NavigationState.self) private var navigationState
+    @Environment(\.scenePhase) private var scenePhase
     @State private var authService = AuthService.shared
     @State private var subscriptionService = SubscriptionService.shared
     
-    // Phone Number Editing State
-    @State private var phoneNumberText: String = ""
-    @State private var isEditingPhone: Bool = false
-    @State private var phoneSavedFeedback: Bool = false
-    
-    // Notification Permission State
+    // Runtime Permission States
     @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
+    @State private var photoLibraryStatus: PHAuthorizationStatus = .notDetermined
     
     // Membership Sheet State
     @State private var showMembershipSheet: Bool = false
@@ -32,110 +30,41 @@ public struct SettingsView: View {
     @State private var showEasterEgg: Bool = false
     @State private var easterEggDismissTask: Task<Void, Never>?
     
+    // Account Deletion States
+    @State private var showDeleteConfirmation: Bool = false
+    @State private var isDeletingAccount: Bool = false
+    @State private var deleteErrorMessage: String?
+    @State private var showDeleteErrorAlert: Bool = false
+    
     public init() {}
     
     public var body: some View {
         ZStack(alignment: .bottom) {
             VStack(spacing: 0) {
                 // MARK: - Header
-                HStack {
-                    Button {
-                        navigationState.navigateToHome()
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(PhotonColors.textPrimary)
-                            .frame(width: 36, height: 36)
-                            .background(PhotonColors.surfaceSecondary)
-                            .clipShape(Circle())
-                    }
-                    
-                    Spacer()
-                    
-                    Text("Profil & Ayarlar")
-                        .font(PhotonTypography.headline)
-                        .foregroundColor(PhotonColors.textPrimary)
-                    
-                    Spacer()
-                    
-                    Color.clear
-                        .frame(width: 36, height: 36)
-                }
-                .padding(.horizontal, PhotonSpacing.lg)
-                .padding(.vertical, PhotonSpacing.sm)
+                headerView
                 
                 Divider()
                     .foregroundColor(PhotonColors.divider)
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: PhotonSpacing.xl) {
-                        // MARK: - Profile Card
+                        // MARK: - 1. Profile Section
                         if let session = authService.currentSession {
-                            profileCard(session: session)
+                            profileSection(session: session)
                         }
                         
-                        // MARK: - Settings Group
-                        VStack(alignment: .leading, spacing: PhotonSpacing.sm) {
-                            Text("Ayarlar")
-                                .font(PhotonTypography.caption)
-                                .foregroundColor(PhotonColors.textTertiary)
-                                .padding(.horizontal, PhotonSpacing.xs)
-                            
-                            VStack(spacing: 0) {
-                                // 1. Notifications
-                                notificationRow
-                                
-                                Divider().foregroundColor(PhotonColors.divider)
-                                
-                                // 2. Memberships
-                                Button {
-                                    showMembershipSheet = true
-                                } label: {
-                                    HStack {
-                                        Image(systemName: "crown.fill")
-                                            .font(.system(size: 16))
-                                            .foregroundColor(subscriptionService.isProUser ? Color.yellow : PhotonColors.textPrimary)
-                                            .frame(width: 28)
-                                        
-                                        Text("Üyelikler")
-                                            .font(PhotonTypography.bodyMedium)
-                                            .foregroundColor(PhotonColors.textPrimary)
-                                        
-                                        Spacer()
-                                        
-                                        if subscriptionService.isProUser {
-                                            HStack(spacing: 4) {
-                                                Image(systemName: "sparkles")
-                                                    .font(.system(size: 11))
-                                                Text("Pro")
-                                                    .font(PhotonTypography.caption.weight(.bold))
-                                            }
-                                            .foregroundColor(PhotonColors.textInverted)
-                                            .padding(.horizontal, PhotonSpacing.sm)
-                                            .padding(.vertical, 3)
-                                            .background(Color.black)
-                                            .clipShape(Capsule())
-                                        } else {
-                                            Text("Standart")
-                                                .font(PhotonTypography.caption.weight(.medium))
-                                                .foregroundColor(PhotonColors.textSecondary)
-                                        }
-                                        
-                                        Image(systemName: "chevron.right")
-                                            .font(.system(size: 13, weight: .semibold))
-                                            .foregroundColor(PhotonColors.textTertiary)
-                                    }
-                                    .padding(.vertical, PhotonSpacing.md)
-                                    .contentShape(Rectangle())
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            .padding(.horizontal, PhotonSpacing.md)
-                            .photonCard()
-                        }
+                        // MARK: - 2. Permissions Section
+                        permissionsSection
                         
-                        // MARK: - Privacy & Hardware Acceleration Card (with 3-Tap Easter Egg)
+                        // MARK: - 3. Membership Section
+                        membershipSection
+                        
+                        // MARK: - 4. Privacy & Hardware Acceleration Card (with 3-Tap Easter Egg)
                         privacyCard
+                        
+                        // MARK: - 5. Delete Account Section
+                        deleteAccountSection
                     }
                     .padding(PhotonSpacing.lg)
                     .padding(.bottom, PhotonSpacing.xxxl)
@@ -146,8 +75,29 @@ public struct SettingsView: View {
                 MembershipView()
             }
             .onAppear {
-                initializeProfileState()
-                checkNotificationStatus()
+                checkAllPermissions()
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active {
+                    checkAllPermissions()
+                }
+            }
+            .confirmationDialog(
+                "Hesabınızı Silmek İstediğinize Emin Misiniz?",
+                isPresented: $showDeleteConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Hesabımı Kalıcı Olarak Sil", role: .destructive) {
+                    performAccountDeletion()
+                }
+                Button("Vazgeç", role: .cancel) {}
+            } message: {
+                Text("Bu işlem Firebase üzerindeki hesabınızı ve tüm yerel oturum verilerinizi kalıcı olarak silecektir. Bu işlem geri alınamaz.")
+            }
+            .alert("Hesap Silme Hatası", isPresented: $showDeleteErrorAlert) {
+                Button("Tamam", role: .cancel) {}
+            } message: {
+                Text(deleteErrorMessage ?? "Hesap silinirken bir hata oluştu.")
             }
             
             // MARK: - Easter Egg Floating Banner
@@ -159,16 +109,45 @@ public struct SettingsView: View {
         }
     }
     
-    // MARK: - Profile Card View
+    // MARK: - Header View
     
-    private func profileCard(session: UserSession) -> some View {
+    private var headerView: some View {
+        HStack {
+            Button {
+                navigationState.navigateToHome()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(PhotonColors.textPrimary)
+                    .frame(width: 36, height: 36)
+                    .background(PhotonColors.surfaceSecondary)
+                    .clipShape(Circle())
+            }
+            
+            Spacer()
+            
+            Text("Profil & Ayarlar")
+                .font(PhotonTypography.headline)
+                .foregroundColor(PhotonColors.textPrimary)
+            
+            Spacer()
+            
+            Color.clear
+                .frame(width: 36, height: 36)
+        }
+        .padding(.horizontal, PhotonSpacing.lg)
+        .padding(.vertical, PhotonSpacing.sm)
+    }
+    
+    // MARK: - 1. Profile Section (Photo, Name, Email, Provider & Sign Out)
+    
+    private func profileSection(session: UserSession) -> some View {
         VStack(alignment: .leading, spacing: PhotonSpacing.md) {
-            // User Avatar & Name
             HStack(spacing: PhotonSpacing.md) {
                 ZStack {
                     Circle()
                         .fill(PhotonColors.surfaceSecondary)
-                        .frame(width: 56, height: 56)
+                        .frame(width: 60, height: 60)
                     
                     if let photoURL = session.photoURL {
                         AsyncImage(url: photoURL) { phase in
@@ -176,7 +155,7 @@ public struct SettingsView: View {
                                 image
                                     .resizable()
                                     .scaledToFill()
-                                    .frame(width: 56, height: 56)
+                                    .frame(width: 60, height: 60)
                                     .clipShape(Circle())
                             } else {
                                 fallbackAvatar(for: session)
@@ -191,21 +170,24 @@ public struct SettingsView: View {
                     Text(session.displayName ?? "Phonla Kullanıcısı")
                         .font(PhotonTypography.headline)
                         .foregroundColor(PhotonColors.textPrimary)
+                        .lineLimit(1)
                     
                     if let email = session.email {
                         Text(email)
                             .font(PhotonTypography.caption)
                             .foregroundColor(PhotonColors.textSecondary)
+                            .lineLimit(1)
                     }
                     
                     if let provider = session.providerId {
                         HStack(spacing: 4) {
-                            Image(systemName: provider == "Apple" ? "apple.logo" : "globe")
-                                .font(.system(size: 10))
+                            Image(systemName: providerSystemIcon(for: provider))
+                                .font(.system(size: 11))
                             Text("\(provider) ile Bağlı")
-                                .font(PhotonTypography.caption)
+                                .font(PhotonTypography.caption.weight(.medium))
                         }
                         .foregroundColor(PhotonColors.textTertiary)
+                        .padding(.top, 2)
                     }
                 }
                 
@@ -214,65 +196,11 @@ public struct SettingsView: View {
             
             Divider().foregroundColor(PhotonColors.divider)
             
-            // Phone Number Field (Optional & Editable)
-            VStack(alignment: .leading, spacing: PhotonSpacing.xs) {
-                Text("Telefon Numarası (Opsiyonel)")
-                    .font(PhotonTypography.caption)
-                    .foregroundColor(PhotonColors.textTertiary)
-                
-                HStack(spacing: PhotonSpacing.sm) {
-                    Image(systemName: "phone.fill")
-                        .font(.system(size: 13))
-                        .foregroundColor(PhotonColors.textSecondary)
-                    
-                    TextField("Telefon numaranızı girin", text: $phoneNumberText)
-                        .font(PhotonTypography.bodyMedium)
-                        .keyboardType(.phonePad)
-                        .foregroundColor(PhotonColors.textPrimary)
-                    
-                    if phoneNumberText != (session.phoneNumber ?? "") {
-                        Button {
-                            authService.savePhoneNumber(phoneNumberText)
-                            withAnimation {
-                                phoneSavedFeedback = true
-                            }
-                            Task {
-                                try? await Task.sleep(nanoseconds: 2_000_000_000)
-                                withAnimation {
-                                    phoneSavedFeedback = false
-                                }
-                            }
-                        } label: {
-                            Text("Kaydet")
-                                .font(PhotonTypography.caption.weight(.semibold))
-                                .foregroundColor(PhotonColors.textInverted)
-                                .padding(.horizontal, PhotonSpacing.sm)
-                                .padding(.vertical, 6)
-                                .background(PhotonColors.textPrimary)
-                                .clipShape(Capsule())
-                        }
-                    } else if phoneSavedFeedback {
-                        Text("Kaydedildi")
-                            .font(PhotonTypography.caption.weight(.semibold))
-                            .foregroundColor(PhotonColors.success)
-                    }
-                }
-                .padding(.vertical, PhotonSpacing.xs)
-                .padding(.horizontal, PhotonSpacing.sm)
-                .background(PhotonColors.surfaceSecondary)
-                .clipShape(RoundedRectangle(cornerRadius: PhotonCornerRadius.md, style: .continuous))
-            }
-            
-            Divider().foregroundColor(PhotonColors.divider)
-            
-            // Sign Out Button
-            HStack {
-                Spacer()
-                PhotonButton("Çıkış Yap", variant: .outline, size: .small, isFullWidth: true) {
-                    Task {
-                        try? await authService.signOut()
-                        navigationState.navigateToAuth()
-                    }
+            // Sign Out Button inside Profile
+            PhotonButton("Çıkış Yap", variant: .outline, size: .small, isFullWidth: true) {
+                Task {
+                    try? await authService.signOut()
+                    navigationState.navigateToAuth()
                 }
             }
         }
@@ -280,48 +208,205 @@ public struct SettingsView: View {
         .photonCard()
     }
     
-    // MARK: - Notifications Row
+    // MARK: - 2. Permissions Section (Notifications & Photos Add-Only)
     
-    private var notificationRow: some View {
+    private var permissionsSection: some View {
+        VStack(alignment: .leading, spacing: PhotonSpacing.sm) {
+            Text("İzinler")
+                .font(PhotonTypography.caption)
+                .foregroundColor(PhotonColors.textTertiary)
+                .padding(.horizontal, PhotonSpacing.xs)
+            
+            VStack(spacing: 0) {
+                // 1. Bildirimler
+                notificationPermissionRow
+                
+                Divider().foregroundColor(PhotonColors.divider)
+                
+                // 2. Fotoğraflara Kaydetme (Lowest Privilege: Add Only)
+                photoLibraryPermissionRow
+            }
+            .padding(.horizontal, PhotonSpacing.md)
+            .photonCard()
+        }
+    }
+    
+    private var notificationPermissionRow: some View {
         HStack {
             Image(systemName: "bell.badge.fill")
                 .font(.system(size: 16))
                 .foregroundColor(PhotonColors.textPrimary)
                 .frame(width: 28)
             
-            Text("Bildirim İzni")
-                .font(PhotonTypography.bodyMedium)
-                .foregroundColor(PhotonColors.textPrimary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Bildirimler")
+                    .font(PhotonTypography.bodyMedium)
+                    .foregroundColor(PhotonColors.textPrimary)
+                
+                Text("Güncellemeler ve yenilikler")
+                    .font(PhotonTypography.caption)
+                    .foregroundColor(PhotonColors.textTertiary)
+            }
             
             Spacer()
             
             if notificationStatus == .authorized || notificationStatus == .provisional {
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(PhotonColors.success)
-                        .frame(width: 6, height: 6)
-                    Text("İzin Verildi")
-                        .font(PhotonTypography.caption.weight(.medium))
-                        .foregroundColor(PhotonColors.success)
-                }
+                permissionStatusBadge(title: "İzin Verildi", isGranted: true)
+            } else if notificationStatus == .denied {
+                openSettingsButton
             } else {
                 Button {
                     requestNotificationPermission()
                 } label: {
-                    Text(notificationStatus == .denied ? "İzin Verilmedi" : "İzin İste")
-                        .font(PhotonTypography.caption.weight(.medium))
-                        .foregroundColor(PhotonColors.textSecondary)
+                    Text("İzin İste")
+                        .font(PhotonTypography.caption.weight(.semibold))
+                        .foregroundColor(PhotonColors.textInverted)
                         .padding(.horizontal, PhotonSpacing.sm)
-                        .padding(.vertical, 4)
-                        .background(PhotonColors.surfaceSecondary)
+                        .padding(.vertical, 6)
+                        .background(PhotonColors.textPrimary)
                         .clipShape(Capsule())
                 }
+                .buttonStyle(.plain)
             }
         }
         .padding(.vertical, PhotonSpacing.md)
     }
     
-    // MARK: - Privacy & Hardware Acceleration Card
+    private var photoLibraryPermissionRow: some View {
+        HStack {
+            Image(systemName: "photo.stack.fill")
+                .font(.system(size: 16))
+                .foregroundColor(PhotonColors.textPrimary)
+                .frame(width: 28)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Fotoğraflara Kaydetme")
+                    .font(PhotonTypography.bodyMedium)
+                    .foregroundColor(PhotonColors.textPrimary)
+                
+                Text("Düzenlenen fotoğrafları galeriye ekleme")
+                    .font(PhotonTypography.caption)
+                    .foregroundColor(PhotonColors.textTertiary)
+            }
+            
+            Spacer()
+            
+            if photoLibraryStatus == .authorized || photoLibraryStatus == .limited {
+                permissionStatusBadge(title: "İzin Verildi", isGranted: true)
+            } else if photoLibraryStatus == .denied || photoLibraryStatus == .restricted {
+                openSettingsButton
+            } else {
+                Button {
+                    requestPhotoLibraryPermission()
+                } label: {
+                    Text("İzin İste")
+                        .font(PhotonTypography.caption.weight(.semibold))
+                        .foregroundColor(PhotonColors.textInverted)
+                        .padding(.horizontal, PhotonSpacing.sm)
+                        .padding(.vertical, 6)
+                        .background(PhotonColors.textPrimary)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.vertical, PhotonSpacing.md)
+    }
+    
+    private func permissionStatusBadge(title: String, isGranted: Bool) -> some View {
+        HStack(spacing: 5) {
+            Circle()
+                .fill(isGranted ? PhotonColors.success : PhotonColors.error)
+                .frame(width: 6, height: 6)
+            Text(title)
+                .font(PhotonTypography.caption.weight(.medium))
+                .foregroundColor(isGranted ? PhotonColors.success : PhotonColors.textSecondary)
+        }
+        .padding(.horizontal, PhotonSpacing.xs)
+        .padding(.vertical, 4)
+    }
+    
+    private var openSettingsButton: some View {
+        Button {
+            if let url = URL(string: UIApplication.openSettingsURLString), UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url)
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Text("Ayarları Aç")
+                    .font(PhotonTypography.caption.weight(.semibold))
+                Image(systemName: "arrow.up.forward.app")
+                    .font(.system(size: 11))
+            }
+            .foregroundColor(PhotonColors.textPrimary)
+            .padding(.horizontal, PhotonSpacing.sm)
+            .padding(.vertical, 6)
+            .background(PhotonColors.surfaceSecondary)
+            .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .strokeBorder(PhotonColors.border, lineWidth: 0.8)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+    
+    // MARK: - 3. Membership Section
+    
+    private var membershipSection: some View {
+        VStack(alignment: .leading, spacing: PhotonSpacing.sm) {
+            Text("Üyelik")
+                .font(PhotonTypography.caption)
+                .foregroundColor(PhotonColors.textTertiary)
+                .padding(.horizontal, PhotonSpacing.xs)
+            
+            Button {
+                showMembershipSheet = true
+            } label: {
+                HStack {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(subscriptionService.isProUser ? Color.yellow : PhotonColors.textPrimary)
+                        .frame(width: 28)
+                    
+                    Text("phonla Pro & Planlar")
+                        .font(PhotonTypography.bodyMedium)
+                        .foregroundColor(PhotonColors.textPrimary)
+                    
+                    Spacer()
+                    
+                    if subscriptionService.isProUser {
+                        HStack(spacing: 4) {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 11))
+                            Text("Pro")
+                                .font(PhotonTypography.caption.weight(.bold))
+                        }
+                        .foregroundColor(PhotonColors.textInverted)
+                        .padding(.horizontal, PhotonSpacing.sm)
+                        .padding(.vertical, 3)
+                        .background(Color.black)
+                        .clipShape(Capsule())
+                    } else {
+                        Text("Standart")
+                            .font(PhotonTypography.caption.weight(.medium))
+                            .foregroundColor(PhotonColors.textSecondary)
+                    }
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(PhotonColors.textTertiary)
+                }
+                .padding(.horizontal, PhotonSpacing.md)
+                .padding(.vertical, PhotonSpacing.md)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .photonCard()
+        }
+    }
+    
+    // MARK: - 4. Privacy & Hardware Acceleration Card (with 3-Tap Easter Egg)
     
     private var privacyCard: some View {
         VStack(alignment: .leading, spacing: PhotonSpacing.md) {
@@ -359,6 +444,64 @@ public struct SettingsView: View {
         }
     }
     
+    // MARK: - 5. Delete Account Section (Real Firebase Auth Account Deletion)
+    
+    private var deleteAccountSection: some View {
+        VStack(alignment: .leading, spacing: PhotonSpacing.xs) {
+            Button {
+                showDeleteConfirmation = true
+            } label: {
+                HStack(spacing: PhotonSpacing.sm) {
+                    if isDeletingAccount {
+                        ProgressView()
+                            .tint(PhotonColors.error)
+                            .frame(width: 20, height: 20)
+                    } else {
+                        Image(systemName: "trash.fill")
+                            .font(.system(size: 15))
+                            .foregroundColor(PhotonColors.error)
+                    }
+                    
+                    Text("Hesabımı Sil")
+                        .font(PhotonTypography.bodyMedium.weight(.semibold))
+                        .foregroundColor(PhotonColors.error)
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, PhotonSpacing.md)
+                .padding(.vertical, PhotonSpacing.md)
+                .background(PhotonColors.error.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: PhotonCornerRadius.md, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: PhotonCornerRadius.md, style: .continuous)
+                        .strokeBorder(PhotonColors.error.opacity(0.2), lineWidth: 0.8)
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(isDeletingAccount)
+            
+            Text("Hesabınızı sildiğinizde kimlik bilgileriniz ve oturumunuz kalıcı olarak kaldırılır.")
+                .font(PhotonTypography.caption)
+                .foregroundColor(PhotonColors.textTertiary)
+                .padding(.horizontal, PhotonSpacing.xs)
+        }
+    }
+    
+    private func performAccountDeletion() {
+        isDeletingAccount = true
+        Task {
+            do {
+                try await authService.deleteAccount()
+                isDeletingAccount = false
+                navigationState.navigateToAuth()
+            } catch {
+                isDeletingAccount = false
+                deleteErrorMessage = error.localizedDescription
+                showDeleteErrorAlert = true
+            }
+        }
+    }
+    
     // MARK: - Easter Egg Floating Banner
     
     private var easterEggBanner: some View {
@@ -382,8 +525,6 @@ public struct SettingsView: View {
         .padding(.horizontal, PhotonSpacing.lg)
         .padding(.bottom, PhotonSpacing.xl)
     }
-    
-    // MARK: - Easter Egg Action (3 Taps within 1.5s)
     
     private func handlePrivacyCardTap() {
         let now = Date()
@@ -415,12 +556,11 @@ public struct SettingsView: View {
         }
     }
     
-    // MARK: - State Initializers & Helpers
+    // MARK: - Permission Handlers & Checkers
     
-    private func initializeProfileState() {
-        if let session = authService.currentSession {
-            phoneNumberText = session.phoneNumber ?? ""
-        }
+    private func checkAllPermissions() {
+        checkNotificationStatus()
+        checkPhotoLibraryStatus()
     }
     
     private func checkNotificationStatus() {
@@ -436,6 +576,32 @@ public struct SettingsView: View {
             Task { @MainActor in
                 checkNotificationStatus()
             }
+        }
+    }
+    
+    private func checkPhotoLibraryStatus() {
+        let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+        self.photoLibraryStatus = status
+    }
+    
+    private func requestPhotoLibraryPermission() {
+        Task {
+            let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+            await MainActor.run {
+                self.photoLibraryStatus = status
+            }
+        }
+    }
+    
+    // MARK: - Helpers
+    
+    private func providerSystemIcon(for provider: String) -> String {
+        switch provider.lowercased() {
+        case "apple": return "apple.logo"
+        case "google": return "globe"
+        case "facebook": return "f.circle"
+        case "e-posta", "email", "password": return "envelope.fill"
+        default: return "person.crop.circle"
         }
     }
     
@@ -457,3 +623,4 @@ public struct SettingsView: View {
     SettingsView()
         .environment(NavigationState())
 }
+

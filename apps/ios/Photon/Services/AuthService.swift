@@ -34,6 +34,7 @@ public enum AuthError: LocalizedError, Sendable {
     case missingConfiguration(String)
     case cancelled
     case notAuthenticated
+    case requiresRecentLogin
     case unknown(String)
     
     public var errorDescription: String? {
@@ -46,6 +47,8 @@ public enum AuthError: LocalizedError, Sendable {
             return "Giriş işlemi iptal edildi."
         case .notAuthenticated:
             return "Aktif bir oturum bulunamadı."
+        case .requiresRecentLogin:
+            return "Güvenlik nedeniyle hesabınızı silmeden önce lütfen yeniden giriş yapınız."
         case .unknown(let message):
             return message
         }
@@ -61,11 +64,11 @@ public protocol AuthServiceProtocol: Sendable {
     func checkCurrentSession() async -> UserSession?
     func signIn(with provider: AuthProvider) async throws -> UserSession
     func signOut() async throws
-    func savePhoneNumber(_ phoneNumber: String)
+    func deleteAccount() async throws
 }
 
 /// Production authentication service backed by Firebase Auth.
-/// Manages real currentUser lifecycle, persistent tokens, and secure sign-out.
+/// Manages real currentUser lifecycle, persistent tokens, secure sign-out, and account deletion.
 @MainActor
 @Observable
 public final class AuthService: NSObject, AuthServiceProtocol {
@@ -116,15 +119,11 @@ public final class AuthService: NSObject, AuthServiceProtocol {
         }
         
         if let firebaseUser = Auth.auth().currentUser {
-            let storedPhone = UserDefaults.standard.string(forKey: "photon_user_phone_\(firebaseUser.uid)")
-            let resolvedPhone = firebaseUser.phoneNumber ?? storedPhone
-            
             self.currentSession = UserSession(
                 uid: firebaseUser.uid,
                 email: firebaseUser.email,
                 displayName: firebaseUser.displayName ?? (firebaseUser.email?.components(separatedBy: "@").first?.capitalized ?? "Phonla Üyesi"),
                 photoURL: firebaseUser.photoURL,
-                phoneNumber: resolvedPhone,
                 providerId: resolveProviderName(from: firebaseUser),
                 isAnonymous: firebaseUser.isAnonymous
             )
@@ -140,20 +139,10 @@ public final class AuthService: NSObject, AuthServiceProtocol {
             case "google.com": return "Google"
             case "facebook.com": return "Facebook"
             case "password": return "E-posta"
-            case "phone": return "Telefon"
             default: return primary
             }
         }
         return user.isAnonymous ? "Misafir" : "Firebase"
-    }
-    
-    // MARK: - Phone Number Management
-    
-    public func savePhoneNumber(_ phoneNumber: String) {
-        guard let session = currentSession else { return }
-        let trimmed = phoneNumber.trimmingCharacters(in: .whitespacesAndNewlines)
-        UserDefaults.standard.set(trimmed, forKey: "photon_user_phone_\(session.uid)")
-        self.currentSession?.phoneNumber = trimmed.isEmpty ? nil : trimmed
     }
     
     // MARK: - Session Verification
@@ -236,13 +225,11 @@ public final class AuthService: NSObject, AuthServiceProtocol {
                 }
             }
             
-            let storedPhone = UserDefaults.standard.string(forKey: "photon_user_phone_\(user.uid)")
             let session = UserSession(
                 uid: user.uid,
                 email: user.email,
                 displayName: resolvedDisplayName ?? (user.email?.components(separatedBy: "@").first?.capitalized ?? "Phonla Üyesi"),
                 photoURL: user.photoURL,
-                phoneNumber: user.phoneNumber ?? storedPhone,
                 providerId: resolveProviderName(from: user),
                 isAnonymous: user.isAnonymous
             )
@@ -274,4 +261,35 @@ public final class AuthService: NSObject, AuthServiceProtocol {
             throw error
         }
     }
+    
+    // MARK: - Delete Account (Real Firebase Account Deletion)
+    
+    public func deleteAccount() async throws {
+        isLoading = true
+        defer { isLoading = false }
+        
+        guard ensureFirebaseConfigured() else {
+            self.currentSession = nil
+            return
+        }
+        
+        guard let currentUser = Auth.auth().currentUser else {
+            self.currentSession = nil
+            return
+        }
+        
+        do {
+            try await currentUser.delete()
+            self.currentSession = nil
+        } catch let error as NSError {
+            if error.domain == AuthErrorDomain, error.code == AuthErrorCode.requiresRecentLogin.rawValue {
+                let recentLoginError = AuthError.requiresRecentLogin
+                self.lastError = recentLoginError.localizedDescription
+                throw recentLoginError
+            }
+            self.lastError = error.localizedDescription
+            throw error
+        }
+    }
 }
+
