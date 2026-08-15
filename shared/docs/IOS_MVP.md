@@ -72,3 +72,13 @@ Editor 4 ana araç kategorisinden oluşur:
 - **Yeni Asset Olarak Kayıt**: Düzenlenen görsel `PHPhotoLibrary` aracılığıyla kullanıcının fotoğraf galerisine yeni bir fotoğraf olarak kaydedilir.
 - **Full-Resolution Render**: Dışa aktarım sırasında önizleme ölçeği değil, orijinal görselin tam çözünürlüğü ve kalitesi üzerinden render pipeline çalıştırılır.
 - **Format & Metadata**: JPEG/HEIC formatında, mümkün olan en yüksek kalite ve doğru renk uzayı (sRGB / Display P3) korunarak export edilir.
+
+---
+
+## 6. App Store Dağıtım & Export Compliance (Şifreleme Uyumluluğu)
+
+- **ITSAppUsesNonExemptEncryption**: `false` (`NO`).
+  - **Gerekçe**: Phonla, tescilli (proprietary) veya standart dışı özel bir şifreleme algoritması uygulamamaktadır.
+  - **Mevcut Şifreleme Kullanımı**: Yalnızca Apple platformu tarafından sunulan standart işletim sistemi mekanizmaları, güvenli HTTPS/TLS ağ iletişimleri ve Firebase / Apple / Google SDK'larının standart oturum şifrelemeleri kullanılmaktadır (Exempt standard encryption).
+  - **Gelecek Notu (Kritik)**: İleride uygulamaya uçtan uca özel veri şifreleme, harici crypto kütüphanesi veya standart dışı tescilli şifreleme mekanizması entegre edilirse, `ITSAppUsesNonExemptEncryption` ayarı ve App Store Export Compliance formu yeniden değerlendirilmeli ve gerekli ise Fransız / ABD ihracat beyannameleri düzenlenmelidir.
+
