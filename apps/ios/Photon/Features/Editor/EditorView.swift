@@ -239,13 +239,36 @@ public struct EditorView: View {
                                 RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous)
                                     .strokeBorder(PhotonColors.border, lineWidth: 0.5)
                             )
-                            // Face Bounding Box Overlay when Cilt tool is active (strictly UI only)
+                            // Spot Healing interactive tap overlay when Healing subtool is active
                             .overlay {
-                                if viewModel.activeCategory == .portrait && !viewModel.isComparingOriginal {
-                                    FaceBoundingBoxOverlayView(
-                                        faces: viewModel.detectedFaces,
-                                        isDetecting: viewModel.isDetectingFaces
-                                    )
+                                if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing && !viewModel.isComparingOriginal {
+                                    GeometryReader { imgGeo in
+                                        Color.clear
+                                            .contentShape(Rectangle())
+                                            .onTapGesture { location in
+                                                let w = imgGeo.size.width
+                                                let h = imgGeo.size.height
+                                                guard w > 0, h > 0 else { return }
+                                                let normX = location.x / w
+                                                let normY = location.y / h
+                                                viewModel.addHealedSpot(x: normX, y: normY)
+                                            }
+                                            .overlay {
+                                                // Render subtle visual markers on healed spots
+                                                ForEach(viewModel.editState.healedSpots) { spot in
+                                                    let spotX = spot.x * imgGeo.size.width
+                                                    let spotY = spot.y * imgGeo.size.height
+                                                    let spotPx = max(18, spot.radius * max(imgGeo.size.width, imgGeo.size.height) * 2)
+                                                    
+                                                    Circle()
+                                                        .strokeBorder(Color.white.opacity(0.85), lineWidth: 1.2)
+                                                        .background(Circle().fill(Color.white.opacity(0.15)))
+                                                        .frame(width: spotPx, height: spotPx)
+                                                        .position(x: spotX, y: spotY)
+                                                        .allowsHitTesting(false)
+                                                }
+                                            }
+                                    }
                                 }
                             }
                             // Zoom & Pan transforms (Maintains identical zoom & position for Before and After)
@@ -563,19 +586,36 @@ public struct EditorView: View {
             }
             
         case .portrait:
-            VerticalAdjustmentSlider(
-                systemIcon: "sparkles",
-                title: "Pürüzsüzlük",
-                value: Binding(
-                    get: { viewModel.editState.skinSmoothing },
-                    set: { newVal in viewModel.updateStateDirectly { $0.skinSmoothing = newVal } }
-                ),
-                range: 0.0...100.0,
-                defaultValue: 0.0,
-                step: 1.0,
-                valueFormatter: { val in "\(Int(val))%" },
-                onEditingEnded: { viewModel.recordHistorySnapshot() }
-            )
+            switch viewModel.selectedPortraitSubTool {
+            case .smoothing:
+                VerticalAdjustmentSlider(
+                    systemIcon: "sparkles",
+                    title: "Pürüzsüzlük",
+                    value: Binding(
+                        get: { viewModel.editState.skinSmoothing },
+                        set: { newVal in viewModel.updateStateDirectly { $0.skinSmoothing = newVal } }
+                    ),
+                    range: 0.0...100.0,
+                    defaultValue: 0.0,
+                    step: 1.0,
+                    valueFormatter: { val in "\(Int(val))%" },
+                    onEditingEnded: { viewModel.recordHistorySnapshot() }
+                )
+            case .healing:
+                VerticalAdjustmentSlider(
+                    systemIcon: "circle.dashed",
+                    title: "Fırça Boyutu",
+                    value: Binding(
+                        get: { viewModel.healingBrushRadius },
+                        set: { newVal in viewModel.healingBrushRadius = newVal }
+                    ),
+                    range: 0.010...0.050,
+                    defaultValue: 0.022,
+                    step: 0.002,
+                    valueFormatter: { val in "\(Int(val * 1000)) px" },
+                    onEditingEnded: {}
+                )
+            }
             
         case .cinematic:
             if viewModel.editState.selectedLookId != nil {

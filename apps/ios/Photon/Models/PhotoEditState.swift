@@ -7,6 +7,24 @@
 
 import Foundation
 
+/// Represents a single healed blemish/spot on a photo (Tap-to-Heal).
+public struct HealedSpot: Equatable, Codable, Sendable, Identifiable {
+    public var id: UUID
+    /// Normalized horizontal coordinate (0.0 ... 1.0 from left)
+    public var x: CGFloat
+    /// Normalized vertical coordinate (0.0 ... 1.0 from top)
+    public var y: CGFloat
+    /// Normalized radius relative to the max dimension of the photo (e.g. 0.015)
+    public var radius: CGFloat
+    
+    public init(id: UUID = UUID(), x: CGFloat, y: CGFloat, radius: CGFloat) {
+        self.id = id
+        self.x = x
+        self.y = y
+        self.radius = radius
+    }
+}
+
 /// Central, serializable, and deterministic state model representing all adjustments.
 public struct PhotoEditState: Equatable, Codable, Sendable {
     // MARK: - Light Adjustments
@@ -58,6 +76,9 @@ public struct PhotoEditState: Equatable, Codable, Sendable {
     // MARK: - Portrait & Skin Smoothing
     /// Skin smoothing intensity (0.0 ... 100.0, neutral: 0.0)
     public var skinSmoothing: Float = 0.0
+    
+    /// List of selective healed spots (blemishes/acne removed by user tap)
+    public var healedSpots: [HealedSpot] = []
     
     // MARK: - Helpers & Identity
     

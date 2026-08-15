@@ -44,6 +44,11 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
     public func processImage(_ input: CIImage, state: PhotoEditState, skinMask: CIImage? = nil) -> CIImage {
         var output = input
         
+        // 0. Selective Spot Healing Engine (Tap-to-Heal Blemish Removal)
+        if !state.healedSpots.isEmpty {
+            output = applySpotHealing(to: output, spots: state.healedSpots)
+        }
+        
         // 1. Exposure (CIExposureAdjust)
         if state.exposure != 0.0 {
             output = output.applyingFilter("CIExposureAdjust", parameters: [
@@ -96,7 +101,7 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
             output = applyMonochromeEngine(to: output, state: state)
         }
         
-        // 8. Portrait & Skin Smoothing Engine
+        // 8. Portrait & Skin Smoothing Engine (Frequency Separation)
         if state.skinSmoothing > 0.0 {
             output = applySkinSmoothing(to: output, intensity: state.skinSmoothing, skinMask: skinMask)
         }
@@ -104,53 +109,105 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
         return output
     }
     
-    // MARK: - Portrait & Skin Smoothing Pipeline
+    // MARK: - Portrait & Skin Smoothing Pipeline (Frequency Separation)
     
     private func applySkinSmoothing(to image: CIImage, intensity: Float, skinMask: CIImage?) -> CIImage {
         guard intensity > 0.001, let mask = skinMask else {
             return image
         }
         
-        // Scale 0..100 UI range to 0..60 max smoothing intensity for natural look
-        let effectiveIntensity = intensity * 0.60
-        let normIntensity = CGFloat(min(max(effectiveIntensity / 100.0, 0.0), 1.0))
+        let normIntensity = CGFloat(min(max(intensity / 100.0, 0.0), 1.0))
         let maxDim = max(image.extent.width, image.extent.height)
         let scale = max(0.5, (maxDim > 0 ? maxDim : 1920.0) / 1920.0)
         
-        // 1. Adaptive edge-preserving smoothing radius scaled for resolution parity
-        let bilateralRadius = (16.0 * normIntensity + 3.0) * scale
-        let gaussianRadius = (10.0 * normIntensity + 2.0) * scale
-        
-        // 2. High-quality bilateral smoothing (smooths skin textures while preserving crisp contours)
-        var smoothedSurface: CIImage
+        // 1. Low-Frequency Tone Smoothing: Level redness, blotchiness, uneven tones
+        let toneRadius = (15.0 * normIntensity + 4.0) * scale
+        let lowFrequencyTone: CIImage
         if let bilateral = CIFilter(name: "CIBilateralFilter", parameters: [
             kCIInputImageKey: image,
-            "inputRadius": NSNumber(value: bilateralRadius),
-            "inputDistanceRange": NSNumber(value: 0.12)
+            "inputRadius": NSNumber(value: toneRadius),
+            "inputDistanceRange": NSNumber(value: 0.10)
         ])?.outputImage {
-            smoothedSurface = bilateral
+            lowFrequencyTone = bilateral
         } else {
-            // Fallback Gaussian blur if bilateral is unavailable
-            smoothedSurface = image
+            lowFrequencyTone = image
                 .clampedToExtent()
                 .applyingFilter("CIGaussianBlur", parameters: [
-                    kCIInputRadiusKey: NSNumber(value: gaussianRadius)
+                    kCIInputRadiusKey: NSNumber(value: toneRadius * 0.7)
                 ])
                 .cropped(to: image.extent)
         }
         
-        // 3. Frequency Separation: retain ~20% original micro-texture so skin never looks artificial or melted
-        let textureRetentionAlpha = Float(min(0.92, normIntensity * 0.88))
-        let naturalSkinBlend = blendImages(base: image, overlay: smoothedSurface, alpha: textureRetentionAlpha)
+        // 2. High-Frequency Micro-Texture Layer: Preserves skin pores and fine natural detail
+        let microDetailRadius = max(1.2, 1.8 * scale)
+        let textureSharpen = image.applyingFilter("CIUnsharpMask", parameters: [
+            kCIInputRadiusKey: NSNumber(value: microDetailRadius),
+            kCIInputIntensityKey: NSNumber(value: 0.70 + 0.45 * Float(normIntensity))
+        ])
         
-        // 4. Composite STRICTLY over skin region using Vision Mask (CIBlendWithMask)
+        // 3. Re-combine Low-Frequency Smooth Tone + High-Frequency Crisp Texture
+        let smoothSkinComposite = blendImages(base: lowFrequencyTone, overlay: textureSharpen, alpha: 0.65)
+        
+        // Blend between original and frequency-separated skin according to slider intensity
+        let blendedSkin = blendImages(base: image, overlay: smoothSkinComposite, alpha: Float(normIntensity * 0.88))
+        
+        // 4. Composite STRICTLY over skin region using Vision Mask (Eyes/Lips/Eyebrows are 100% excluded)
         let maskedOutput = CIFilter(name: "CIBlendWithMask", parameters: [
-            kCIInputImageKey: naturalSkinBlend,
+            kCIInputImageKey: blendedSkin,
             kCIInputBackgroundImageKey: image,
             kCIInputMaskImageKey: mask
         ])?.outputImage ?? image
         
         return maskedOutput.cropped(to: image.extent)
+    }
+    
+    // MARK: - Spot Healing Engine (Tap-to-Heal / Blemish Removal)
+    
+    private func applySpotHealing(to image: CIImage, spots: [HealedSpot]) -> CIImage {
+        guard !spots.isEmpty else { return image }
+        
+        var healed = image
+        let imgWidth = image.extent.width
+        let imgHeight = image.extent.height
+        let maxDim = max(imgWidth, imgHeight)
+        
+        for spot in spots {
+            // Convert normalized coordinates (0...1, top-left) to CIImage coordinate system (bottom-left origin)
+            let centerPoint = CGPoint(x: spot.x * imgWidth, y: (1.0 - spot.y) * imgHeight)
+            let spotPixelRadius = max(10.0, spot.radius * maxDim)
+            let sampleRadius = spotPixelRadius * 1.8
+            
+            // 1. Generate a smooth feathered radial circular mask at the spot location
+            guard let radialMask = CIFilter(name: "CIRadialGradient", parameters: [
+                "inputCenter": CIVector(cgPoint: centerPoint),
+                "inputRadius0": NSNumber(value: spotPixelRadius * 0.2),
+                "inputRadius1": NSNumber(value: spotPixelRadius * 1.15),
+                "inputColor0": CIColor(red: 1, green: 1, blue: 1, alpha: 1),
+                "inputColor1": CIColor(red: 0, green: 0, blue: 0, alpha: 0)
+            ])?.outputImage?.cropped(to: image.extent) else {
+                continue
+            }
+            
+            // 2. Synthesize clean surrounding skin texture over the blemish area
+            let patchPatch = healed
+                .clampedToExtent()
+                .applyingFilter("CIBilateralFilter", parameters: [
+                    "inputRadius": NSNumber(value: sampleRadius),
+                    "inputDistanceRange": NSNumber(value: 0.18)
+                ])
+                .cropped(to: image.extent)
+            
+            // 3. Seamlessly blend patched skin over the blemish using the radial feathered mask
+            if let blended = CIFilter(name: "CIBlendWithMask", parameters: [
+                kCIInputImageKey: patchPatch,
+                kCIInputBackgroundImageKey: healed,
+                kCIInputMaskImageKey: radialMask
+            ])?.outputImage {
+                healed = blended.cropped(to: image.extent)
+            }
+        }
+        
+        return healed
     }
     
     // MARK: - Cinematic Look Pipeline

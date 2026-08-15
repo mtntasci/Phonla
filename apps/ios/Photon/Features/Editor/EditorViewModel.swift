@@ -73,12 +73,14 @@ public enum ColorSubTool: String, CaseIterable, Identifiable, Sendable {
 /// Sub-tools under Portrait (Cilt) category
 public enum PortraitSubTool: String, CaseIterable, Identifiable, Sendable {
     case smoothing = "Pürüzsüzlük"
+    case healing = "Leke Silme"
     
     public var id: String { rawValue }
     
     public var systemIcon: String {
         switch self {
         case .smoothing: return "sparkles"
+        case .healing: return "bandage.fill"
         }
     }
 }
@@ -100,6 +102,10 @@ public final class EditorViewModel {
     public var selectedLightSubTool: LightSubTool = .exposure
     public var selectedColorSubTool: ColorSubTool = .temperature
     public var selectedPortraitSubTool: PortraitSubTool = .smoothing
+    
+    // Spot Healing Parameters
+    public var healingBrushRadius: Float = 0.022
+    public var lastHealedSpotPoint: CGPoint? = nil
     
     // Export Status
     public var isExporting: Bool = false
@@ -209,6 +215,37 @@ public final class EditorViewModel {
     public func applyPresetUpdate(_ mutate: () -> Void) {
         recordHistorySnapshot()
         mutate()
+        requestPreviewRender()
+    }
+    
+    // MARK: - Portrait & Spot Healing Mutators
+    
+    public func updateSkinSmoothing(_ value: Float) {
+        self.editState.skinSmoothing = value
+        requestPreviewRender()
+    }
+    
+    public func addHealedSpot(x: CGFloat, y: CGFloat) {
+        recordHistorySnapshot()
+        let clampedX = min(max(x, 0.0), 1.0)
+        let clampedY = min(max(y, 0.0), 1.0)
+        let spot = HealedSpot(x: clampedX, y: clampedY, radius: CGFloat(healingBrushRadius))
+        self.editState.healedSpots.append(spot)
+        self.lastHealedSpotPoint = CGPoint(x: clampedX, y: clampedY)
+        requestPreviewRender()
+    }
+    
+    public func undoLastHealedSpot() {
+        guard !editState.healedSpots.isEmpty else { return }
+        recordHistorySnapshot()
+        self.editState.healedSpots.removeLast()
+        requestPreviewRender()
+    }
+    
+    public func clearAllHealedSpots() {
+        guard !editState.healedSpots.isEmpty else { return }
+        recordHistorySnapshot()
+        self.editState.healedSpots.removeAll()
         requestPreviewRender()
     }
     

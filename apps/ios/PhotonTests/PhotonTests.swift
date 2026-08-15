@@ -278,6 +278,48 @@ struct PhotonTests {
         #expect(emptyMask == nil)
     }
     
+    @Test func testSpotHealingPipeline() async throws {
+        let processing = ImageProcessingService.shared
+        let testCI = createTestCIImage(width: 800, height: 600)
+        
+        var state = PhotoEditState()
+        state.healedSpots = [
+            HealedSpot(x: 0.5, y: 0.5, radius: 0.02),
+            HealedSpot(x: 0.3, y: 0.4, radius: 0.015)
+        ]
+        
+        #expect(state.isEdited)
+        #expect(state.healedSpots.count == 2)
+        
+        let healedCI = processing.processImage(testCI, state: state)
+        #expect(healedCI.extent.width == 800)
+        #expect(healedCI.extent.height == 600)
+        
+        let preview = processing.renderPreview(from: testCI, state: state)
+        #expect(preview != nil)
+    }
+    
+    @Test @MainActor func testSpotHealingViewModelMutations() async throws {
+        let viewModel = EditorViewModel.shared
+        viewModel.editState = .identity
+        
+        #expect(viewModel.editState.healedSpots.isEmpty)
+        
+        // Add 2 healed spots
+        viewModel.addHealedSpot(x: 0.45, y: 0.55)
+        viewModel.addHealedSpot(x: 0.60, y: 0.70)
+        #expect(viewModel.editState.healedSpots.count == 2)
+        #expect(viewModel.canUndo)
+        
+        // Undo last spot
+        viewModel.undoLastHealedSpot()
+        #expect(viewModel.editState.healedSpots.count == 1)
+        
+        // Clear all spots
+        viewModel.clearAllHealedSpots()
+        #expect(viewModel.editState.healedSpots.isEmpty)
+    }
+    
     // MARK: - StoreKit 2 & AdMob Configuration Tests
     
     @Test func testAppConfigConstants() async throws {
