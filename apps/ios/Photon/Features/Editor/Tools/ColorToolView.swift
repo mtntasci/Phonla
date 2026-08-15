@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// Adjustment panel for Color tools: Temperature, Tint, Saturation, Vibrance.
+/// Compact sub-tool icon bar for Color adjustments (Temperature, Tint, Saturation, Vibrance).
 public struct ColorToolView: View {
     @Bindable var viewModel: EditorViewModel
     
@@ -15,98 +15,58 @@ public struct ColorToolView: View {
         self.viewModel = viewModel
     }
     
-    public var body: some View {
-        VStack(spacing: PhotonSpacing.xs) {
-            // Temperature -> Sıcaklık
-            PhotonSlider(
-                title: "Sıcaklık",
-                value: Binding(
-                    get: { viewModel.editState.temperature },
-                    set: { newVal in
-                        viewModel.updateStateDirectly { $0.temperature = newVal }
-                    }
-                ),
-                range: 2000.0...10000.0,
-                defaultValue: 6500.0,
-                step: 50.0,
-                valueFormatter: { val in
-                    let diff = Int(val - 6500.0)
-                    if diff == 0 {
-                        return "6500K (Nötr)"
-                    } else if diff > 0 {
-                        return "+\(diff)K (\(Int(val))K)"
-                    } else {
-                        return "\(diff)K (\(Int(val))K)"
-                    }
-                },
-                onEditingEnded: {
-                    viewModel.recordHistorySnapshot()
-                }
-            )
-            
-            // Tint -> Renk Tonu
-            PhotonSlider(
-                title: "Renk Tonu",
-                value: Binding(
-                    get: { viewModel.editState.tint },
-                    set: { newVal in
-                        viewModel.updateStateDirectly { $0.tint = newVal }
-                    }
-                ),
-                range: -100.0...100.0,
-                defaultValue: 0.0,
-                step: 1.0,
-                valueFormatter: { val in
-                    let ival = Int(val)
-                    return ival >= 0 ? "+\(ival)" : "\(ival)"
-                },
-                onEditingEnded: {
-                    viewModel.recordHistorySnapshot()
-                }
-            )
-            
-            // Saturation -> Doygunluk
-            PhotonSlider(
-                title: "Doygunluk",
-                value: Binding(
-                    get: { viewModel.editState.saturation },
-                    set: { newVal in
-                        viewModel.updateStateDirectly { $0.saturation = newVal }
-                    }
-                ),
-                range: 0.0...2.0,
-                defaultValue: 1.0,
-                step: 0.02,
-                valueFormatter: { val in
-                    let percent = Int((val - 1.0) * 100)
-                    return percent >= 0 ? "+\(percent)%" : "\(percent)%"
-                },
-                onEditingEnded: {
-                    viewModel.recordHistorySnapshot()
-                }
-            )
-            
-            // Vibrance -> Canlılık
-            PhotonSlider(
-                title: "Canlılık",
-                value: Binding(
-                    get: { viewModel.editState.vibrance },
-                    set: { newVal in
-                        viewModel.updateStateDirectly { $0.vibrance = newVal }
-                    }
-                ),
-                range: -1.0...1.0,
-                defaultValue: 0.0,
-                step: 0.02,
-                valueFormatter: { val in
-                    let percent = Int(val * 100)
-                    return percent >= 0 ? "+\(percent)%" : "\(percent)%"
-                },
-                onEditingEnded: {
-                    viewModel.recordHistorySnapshot()
-                }
-            )
+    private func isSubToolModified(_ tool: ColorSubTool) -> Bool {
+        switch tool {
+        case .temperature: return abs(viewModel.editState.temperature - 6500.0) > 1.0
+        case .tint: return abs(viewModel.editState.tint) > 0.001
+        case .saturation: return abs(viewModel.editState.saturation - 1.0) > 0.001
+        case .vibrance: return abs(viewModel.editState.vibrance) > 0.001
         }
-        .padding(.vertical, PhotonSpacing.xs)
+    }
+    
+    public var body: some View {
+        HStack(spacing: PhotonSpacing.xs) {
+            ForEach(ColorSubTool.allCases) { tool in
+                let isSelected = viewModel.selectedColorSubTool == tool
+                let modified = isSubToolModified(tool)
+                
+                Button {
+                    withAnimation(.spring(response: 0.25, dampingFraction: 0.82)) {
+                        viewModel.selectedColorSubTool = tool
+                    }
+                } label: {
+                    HStack(spacing: 5) {
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: tool.systemIcon)
+                                .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
+                            
+                            if modified {
+                                Circle()
+                                    .fill(PhotonColors.accent)
+                                    .frame(width: 5, height: 5)
+                                    .offset(x: 3, y: -2)
+                            }
+                        }
+                        
+                        Text(tool.rawValue)
+                            .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
+                            .lineLimit(1)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(isSelected ? PhotonColors.textPrimary : PhotonColors.surfaceSecondary)
+                    .foregroundColor(isSelected ? PhotonColors.textInverted : PhotonColors.textPrimary)
+                    .clipShape(Capsule())
+                    .overlay(
+                        Capsule()
+                            .strokeBorder(isSelected ? Color.clear : (modified ? PhotonColors.accent.opacity(0.4) : PhotonColors.border.opacity(0.4)), lineWidth: 0.8)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, PhotonSpacing.xs)
+        .padding(.vertical, 4)
     }
 }
+

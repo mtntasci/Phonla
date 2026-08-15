@@ -329,6 +329,17 @@ public struct EditorView: View {
                         .tint(PhotonColors.textPrimary)
                 }
                 
+                // MARK: - Floating Vertical Adjustment Slider (Right Edge)
+                if !viewModel.isComparingOriginal {
+                    HStack {
+                        Spacer()
+                        
+                        floatingVerticalSlider
+                            .padding(.trailing, PhotonSpacing.md)
+                    }
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                }
+                
                 // Export Success Toast
                 if let successMessage = viewModel.exportSuccessMessage {
                     VStack {
@@ -385,54 +396,269 @@ public struct EditorView: View {
         }
     }
     
-    // MARK: - Bottom Tool Section (Dynamic Panels & Translucent Backdrop)
+    // MARK: - Floating Right-Side Vertical Slider
+    
+    @ViewBuilder
+    private var floatingVerticalSlider: some View {
+        switch viewModel.activeCategory {
+        case .light:
+            switch viewModel.selectedLightSubTool {
+            case .exposure:
+                VerticalAdjustmentSlider(
+                    systemIcon: viewModel.selectedLightSubTool.systemIcon,
+                    title: viewModel.selectedLightSubTool.rawValue,
+                    value: Binding(
+                        get: { viewModel.editState.exposure },
+                        set: { newVal in viewModel.updateStateDirectly { $0.exposure = newVal } }
+                    ),
+                    range: -2.0...2.0,
+                    defaultValue: 0.0,
+                    step: 0.05,
+                    valueFormatter: { val in
+                        val >= 0 ? String(format: "+%.2f EV", val) : String(format: "%.2f EV", val)
+                    },
+                    onEditingEnded: { viewModel.recordHistorySnapshot() }
+                )
+            case .brightness:
+                VerticalAdjustmentSlider(
+                    systemIcon: viewModel.selectedLightSubTool.systemIcon,
+                    title: viewModel.selectedLightSubTool.rawValue,
+                    value: Binding(
+                        get: { viewModel.editState.brightness },
+                        set: { newVal in viewModel.updateStateDirectly { $0.brightness = newVal } }
+                    ),
+                    range: -1.0...1.0,
+                    defaultValue: 0.0,
+                    step: 0.02,
+                    valueFormatter: { val in
+                        let pct = Int(val * 100)
+                        return pct >= 0 ? "+\(pct)%" : "\(pct)%"
+                    },
+                    onEditingEnded: { viewModel.recordHistorySnapshot() }
+                )
+            case .contrast:
+                VerticalAdjustmentSlider(
+                    systemIcon: viewModel.selectedLightSubTool.systemIcon,
+                    title: viewModel.selectedLightSubTool.rawValue,
+                    value: Binding(
+                        get: { viewModel.editState.contrast },
+                        set: { newVal in viewModel.updateStateDirectly { $0.contrast = newVal } }
+                    ),
+                    range: 0.5...1.5,
+                    defaultValue: 1.0,
+                    step: 0.02,
+                    valueFormatter: { val in
+                        let pct = Int((val - 1.0) * 100)
+                        return pct >= 0 ? "+\(pct)%" : "\(pct)%"
+                    },
+                    onEditingEnded: { viewModel.recordHistorySnapshot() }
+                )
+            case .highlights:
+                VerticalAdjustmentSlider(
+                    systemIcon: viewModel.selectedLightSubTool.systemIcon,
+                    title: viewModel.selectedLightSubTool.rawValue,
+                    value: Binding(
+                        get: { viewModel.editState.highlights },
+                        set: { newVal in viewModel.updateStateDirectly { $0.highlights = newVal } }
+                    ),
+                    range: -1.0...1.0,
+                    defaultValue: 0.0,
+                    step: 0.02,
+                    valueFormatter: { val in
+                        let pct = Int(val * 100)
+                        return pct >= 0 ? "+\(pct)%" : "\(pct)%"
+                    },
+                    onEditingEnded: { viewModel.recordHistorySnapshot() }
+                )
+            case .shadows:
+                VerticalAdjustmentSlider(
+                    systemIcon: viewModel.selectedLightSubTool.systemIcon,
+                    title: viewModel.selectedLightSubTool.rawValue,
+                    value: Binding(
+                        get: { viewModel.editState.shadows },
+                        set: { newVal in viewModel.updateStateDirectly { $0.shadows = newVal } }
+                    ),
+                    range: -1.0...1.0,
+                    defaultValue: 0.0,
+                    step: 0.02,
+                    valueFormatter: { val in
+                        let pct = Int(val * 100)
+                        return pct >= 0 ? "+\(pct)%" : "\(pct)%"
+                    },
+                    onEditingEnded: { viewModel.recordHistorySnapshot() }
+                )
+            }
+            
+        case .color:
+            switch viewModel.selectedColorSubTool {
+            case .temperature:
+                VerticalAdjustmentSlider(
+                    systemIcon: viewModel.selectedColorSubTool.systemIcon,
+                    title: viewModel.selectedColorSubTool.rawValue,
+                    value: Binding(
+                        get: { viewModel.editState.temperature },
+                        set: { newVal in viewModel.updateStateDirectly { $0.temperature = newVal } }
+                    ),
+                    range: 2000.0...10000.0,
+                    defaultValue: 6500.0,
+                    step: 50.0,
+                    valueFormatter: { val in
+                        let diff = Int(val - 6500.0)
+                        if diff == 0 { return "6500K" }
+                        return diff > 0 ? "+\(diff)K" : "\(diff)K"
+                    },
+                    onEditingEnded: { viewModel.recordHistorySnapshot() }
+                )
+            case .tint:
+                VerticalAdjustmentSlider(
+                    systemIcon: viewModel.selectedColorSubTool.systemIcon,
+                    title: viewModel.selectedColorSubTool.rawValue,
+                    value: Binding(
+                        get: { viewModel.editState.tint },
+                        set: { newVal in viewModel.updateStateDirectly { $0.tint = newVal } }
+                    ),
+                    range: -100.0...100.0,
+                    defaultValue: 0.0,
+                    step: 1.0,
+                    valueFormatter: { val in
+                        let ival = Int(val)
+                        return ival >= 0 ? "+\(ival)" : "\(ival)"
+                    },
+                    onEditingEnded: { viewModel.recordHistorySnapshot() }
+                )
+            case .saturation:
+                VerticalAdjustmentSlider(
+                    systemIcon: viewModel.selectedColorSubTool.systemIcon,
+                    title: viewModel.selectedColorSubTool.rawValue,
+                    value: Binding(
+                        get: { viewModel.editState.saturation },
+                        set: { newVal in viewModel.updateStateDirectly { $0.saturation = newVal } }
+                    ),
+                    range: 0.0...2.0,
+                    defaultValue: 1.0,
+                    step: 0.02,
+                    valueFormatter: { val in
+                        let pct = Int((val - 1.0) * 100)
+                        return pct >= 0 ? "+\(pct)%" : "\(pct)%"
+                    },
+                    onEditingEnded: { viewModel.recordHistorySnapshot() }
+                )
+            case .vibrance:
+                VerticalAdjustmentSlider(
+                    systemIcon: viewModel.selectedColorSubTool.systemIcon,
+                    title: viewModel.selectedColorSubTool.rawValue,
+                    value: Binding(
+                        get: { viewModel.editState.vibrance },
+                        set: { newVal in viewModel.updateStateDirectly { $0.vibrance = newVal } }
+                    ),
+                    range: -1.0...1.0,
+                    defaultValue: 0.0,
+                    step: 0.02,
+                    valueFormatter: { val in
+                        let pct = Int(val * 100)
+                        return pct >= 0 ? "+\(pct)%" : "\(pct)%"
+                    },
+                    onEditingEnded: { viewModel.recordHistorySnapshot() }
+                )
+            }
+            
+        case .portrait:
+            VerticalAdjustmentSlider(
+                systemIcon: "sparkles",
+                title: "Pürüzsüzlük",
+                value: Binding(
+                    get: { viewModel.editState.skinSmoothing },
+                    set: { newVal in viewModel.updateStateDirectly { $0.skinSmoothing = newVal } }
+                ),
+                range: 0.0...100.0,
+                defaultValue: 0.0,
+                step: 1.0,
+                valueFormatter: { val in "\(Int(val))%" },
+                onEditingEnded: { viewModel.recordHistorySnapshot() }
+            )
+            
+        case .cinematic:
+            if viewModel.editState.selectedLookId != nil {
+                VerticalAdjustmentSlider(
+                    systemIcon: "slider.vertical.3",
+                    title: "Yoğunluk",
+                    value: Binding(
+                        get: { viewModel.editState.lookIntensity },
+                        set: { newVal in viewModel.updateStateDirectly { $0.lookIntensity = newVal } }
+                    ),
+                    range: 0.0...1.0,
+                    defaultValue: 1.0,
+                    step: 0.02,
+                    valueFormatter: { val in "\(Int(val * 100))%" },
+                    onEditingEnded: { viewModel.recordHistorySnapshot() }
+                )
+            }
+            
+        case .mono:
+            if viewModel.editState.isMonoActive {
+                VerticalAdjustmentSlider(
+                    systemIcon: "slider.vertical.3",
+                    title: "Yoğunluk",
+                    value: Binding(
+                        get: { viewModel.editState.monoIntensity },
+                        set: { newVal in viewModel.updateStateDirectly { $0.monoIntensity = newVal } }
+                    ),
+                    range: 0.0...1.0,
+                    defaultValue: 1.0,
+                    step: 0.02,
+                    valueFormatter: { val in "\(Int(val * 100))%" },
+                    onEditingEnded: { viewModel.recordHistorySnapshot() }
+                )
+            }
+        }
+    }
+    
+    // MARK: - Ultra-Compact 2-Tier Bottom Bar (Maximized Photo Viewport)
     
     private var bottomToolSection: some View {
         VStack(spacing: 0) {
             Divider()
                 .foregroundColor(PhotonColors.divider)
             
-            // Dynamic Active Tool Adjustment Panel (Sizes to content needs without artificial scrollbars)
-            ScrollView(.vertical, showsIndicators: false) {
-                Group {
-                    switch viewModel.activeCategory {
-                    case .light:
-                        LightToolView(viewModel: viewModel)
-                    case .color:
-                        ColorToolView(viewModel: viewModel)
-                    case .portrait:
-                        SmoothToolView(viewModel: viewModel)
-                    case .cinematic:
-                        CinematicToolView(viewModel: viewModel)
-                    case .mono:
-                        MonoToolView(viewModel: viewModel)
-                    }
+            // Tier 1: Sub-tool Bar / Presets Row (Only ~42pt high, no large expanding panels!)
+            Group {
+                switch viewModel.activeCategory {
+                case .light:
+                    LightToolView(viewModel: viewModel)
+                case .color:
+                    ColorToolView(viewModel: viewModel)
+                case .portrait:
+                    SmoothToolView(viewModel: viewModel)
+                case .cinematic:
+                    CinematicToolView(viewModel: viewModel)
+                case .mono:
+                    MonoToolView(viewModel: viewModel)
                 }
-                .padding(.horizontal, PhotonSpacing.xs)
             }
-            .frame(maxHeight: 280) // Restricts excessive vertical expansion on small devices while letting small panels stay compact
-            .animation(.spring(response: 0.32, dampingFraction: 0.85), value: viewModel.activeCategory)
+            .frame(height: 44)
+            .padding(.horizontal, PhotonSpacing.xxs)
+            .animation(.spring(response: 0.28, dampingFraction: 0.85), value: viewModel.activeCategory)
             
             Divider()
-                .foregroundColor(PhotonColors.divider)
+                .foregroundColor(PhotonColors.divider.opacity(0.6))
             
-            // Category Tabs Bar
-            HStack(spacing: PhotonSpacing.xs) {
+            // Tier 2: Main Category Tabs (Compact ~46pt high)
+            HStack(spacing: PhotonSpacing.xxs) {
                 ForEach(EditorToolCategory.allCases) { category in
                     Button {
                         withAnimation(.easeInOut(duration: 0.18)) {
                             viewModel.activeCategory = category
                         }
                     } label: {
-                        VStack(spacing: 3) {
+                        VStack(spacing: 2) {
                             Image(systemName: category.systemIcon)
-                                .font(.system(size: 15, weight: viewModel.activeCategory == category ? .semibold : .regular))
+                                .font(.system(size: 14, weight: viewModel.activeCategory == category ? .semibold : .regular))
                             
                             Text(category.rawValue)
-                                .font(PhotonTypography.caption.weight(viewModel.activeCategory == category ? .semibold : .regular))
+                                .font(.system(size: 11, weight: viewModel.activeCategory == category ? .semibold : .regular))
                         }
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                        .padding(.vertical, 4)
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .padding(.vertical, 3)
                         .background(viewModel.activeCategory == category ? PhotonColors.surfaceSecondary : Color.clear)
                         .foregroundColor(viewModel.activeCategory == category ? PhotonColors.textPrimary : PhotonColors.textSecondary)
                         .clipShape(RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous))
@@ -440,7 +666,7 @@ public struct EditorView: View {
                 }
             }
             .padding(.horizontal, PhotonSpacing.xs)
-            .padding(.top, 3)
+            .padding(.top, 2)
             .padding(.bottom, 12)
         }
         .background(

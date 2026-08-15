@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// Preset selection panel and intensity control for Phase 7 Professional Monochrome Engine.
+/// Compact horizontal preset strip for Phase 7 Professional Monochrome Engine.
 public struct MonoToolView: View {
     @Bindable var viewModel: EditorViewModel
     
@@ -16,100 +16,74 @@ public struct MonoToolView: View {
     }
     
     public var body: some View {
-        VStack(spacing: PhotonSpacing.xs) {
-            // Horizontal Mono Presets Strip
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: PhotonSpacing.xs) {
-                    // Original / Color Toggle Option
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: PhotonSpacing.xs) {
+                // Original / Color Toggle Option
+                Button {
+                    viewModel.applyPresetUpdate {
+                        viewModel.editState.isMonoActive = false
+                    }
+                } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "slash.circle")
+                            .font(.system(size: 13, weight: !viewModel.editState.isMonoActive ? .semibold : .regular))
+                            .foregroundColor(!viewModel.editState.isMonoActive ? PhotonColors.textInverted : PhotonColors.textSecondary)
+                        
+                        Text("Renkli")
+                            .font(.system(size: 12, weight: !viewModel.editState.isMonoActive ? .semibold : .medium))
+                            .lineLimit(1)
+                    }
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 7)
+                    .background(!viewModel.editState.isMonoActive ? PhotonColors.textPrimary : PhotonColors.surfaceSecondary)
+                    .foregroundColor(!viewModel.editState.isMonoActive ? PhotonColors.textInverted : PhotonColors.textPrimary)
+                    .clipShape(Capsule())
+                    .overlay(
+                        Capsule()
+                            .strokeBorder(!viewModel.editState.isMonoActive ? Color.clear : PhotonColors.border.opacity(0.4), lineWidth: 0.8)
+                    )
+                }
+                .buttonStyle(.plain)
+                
+                // Mono Presets
+                ForEach(MonoPreset.allPresets) { preset in
+                    let isSelected = viewModel.editState.isMonoActive &&
+                        (viewModel.editState.selectedMonoPresetId == preset.id ||
+                         (viewModel.editState.selectedMonoPresetId == nil && preset.id == "mono_natural"))
+                    
                     Button {
                         viewModel.applyPresetUpdate {
-                            viewModel.editState.isMonoActive = false
+                            viewModel.editState.isMonoActive = true
+                            viewModel.editState.selectedMonoPresetId = preset.id
+                            // Turn off cinematic look when mono is enabled
+                            viewModel.editState.selectedLookId = nil
                         }
                     } label: {
-                        VStack(spacing: PhotonSpacing.xxs) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous)
-                                    .fill(!viewModel.editState.isMonoActive ? PhotonColors.textPrimary : PhotonColors.surfaceSecondary)
-                                    .frame(width: 46, height: 46)
-                                
-                                Image(systemName: "slash.circle")
-                                    .font(.system(size: 19, weight: .regular))
-                                    .foregroundColor(!viewModel.editState.isMonoActive ? PhotonColors.textInverted : PhotonColors.textSecondary)
-                            }
+                        HStack(spacing: 5) {
+                            Image(systemName: preset.systemIcon)
+                                .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
+                                .foregroundColor(isSelected ? PhotonColors.textInverted : PhotonColors.textPrimary)
                             
-                            Text("Renkli")
-                                .font(PhotonTypography.caption.weight(!viewModel.editState.isMonoActive ? .semibold : .regular))
-                                .foregroundColor(!viewModel.editState.isMonoActive ? PhotonColors.textPrimary : PhotonColors.textSecondary)
+                            Text(preset.name)
+                                .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
                                 .lineLimit(1)
                         }
-                        .frame(width: 58)
-                        .padding(.vertical, PhotonSpacing.xxs)
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 7)
+                        .background(isSelected ? PhotonColors.textPrimary : PhotonColors.surfaceSecondary)
+                        .foregroundColor(isSelected ? PhotonColors.textInverted : PhotonColors.textPrimary)
+                        .clipShape(Capsule())
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(isSelected ? Color.clear : PhotonColors.border.opacity(0.4), lineWidth: 0.8)
+                        )
                     }
                     .buttonStyle(.plain)
-                    
-                    // Mono Presets
-                    ForEach(MonoPreset.allPresets) { preset in
-                        let isSelected = viewModel.editState.isMonoActive &&
-                            (viewModel.editState.selectedMonoPresetId == preset.id ||
-                             (viewModel.editState.selectedMonoPresetId == nil && preset.id == "mono_natural"))
-                        
-                        Button {
-                            viewModel.applyPresetUpdate {
-                                viewModel.editState.isMonoActive = true
-                                viewModel.editState.selectedMonoPresetId = preset.id
-                                // Turn off cinematic look when mono is enabled
-                                viewModel.editState.selectedLookId = nil
-                            }
-                        } label: {
-                            VStack(spacing: PhotonSpacing.xxs) {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous)
-                                        .fill(isSelected ? PhotonColors.textPrimary : PhotonColors.surfaceSecondary)
-                                        .frame(width: 46, height: 46)
-                                    
-                                    Image(systemName: preset.systemIcon)
-                                        .font(.system(size: 19, weight: .regular))
-                                        .foregroundColor(isSelected ? PhotonColors.textInverted : PhotonColors.textPrimary)
-                                }
-                                
-                                Text(preset.name)
-                                    .font(PhotonTypography.caption.weight(isSelected ? .semibold : .regular))
-                                    .foregroundColor(isSelected ? PhotonColors.textPrimary : PhotonColors.textSecondary)
-                                    .lineLimit(1)
-                            }
-                            .frame(width: 58)
-                            .padding(.vertical, PhotonSpacing.xxs)
-                        }
-                        .buttonStyle(.plain)
-                    }
                 }
-                .padding(.horizontal, PhotonSpacing.md)
-                .padding(.vertical, PhotonSpacing.xxs)
             }
-            
-            // Mono Intensity Slider when Monochrome is active
-            if viewModel.editState.isMonoActive {
-                PhotonSlider(
-                    title: "Yoğunluk",
-                    value: Binding(
-                        get: { viewModel.editState.monoIntensity },
-                        set: { newVal in
-                            viewModel.updateStateDirectly { $0.monoIntensity = newVal }
-                        }
-                    ),
-                    range: 0.0...1.0,
-                    defaultValue: 1.0,
-                    step: 0.02,
-                    valueFormatter: { val in
-                        "\(Int(val * 100))%"
-                    },
-                    onEditingEnded: {
-                        viewModel.recordHistorySnapshot()
-                    }
-                )
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
-            }
+            .padding(.horizontal, PhotonSpacing.xs)
+            .padding(.vertical, 4)
         }
-        .padding(.vertical, PhotonSpacing.xs)
     }
 }
+

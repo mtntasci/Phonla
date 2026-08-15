@@ -30,6 +30,59 @@ public enum EditorToolCategory: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+/// Sub-tools under Light category
+public enum LightSubTool: String, CaseIterable, Identifiable, Sendable {
+    case exposure = "Pozlama"
+    case brightness = "Parlaklık"
+    case contrast = "Kontrast"
+    case highlights = "Açık Ton"
+    case shadows = "Gölgeler"
+    
+    public var id: String { rawValue }
+    
+    public var systemIcon: String {
+        switch self {
+        case .exposure: return "plusminus.circle"
+        case .brightness: return "sun.min.fill"
+        case .contrast: return "circle.righthalf.filled"
+        case .highlights: return "sun.and.horizon.fill"
+        case .shadows: return "moon.fill"
+        }
+    }
+}
+
+/// Sub-tools under Color category
+public enum ColorSubTool: String, CaseIterable, Identifiable, Sendable {
+    case temperature = "Sıcaklık"
+    case tint = "Ton"
+    case saturation = "Doygunluk"
+    case vibrance = "Canlılık"
+    
+    public var id: String { rawValue }
+    
+    public var systemIcon: String {
+        switch self {
+        case .temperature: return "thermometer.sun.fill"
+        case .tint: return "paintpalette.fill"
+        case .saturation: return "drop.fill"
+        case .vibrance: return "sparkles"
+        }
+    }
+}
+
+/// Sub-tools under Portrait (Cilt) category
+public enum PortraitSubTool: String, CaseIterable, Identifiable, Sendable {
+    case smoothing = "Pürüzsüzlük"
+    
+    public var id: String { rawValue }
+    
+    public var systemIcon: String {
+        switch self {
+        case .smoothing: return "sparkles"
+        }
+    }
+}
+
 /// Central view model driving the interactive Core Image preview, undo/redo history, and export pipeline.
 @MainActor
 @Observable
@@ -42,6 +95,11 @@ public final class EditorViewModel {
     public var isRendering: Bool = false
     public var activeCategory: EditorToolCategory = .light
     public var isComparingOriginal: Bool = false
+    
+    // Sub-tool selections
+    public var selectedLightSubTool: LightSubTool = .exposure
+    public var selectedColorSubTool: ColorSubTool = .temperature
+    public var selectedPortraitSubTool: PortraitSubTool = .smoothing
     
     // Export Status
     public var isExporting: Bool = false
