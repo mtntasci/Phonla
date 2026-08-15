@@ -120,13 +120,13 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
         let maxDim = max(image.extent.width, image.extent.height)
         let scale = max(0.5, (maxDim > 0 ? maxDim : 1920.0) / 1920.0)
         
-        // 1. Low-Frequency Tone Smoothing: Level redness, blotchiness, uneven tones
-        let toneRadius = (15.0 * normIntensity + 4.0) * scale
+        // 1. Low-Frequency Tone Smoothing: Level redness, blotchiness, uneven tones (Made more aggressive)
+        let toneRadius = (35.0 * normIntensity + 10.0) * scale
         let lowFrequencyTone: CIImage
         if let bilateral = CIFilter(name: "CIBilateralFilter", parameters: [
             kCIInputImageKey: image,
             "inputRadius": NSNumber(value: toneRadius),
-            "inputDistanceRange": NSNumber(value: 0.10)
+            "inputDistanceRange": NSNumber(value: 0.20)
         ])?.outputImage {
             lowFrequencyTone = bilateral
         } else {
@@ -146,10 +146,10 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
         ])
         
         // 3. Re-combine Low-Frequency Smooth Tone + High-Frequency Crisp Texture
-        let smoothSkinComposite = blendImages(base: lowFrequencyTone, overlay: textureSharpen, alpha: 0.65)
+        let smoothSkinComposite = blendImages(base: lowFrequencyTone, overlay: textureSharpen, alpha: 0.40)
         
         // Blend between original and frequency-separated skin according to slider intensity
-        let blendedSkin = blendImages(base: image, overlay: smoothSkinComposite, alpha: Float(normIntensity * 0.88))
+        let blendedSkin = blendImages(base: image, overlay: smoothSkinComposite, alpha: Float(normIntensity * 1.0))
         
         // 4. Composite STRICTLY over skin region using Vision Mask (Eyes/Lips/Eyebrows are 100% excluded)
         let maskedOutput = CIFilter(name: "CIBlendWithMask", parameters: [

@@ -254,15 +254,16 @@ public struct EditorView: View {
                                                 viewModel.addHealedSpot(x: normX, y: normY)
                                             }
                                             .overlay {
-                                                // Render subtle visual markers on healed spots
+                                                // Render highly visible visual markers on healed spots
                                                 ForEach(viewModel.editState.healedSpots) { spot in
                                                     let spotX = spot.x * imgGeo.size.width
                                                     let spotY = spot.y * imgGeo.size.height
-                                                    let spotPx = max(18, spot.radius * max(imgGeo.size.width, imgGeo.size.height) * 2)
+                                                    let spotPx = max(24, spot.radius * max(imgGeo.size.width, imgGeo.size.height) * 2)
                                                     
                                                     Circle()
-                                                        .strokeBorder(Color.white.opacity(0.85), lineWidth: 1.2)
-                                                        .background(Circle().fill(Color.white.opacity(0.15)))
+                                                        .strokeBorder(Color.white, lineWidth: 2.0)
+                                                        .background(Circle().fill(Color.white.opacity(0.25)))
+                                                        .shadow(color: Color.black.opacity(0.6), radius: 3, x: 0, y: 2)
                                                         .frame(width: spotPx, height: spotPx)
                                                         .position(x: spotX, y: spotY)
                                                         .allowsHitTesting(false)
