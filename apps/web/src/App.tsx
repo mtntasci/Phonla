@@ -16,16 +16,24 @@ export function App() {
 
   useEffect(() => {
     const handleNavigation = () => {
-      const hash = window.location.hash;
-      const pathname = window.location.pathname;
+      const hash = window.location.hash.toLowerCase();
+      const rawPath = window.location.pathname.toLowerCase();
+      const cleanPath = rawPath.replace(/\/+$/, '') || '/';
 
-      if (hash === '#privacy' || hash === '#privacy-policy' || pathname === '/privacy') {
+      if (
+        hash === '#privacy' ||
+        hash === '#privacy-policy' ||
+        cleanPath === '/privacy' ||
+        cleanPath === '/privacy-policy' ||
+        cleanPath === '/privacy.html'
+      ) {
         setCurrentPage('privacy');
       } else if (
         hash === '#user-privacy' ||
         hash === '#user-privacy-rights' ||
-        pathname === '/user-privacy' ||
-        pathname === '/user-privacy-rights'
+        cleanPath === '/user-privacy' ||
+        cleanPath === '/user-privacy-rights' ||
+        cleanPath === '/user-privacy.html'
       ) {
         setCurrentPage('user-privacy');
       } else {
@@ -44,17 +52,29 @@ export function App() {
   }, []);
 
   const navigateToPrivacy = () => {
-    window.location.hash = '#privacy';
+    try {
+      window.history.pushState(null, '', '/privacy');
+    } catch {
+      window.location.hash = '#privacy';
+    }
     setCurrentPage('privacy');
   };
 
   const navigateToUserPrivacy = () => {
-    window.location.hash = '#user-privacy';
+    try {
+      window.history.pushState(null, '', '/user-privacy');
+    } catch {
+      window.location.hash = '#user-privacy';
+    }
     setCurrentPage('user-privacy');
   };
 
   const navigateToHome = () => {
-    window.location.hash = '';
+    try {
+      window.history.pushState(null, '', '/');
+    } catch {
+      window.location.hash = '';
+    }
     setCurrentPage('home');
   };
 

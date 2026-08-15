@@ -40,7 +40,7 @@ export const PrivacySection: React.FC = () => {
   };
 
   return (
-    <section id="privacy" style={{ padding: '80px 0', position: 'relative' }}>
+    <section id="technology" style={{ padding: '80px 0', position: 'relative' }}>
       <div className="container">
         
         {/* Main Card with 3-Tap Easter Egg Trigger */}

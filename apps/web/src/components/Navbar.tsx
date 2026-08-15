@@ -57,7 +57,7 @@ export const Navbar: React.FC = () => {
           <a href="#presets" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '14px', fontWeight: 500, transition: 'color 0.2s' }}>
             Koleksiyon
           </a>
-          <a href="#privacy" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '14px', fontWeight: 500, transition: 'color 0.2s' }}>
+          <a href="#technology" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '14px', fontWeight: 500, transition: 'color 0.2s' }}>
             Teknoloji
           </a>
         </nav>
@@ -139,7 +139,7 @@ export const Navbar: React.FC = () => {
             Koleksiyon
           </a>
           <a
-            href="#privacy"
+            href="#technology"
             onClick={() => setMobileMenuOpen(false)}
             style={{ color: '#ffffff', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}
           >
