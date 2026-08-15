@@ -23,6 +23,10 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
                 FirebaseApp.configure()
             }
         }
+        
+        // Initialize Google Mobile Ads SDK and start rewarded ad preloading
+        RewardedAdService.shared.initialize()
+        
         return true
     }
     

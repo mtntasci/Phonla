@@ -178,9 +178,57 @@ public final class EditorViewModel {
         }
     }
     
-    // MARK: - Full Resolution Non-Destructive Export
+    // MARK: - Export Decision Flow (Free vs Pro)
     
+    /// Central decision point for photo export:
+    /// - Pro user -> Exports directly without ads.
+    /// - Free user -> Presents 1 AdMob Rewarded Ad.
+    ///   - Reward earned -> Proceeds to export.
+    ///   - Ad failed / unavailable -> Fails open to export.
+    ///   - Dismissed early before reward -> Aborts export without saving.
     public func exportPhoto() async {
+        guard loadedPhoto != nil else { return }
+        guard !isExporting else { return }
+        
+        exportErrorMessage = nil
+        exportSuccessMessage = nil
+        
+        let isPro = SubscriptionService.shared.isProUser
+        
+        if isPro {
+            // Pro Subscriber -> Direct immediate export
+            await performFullResolutionExport()
+        } else {
+            // Free User -> Present Rewarded Ad before export
+            let adResult = await RewardedAdService.shared.presentRewardedAd()
+            
+            switch adResult {
+            case .rewardEarned:
+                // User watched rewarded ad -> Export photo
+                await performFullResolutionExport()
+                
+            case .failedOpen:
+                // Ad failed to load/present -> Fail-open policy: do not block user, proceed to export
+                await performFullResolutionExport()
+                
+            case .dismissedWithoutReward:
+                // User closed ad before reward was earned -> Do not export
+                self.exportErrorMessage = "Fotoğrafı kaydetmek için lütfen kısa reklamı tamamlayın veya Phonla Pro'ya geçin."
+                
+                // Auto-clear error after 4 seconds
+                Task {
+                    try? await Task.sleep(nanoseconds: 4_000_000_000)
+                    if self.exportErrorMessage != nil {
+                        self.exportErrorMessage = nil
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Full Resolution Non-Destructive Export Execution
+    
+    public func performFullResolutionExport() async {
         guard let photo = loadedPhoto else { return }
         guard !isExporting else { return }
         

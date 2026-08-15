@@ -252,4 +252,106 @@ struct PhotonTests {
         let emptyMask = faceService.generateSkinMask(targetExtent: extent, faces: [])
         #expect(emptyMask == nil)
     }
+    
+    // MARK: - StoreKit 2 & AdMob Configuration Tests
+    
+    @Test func testAppConfigConstants() async throws {
+        #expect(AppConfig.StoreKit.proMonthlyProductID == "com.alafteknoloji.photon.pro.monthly")
+        #expect(AppConfig.StoreKit.allProductIDs.contains("com.alafteknoloji.photon.pro.monthly"))
+        #expect(!AppConfig.AdMob.appID.isEmpty)
+        #expect(!AppConfig.AdMob.rewardedExportAdUnitID.isEmpty)
+        #expect(AppConfig.AdMob.isConservativePrivacyEnabled == true)
+    }
+    
+    // MARK: - Subscription Service Tests
+    
+    @Test func testSubscriptionServiceStateAndErrorDescriptions() async throws {
+        let service = await SubscriptionService.shared
+        
+        // Test Mock switching
+        await service.setMockProUserForTesting(true)
+        #expect(await service.isProUser == true)
+        
+        await service.setMockProUserForTesting(false)
+        #expect(await service.isProUser == false)
+        
+        // Test Error Descriptions
+        let notFound = SubscriptionError.productNotFound
+        #expect(notFound.errorDescription?.contains("bulunamadı") == true)
+        
+        let cancelled = SubscriptionError.userCancelled
+        #expect(cancelled.errorDescription?.contains("iptal") == true)
+        
+        let failed = SubscriptionError.purchaseFailed("Ağ hatası")
+        #expect(failed.errorDescription?.contains("Ağ hatası") == true)
+        
+        let restoreFailed = SubscriptionError.restoreFailed("Bilinmeyen hata")
+        #expect(restoreFailed.errorDescription?.contains("Bilinmeyen hata") == true)
+    }
+    
+    // MARK: - Rewarded Ads & Export Decision Flow Tests
+    
+    @Test func testRewardedAdServiceFailOpen() async throws {
+        let adService = await RewardedAdService.shared
+        
+        // When no ad is preloaded, presentRewardedAd returns .failedOpen (fail-open policy)
+        let result = await adService.presentRewardedAd()
+        switch result {
+        case .failedOpen:
+            #expect(true)
+        case .rewardEarned, .dismissedWithoutReward:
+            #expect(Bool(false), "Without ad ready, it must fail-open to allow export")
+        }
+    }
+    
+    @Test func testExportDecisionFlowForProUser() async throws {
+        let subService = await SubscriptionService.shared
+        let viewModel = await EditorViewModel.shared
+        
+        // Set Pro status
+        await subService.setMockProUserForTesting(true)
+        #expect(await subService.isProUser == true)
+        
+        let testCI = createTestCIImage(width: 200, height: 200)
+        let sampleUI = UIImage()
+        let photo = LoadedPhoto(
+            originalCIImage: testCI,
+            previewCIImage: testCI,
+            previewUIImage: sampleUI,
+            pixelSize: CGSize(width: 200, height: 200)
+        )
+        await viewModel.setPhoto(photo)
+        
+        // When Pro user exports, it goes directly to full-res export without showing ads
+        #expect(await !viewModel.isExporting)
+        await viewModel.exportPhoto()
+        
+        // Verified export finished without blocking
+        #expect(await !viewModel.isExporting)
+    }
+    
+    @Test func testExportDecisionFlowForFreeUserWithFailOpen() async throws {
+        let subService = await SubscriptionService.shared
+        let viewModel = await EditorViewModel.shared
+        
+        // Set Free status
+        await subService.setMockProUserForTesting(false)
+        #expect(await subService.isProUser == false)
+        
+        let testCI = createTestCIImage(width: 200, height: 200)
+        let sampleUI = UIImage()
+        let photo = LoadedPhoto(
+            originalCIImage: testCI,
+            previewCIImage: testCI,
+            previewUIImage: sampleUI,
+            pixelSize: CGSize(width: 200, height: 200)
+        )
+        await viewModel.setPhoto(photo)
+        
+        // When Free user exports and ad is not loaded/fails, it fails open and finishes export
+        await viewModel.exportPhoto()
+        
+        #expect(await !viewModel.isExporting)
+    }
 }
+

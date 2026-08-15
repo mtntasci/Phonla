@@ -13,6 +13,7 @@ import UserNotifications
 public struct SettingsView: View {
     @Environment(NavigationState.self) private var navigationState
     @State private var authService = AuthService.shared
+    @State private var subscriptionService = SubscriptionService.shared
     
     // Phone Number Editing State
     @State private var phoneNumberText: String = ""
@@ -93,7 +94,7 @@ public struct SettingsView: View {
                                     HStack {
                                         Image(systemName: "crown.fill")
                                             .font(.system(size: 16))
-                                            .foregroundColor(PhotonColors.textPrimary)
+                                            .foregroundColor(subscriptionService.isProUser ? Color.yellow : PhotonColors.textPrimary)
                                             .frame(width: 28)
                                         
                                         Text("Üyelikler")
@@ -102,9 +103,23 @@ public struct SettingsView: View {
                                         
                                         Spacer()
                                         
-                                        Text("Free")
-                                            .font(PhotonTypography.caption)
-                                            .foregroundColor(PhotonColors.textSecondary)
+                                        if subscriptionService.isProUser {
+                                            HStack(spacing: 4) {
+                                                Image(systemName: "sparkles")
+                                                    .font(.system(size: 11))
+                                                Text("Pro")
+                                                    .font(PhotonTypography.caption.weight(.bold))
+                                            }
+                                            .foregroundColor(PhotonColors.textInverted)
+                                            .padding(.horizontal, PhotonSpacing.sm)
+                                            .padding(.vertical, 3)
+                                            .background(Color.black)
+                                            .clipShape(Capsule())
+                                        } else {
+                                            Text("Standart")
+                                                .font(PhotonTypography.caption.weight(.medium))
+                                                .foregroundColor(PhotonColors.textSecondary)
+                                        }
                                         
                                         Image(systemName: "chevron.right")
                                             .font(.system(size: 13, weight: .semibold))
