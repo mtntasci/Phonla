@@ -16,101 +16,100 @@ public struct MonoToolView: View {
     }
     
     public var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: PhotonSpacing.xs) {
-                // Horizontal Mono Presets Strip
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: PhotonSpacing.xs) {
-                        // Original / Color Toggle Option
+        VStack(spacing: PhotonSpacing.xs) {
+            // Horizontal Mono Presets Strip
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: PhotonSpacing.xs) {
+                    // Original / Color Toggle Option
+                    Button {
+                        viewModel.applyPresetUpdate {
+                            viewModel.editState.isMonoActive = false
+                        }
+                    } label: {
+                        VStack(spacing: PhotonSpacing.xxs) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous)
+                                    .fill(!viewModel.editState.isMonoActive ? PhotonColors.textPrimary : PhotonColors.surfaceSecondary)
+                                    .frame(width: 46, height: 46)
+                                
+                                Image(systemName: "slash.circle")
+                                    .font(.system(size: 19, weight: .regular))
+                                    .foregroundColor(!viewModel.editState.isMonoActive ? PhotonColors.textInverted : PhotonColors.textSecondary)
+                            }
+                            
+                            Text("Renkli")
+                                .font(PhotonTypography.caption.weight(!viewModel.editState.isMonoActive ? .semibold : .regular))
+                                .foregroundColor(!viewModel.editState.isMonoActive ? PhotonColors.textPrimary : PhotonColors.textSecondary)
+                                .lineLimit(1)
+                        }
+                        .frame(width: 58)
+                        .padding(.vertical, PhotonSpacing.xxs)
+                    }
+                    .buttonStyle(.plain)
+                    
+                    // Mono Presets
+                    ForEach(MonoPreset.allPresets) { preset in
+                        let isSelected = viewModel.editState.isMonoActive &&
+                            (viewModel.editState.selectedMonoPresetId == preset.id ||
+                             (viewModel.editState.selectedMonoPresetId == nil && preset.id == "mono_natural"))
+                        
                         Button {
                             viewModel.applyPresetUpdate {
-                                viewModel.editState.isMonoActive = false
+                                viewModel.editState.isMonoActive = true
+                                viewModel.editState.selectedMonoPresetId = preset.id
+                                // Turn off cinematic look when mono is enabled
+                                viewModel.editState.selectedLookId = nil
                             }
                         } label: {
                             VStack(spacing: PhotonSpacing.xxs) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous)
-                                        .fill(!viewModel.editState.isMonoActive ? PhotonColors.textPrimary : PhotonColors.surfaceSecondary)
+                                        .fill(isSelected ? PhotonColors.textPrimary : PhotonColors.surfaceSecondary)
                                         .frame(width: 46, height: 46)
                                     
-                                    Image(systemName: "slash.circle")
+                                    Image(systemName: preset.systemIcon)
                                         .font(.system(size: 19, weight: .regular))
-                                        .foregroundColor(!viewModel.editState.isMonoActive ? PhotonColors.textInverted : PhotonColors.textSecondary)
+                                        .foregroundColor(isSelected ? PhotonColors.textInverted : PhotonColors.textPrimary)
                                 }
                                 
-                                Text("Renkli")
-                                    .font(PhotonTypography.caption.weight(!viewModel.editState.isMonoActive ? .semibold : .regular))
-                                    .foregroundColor(!viewModel.editState.isMonoActive ? PhotonColors.textPrimary : PhotonColors.textSecondary)
+                                Text(preset.name)
+                                    .font(PhotonTypography.caption.weight(isSelected ? .semibold : .regular))
+                                    .foregroundColor(isSelected ? PhotonColors.textPrimary : PhotonColors.textSecondary)
                                     .lineLimit(1)
                             }
                             .frame(width: 58)
                             .padding(.vertical, PhotonSpacing.xxs)
                         }
                         .buttonStyle(.plain)
-                        
-                        // Mono Presets
-                        ForEach(MonoPreset.allPresets) { preset in
-                            let isSelected = viewModel.editState.isMonoActive &&
-                                (viewModel.editState.selectedMonoPresetId == preset.id ||
-                                 (viewModel.editState.selectedMonoPresetId == nil && preset.id == "mono_natural"))
-                            
-                            Button {
-                                viewModel.applyPresetUpdate {
-                                    viewModel.editState.isMonoActive = true
-                                    viewModel.editState.selectedMonoPresetId = preset.id
-                                    // Turn off cinematic look when mono is enabled
-                                    viewModel.editState.selectedLookId = nil
-                                }
-                            } label: {
-                                VStack(spacing: PhotonSpacing.xxs) {
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous)
-                                            .fill(isSelected ? PhotonColors.textPrimary : PhotonColors.surfaceSecondary)
-                                            .frame(width: 46, height: 46)
-                                        
-                                        Image(systemName: preset.systemIcon)
-                                            .font(.system(size: 19, weight: .regular))
-                                            .foregroundColor(isSelected ? PhotonColors.textInverted : PhotonColors.textPrimary)
-                                    }
-                                    
-                                    Text(preset.name)
-                                        .font(PhotonTypography.caption.weight(isSelected ? .semibold : .regular))
-                                        .foregroundColor(isSelected ? PhotonColors.textPrimary : PhotonColors.textSecondary)
-                                        .lineLimit(1)
-                                }
-                                .frame(width: 58)
-                                .padding(.vertical, PhotonSpacing.xxs)
-                            }
-                            .buttonStyle(.plain)
-                        }
                     }
-                    .padding(.horizontal, PhotonSpacing.md)
-                    .padding(.vertical, PhotonSpacing.xxs)
                 }
-                
-                // Mono Intensity Slider when Monochrome is active
-                if viewModel.editState.isMonoActive {
-                    PhotonSlider(
-                        title: "Yoğunluk",
-                        value: Binding(
-                            get: { viewModel.editState.monoIntensity },
-                            set: { newVal in
-                                viewModel.updateStateDirectly { $0.monoIntensity = newVal }
-                            }
-                        ),
-                        range: 0.0...1.0,
-                        defaultValue: 1.0,
-                        step: 0.02,
-                        valueFormatter: { val in
-                            "\(Int(val * 100))%"
-                        },
-                        onEditingEnded: {
-                            viewModel.recordHistorySnapshot()
-                        }
-                    )
-                }
+                .padding(.horizontal, PhotonSpacing.md)
+                .padding(.vertical, PhotonSpacing.xxs)
             }
-            .padding(.vertical, PhotonSpacing.xxs)
+            
+            // Mono Intensity Slider when Monochrome is active
+            if viewModel.editState.isMonoActive {
+                PhotonSlider(
+                    title: "Yoğunluk",
+                    value: Binding(
+                        get: { viewModel.editState.monoIntensity },
+                        set: { newVal in
+                            viewModel.updateStateDirectly { $0.monoIntensity = newVal }
+                        }
+                    ),
+                    range: 0.0...1.0,
+                    defaultValue: 1.0,
+                    step: 0.02,
+                    valueFormatter: { val in
+                        "\(Int(val * 100))%"
+                    },
+                    onEditingEnded: {
+                        viewModel.recordHistorySnapshot()
+                    }
+                )
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
         }
+        .padding(.vertical, PhotonSpacing.xs)
     }
 }

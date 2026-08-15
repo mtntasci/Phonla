@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// Adjustment panel for Portrait & Skin Smoothing tool.
+/// Adjustment panel for Skin Smoothing (Cilt) tool.
 public struct SmoothToolView: View {
     @Bindable var viewModel: EditorViewModel
     
@@ -16,12 +16,10 @@ public struct SmoothToolView: View {
     }
     
     public var body: some View {
-        VStack(spacing: PhotonSpacing.sm) {
-            Spacer(minLength: 0)
-            
+        VStack(spacing: PhotonSpacing.xs) {
             // Main Portrait Skin Smoothing Slider (0 - 100)
             PhotonSlider(
-                title: "Yumuşat",
+                title: "Cilt Pürüzsüzleştirme",
                 value: Binding(
                     get: { viewModel.editState.skinSmoothing },
                     set: { newVal in
@@ -32,15 +30,13 @@ public struct SmoothToolView: View {
                 defaultValue: 0.0,
                 step: 1.0,
                 valueFormatter: { val in
-                    "\(Int(val))"
+                    "\(Int(val))%"
                 },
                 onEditingEnded: {
                     viewModel.recordHistorySnapshot()
                 }
             )
-            
-            Spacer(minLength: 0)
         }
-        .padding(.vertical, PhotonSpacing.xxs)
+        .padding(.vertical, PhotonSpacing.xs)
     }
 }

@@ -6,9 +6,10 @@
 //
 
 import SwiftUI
+import Vision
 
 /// Non-destructive photo editor powered by Core Image & Metal GPU pipeline.
-/// Supports real-time Light, Color, Cinematic, Mono processing, Undo/Redo, Before/After, and full-resolution export.
+/// Supports real-time Light, Color, Cilt (Portrait), Cinematic, Mono processing, Undo/Redo, Before/After, and full-resolution export.
 public struct EditorView: View {
     @Environment(NavigationState.self) private var navigationState
     @State private var viewModel = EditorViewModel.shared
@@ -19,6 +20,8 @@ public struct EditorView: View {
     @State private var lastZoomScale: CGFloat = 1.0
     @State private var panOffset: CGSize = .zero
     @State private var lastPanOffset: CGSize = .zero
+    @State private var canvasSize: CGSize = .zero
+    @State private var isPanning: Bool = false
     
     public init() {}
     
@@ -30,7 +33,7 @@ public struct EditorView: View {
             // MARK: - Main Canvas Area (Photo Preview & Gestures)
             canvasArea
             
-            // MARK: - Bottom Tool Section
+            // MARK: - Bottom Tool Section (Dynamic Height & Translucent Material)
             bottomToolSection
         }
         .photonBackground()
@@ -41,7 +44,7 @@ public struct EditorView: View {
             titleVisibility: .visible
         ) {
             Button("Değişiklikleri Sil ve Çık", role: .destructive) {
-                resetZoom()
+                resetZoom(animated: false)
                 viewModel.resetState()
                 navigationState.navigateToHome()
             }
@@ -50,16 +53,83 @@ public struct EditorView: View {
             Text("Kaydedilmemiş düzenlemeleriniz kaybolacak.")
         }
         .onChange(of: viewModel.loadedPhoto?.id) { _, _ in
-            resetZoom()
+            resetZoom(animated: false)
+        }
+        .onChange(of: viewModel.activeCategory) { oldCategory, newCategory in
+            handleCategoryChange(to: newCategory, from: oldCategory)
+        }
+        .onChange(of: viewModel.isDetectingFaces) { _, isDetecting in
+            if !isDetecting && viewModel.activeCategory == .portrait && zoomScale <= 1.05 {
+                applyFaceZoom()
+            }
         }
     }
     
-    private func resetZoom() {
-        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+    // MARK: - Zoom & Viewport Management
+    
+    private func resetZoom(animated: Bool = true) {
+        if animated {
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.85)) {
+                zoomScale = 1.0
+                lastZoomScale = 1.0
+                panOffset = .zero
+                lastPanOffset = .zero
+            }
+        } else {
             zoomScale = 1.0
             lastZoomScale = 1.0
             panOffset = .zero
             lastPanOffset = .zero
+        }
+    }
+    
+    private func handleCategoryChange(to newCategory: EditorToolCategory, from oldCategory: EditorToolCategory) {
+        if newCategory == .portrait {
+            // Smoothly auto-zoom to the detected face(s)
+            applyFaceZoom()
+        } else if oldCategory == .portrait {
+            // Smoothly return to normal photo view when leaving Cilt tool
+            resetZoom(animated: true)
+        }
+    }
+    
+    private func applyFaceZoom() {
+        guard !viewModel.detectedFaces.isEmpty else { return }
+        
+        let faces = viewModel.detectedFaces
+        
+        // 1. Calculate enclosing union bounding box in normalized coordinates [0, 1]
+        let minX = faces.map { $0.boundingBox.minX }.min() ?? 0
+        let maxX = faces.map { $0.boundingBox.maxX }.max() ?? 1
+        let minY = faces.map { 1.0 - $0.boundingBox.maxY }.min() ?? 0
+        let maxY = faces.map { 1.0 - $0.boundingBox.minY }.max() ?? 1
+        
+        let unionWidth = max(maxX - minX, 0.05)
+        let unionHeight = max(maxY - minY, 0.05)
+        
+        // 2. Add comfortable margin (ensures forehead, hair, and chin stay comfortably in frame)
+        let paddingMultiplier: CGFloat = faces.count > 1 ? 0.35 : 0.55
+        let paddedWidth = min(unionWidth * (1.0 + paddingMultiplier * 2), 1.0)
+        let paddedHeight = min(unionHeight * (1.0 + paddingMultiplier * 2), 1.0)
+        
+        // 3. Compute optimal zoom scale between 1.3x and 3.2x
+        let targetScale = min(max(min(0.72 / paddedWidth, 0.72 / paddedHeight), 1.3), 3.2)
+        
+        // 4. Center of the face box
+        let faceCenterX = (minX + maxX) / 2.0
+        let faceCenterY = (minY + maxY) / 2.0
+        
+        // 5. Pan offset to focus face cleanly in center of canvas
+        let currentW = canvasSize.width > 0 ? canvasSize.width : 340
+        let currentH = canvasSize.height > 0 ? canvasSize.height : 400
+        let targetOffsetX = (0.5 - faceCenterX) * currentW * targetScale
+        let targetOffsetY = (0.5 - faceCenterY) * currentH * targetScale
+        
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
+            zoomScale = targetScale
+            lastZoomScale = targetScale
+            panOffset = CGSize(width: targetOffsetX, height: targetOffsetY)
+            lastPanOffset = panOffset
         }
     }
     
@@ -147,21 +217,21 @@ public struct EditorView: View {
     
     private var canvasArea: some View {
         GeometryReader { geometry in
+            let availableWidth = geometry.size.width - PhotonSpacing.xxs
+            let availableHeight = geometry.size.height - PhotonSpacing.xxs
+            
             ZStack {
                 PhotonColors.surfaceTertiary
                     .ignoresSafeArea()
                 
                 if let displayImage = viewModel.currentDisplayImage {
-                    let canvasWidth = geometry.size.width - PhotonSpacing.xxs
-                    let canvasHeight = geometry.size.height - PhotonSpacing.xxs
-                    
                     ZStack(alignment: .topTrailing) {
                         Image(uiImage: displayImage)
                             .resizable()
                             .scaledToFit()
                             .frame(
-                                maxWidth: canvasWidth,
-                                maxHeight: canvasHeight
+                                maxWidth: availableWidth,
+                                maxHeight: availableHeight
                             )
                             .clipShape(RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous))
                             .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
@@ -169,7 +239,7 @@ public struct EditorView: View {
                                 RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous)
                                     .strokeBorder(PhotonColors.border, lineWidth: 0.5)
                             )
-                            // Face Bounding Box Overlay when Yumuşat tool is active (strictly UI only)
+                            // Face Bounding Box Overlay when Cilt tool is active (strictly UI only)
                             .overlay {
                                 if viewModel.activeCategory == .portrait && !viewModel.isComparingOriginal {
                                     FaceBoundingBoxOverlayView(
@@ -178,10 +248,10 @@ public struct EditorView: View {
                                     )
                                 }
                             }
-                            // Zoom & Pan transforms
+                            // Zoom & Pan transforms (Maintains identical zoom & position for Before and After)
                             .scaleEffect(zoomScale)
                             .offset(panOffset)
-                            // Gestures: Pinch to Zoom, Pan when zoomed, Before/After when at 1.0, and Double Tap to reset/zoom
+                            // Pinch to Zoom gesture
                             .gesture(
                                 MagnificationGesture()
                                     .onChanged { scale in
@@ -195,35 +265,43 @@ public struct EditorView: View {
                                         }
                                     }
                             )
+                            // Simultaneous Drag: Hold to Compare (Before/After) or Drag to Pan when zoomed
                             .simultaneousGesture(
                                 DragGesture(minimumDistance: 0)
                                     .onChanged { value in
-                                        if zoomScale > 1.05 {
+                                        let distance = hypot(value.translation.width, value.translation.height)
+                                        if zoomScale > 1.05 && distance > 10 {
+                                            isPanning = true
+                                            viewModel.isComparingOriginal = false
                                             panOffset = CGSize(
                                                 width: lastPanOffset.width + value.translation.width,
                                                 height: lastPanOffset.height + value.translation.height
                                             )
-                                        } else if viewModel.isEdited {
+                                        } else if !isPanning && viewModel.isEdited {
+                                            // Press and hold anywhere on photo activates Before/After without shifting
                                             viewModel.isComparingOriginal = true
                                         }
                                     }
                                     .onEnded { _ in
-                                        if zoomScale > 1.05 {
+                                        viewModel.isComparingOriginal = false
+                                        if isPanning {
                                             lastPanOffset = panOffset
-                                        } else {
-                                            viewModel.isComparingOriginal = false
+                                            isPanning = false
                                         }
                                     }
                             )
+                            // Double Tap to toggle between face/detailed zoom and normal view
                             .simultaneousGesture(
                                 TapGesture(count: 2)
                                     .onEnded {
-                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                        withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
                                             if zoomScale > 1.05 {
                                                 resetZoom()
+                                            } else if viewModel.activeCategory == .portrait && !viewModel.detectedFaces.isEmpty {
+                                                applyFaceZoom()
                                             } else {
-                                                zoomScale = 2.5
-                                                lastZoomScale = 2.5
+                                                zoomScale = 2.4
+                                                lastZoomScale = 2.4
                                             }
                                         }
                                     }
@@ -231,15 +309,19 @@ public struct EditorView: View {
                         
                         // "Orijinal" overlay tag when comparing
                         if viewModel.isComparingOriginal {
-                            Text("Orijinal")
-                                .font(PhotonTypography.caption.weight(.semibold))
-                                .padding(.horizontal, PhotonSpacing.sm)
-                                .padding(.vertical, PhotonSpacing.xxs)
-                                .background(PhotonColors.textPrimary.opacity(0.85))
-                                .foregroundColor(PhotonColors.textInverted)
-                                .clipShape(Capsule())
-                                .padding(PhotonSpacing.md)
-                                .transition(.opacity)
+                            HStack(spacing: PhotonSpacing.xxs) {
+                                Image(systemName: "eye.fill")
+                                    .font(.system(size: 11))
+                                Text("Orijinal")
+                                    .font(PhotonTypography.caption.weight(.semibold))
+                            }
+                            .padding(.horizontal, PhotonSpacing.sm)
+                            .padding(.vertical, PhotonSpacing.xxs)
+                            .background(PhotonColors.textPrimary.opacity(0.88))
+                            .foregroundColor(PhotonColors.textInverted)
+                            .clipShape(Capsule())
+                            .padding(PhotonSpacing.md)
+                            .transition(.opacity)
                         }
                     }
                 } else {
@@ -294,32 +376,42 @@ public struct EditorView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipped()
+            .onAppear {
+                canvasSize = CGSize(width: availableWidth, height: availableHeight)
+            }
+            .onChange(of: geometry.size) { _, newSize in
+                canvasSize = CGSize(width: newSize.width - PhotonSpacing.xxs, height: newSize.height - PhotonSpacing.xxs)
+            }
         }
     }
     
-    // MARK: - Bottom Tool Section
+    // MARK: - Bottom Tool Section (Dynamic Panels & Translucent Backdrop)
     
     private var bottomToolSection: some View {
         VStack(spacing: 0) {
             Divider()
                 .foregroundColor(PhotonColors.divider)
             
-            // Active Tool Adjustment Panel (Compact height for maximum photo canvas area)
-            Group {
-                switch viewModel.activeCategory {
-                case .light:
-                    LightToolView(viewModel: viewModel)
-                case .color:
-                    ColorToolView(viewModel: viewModel)
-                case .portrait:
-                    SmoothToolView(viewModel: viewModel)
-                case .cinematic:
-                    CinematicToolView(viewModel: viewModel)
-                case .mono:
-                    MonoToolView(viewModel: viewModel)
+            // Dynamic Active Tool Adjustment Panel (Sizes to content needs without artificial scrollbars)
+            ScrollView(.vertical, showsIndicators: false) {
+                Group {
+                    switch viewModel.activeCategory {
+                    case .light:
+                        LightToolView(viewModel: viewModel)
+                    case .color:
+                        ColorToolView(viewModel: viewModel)
+                    case .portrait:
+                        SmoothToolView(viewModel: viewModel)
+                    case .cinematic:
+                        CinematicToolView(viewModel: viewModel)
+                    case .mono:
+                        MonoToolView(viewModel: viewModel)
+                    }
                 }
+                .padding(.horizontal, PhotonSpacing.xs)
             }
-            .frame(height: 104)
+            .frame(maxHeight: 280) // Restricts excessive vertical expansion on small devices while letting small panels stay compact
+            .animation(.spring(response: 0.32, dampingFraction: 0.85), value: viewModel.activeCategory)
             
             Divider()
                 .foregroundColor(PhotonColors.divider)
@@ -351,7 +443,14 @@ public struct EditorView: View {
             .padding(.top, 3)
             .padding(.bottom, 12)
         }
-        .background(PhotonColors.surfacePrimary.ignoresSafeArea(edges: .bottom))
+        .background(
+            ZStack {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                PhotonColors.surfacePrimary.opacity(0.85)
+            }
+            .ignoresSafeArea(edges: .bottom)
+        )
     }
 }
 

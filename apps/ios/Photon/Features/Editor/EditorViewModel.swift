@@ -13,7 +13,7 @@ import Vision
 public enum EditorToolCategory: String, CaseIterable, Identifiable, Sendable {
     case light = "Işık"
     case color = "Renk"
-    case portrait = "Yumuşat"
+    case portrait = "Cilt"
     case cinematic = "Sinematik"
     case mono = "Siyah & Beyaz"
     
@@ -23,7 +23,7 @@ public enum EditorToolCategory: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .light: return "sun.max.fill"
         case .color: return "paintpalette.fill"
-        case .portrait: return "sparkles"
+        case .portrait: return "face.smiling"
         case .cinematic: return "film.fill"
         case .mono: return "circle.lefthalf.filled"
         }
