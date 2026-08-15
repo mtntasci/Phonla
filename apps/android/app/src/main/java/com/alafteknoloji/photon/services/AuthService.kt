@@ -54,7 +54,7 @@ class AuthService(private val context: Context) {
             currentSession = UserSession(
                 uid = user.uid,
                 email = user.email,
-                displayName = user.displayName ?: (user.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() } ?: "Photon Üyesi"),
+                displayName = user.displayName ?: (user.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() } ?: "Phonla Üyesi"),
                 photoUrl = user.photoUrl?.toString(),
                 phoneNumber = resolvedPhone,
                 providerId = resolveProviderName(user),

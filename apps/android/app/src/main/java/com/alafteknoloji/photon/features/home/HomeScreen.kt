@@ -182,7 +182,7 @@ fun HomeScreen(
                     )
 
                     Text(
-                        text = "PHOTON",
+                        text = "PHONLA",
                         style = PhotonTypography.headline.copy(
                             letterSpacing = 3.5.sp,
                             color = Color.White,

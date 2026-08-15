@@ -57,7 +57,7 @@ fun MembershipScreen(onDismiss: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(PhotonSpacing.xs)
         ) {
             Text(
-                text = "Photon Üyelikleri",
+                text = "Phonla Üyelikleri",
                 style = PhotonTypography.titleLarge,
                 color = PhotonColors.textPrimary
             )
@@ -88,7 +88,7 @@ fun MembershipScreen(onDismiss: () -> Unit) {
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(PhotonSpacing.xxs)) {
                     Text(
-                        text = "Photon Standart",
+                        text = "Phonla Standart",
                         style = PhotonTypography.titleMedium,
                         color = PhotonColors.textPrimary
                     )
@@ -145,7 +145,7 @@ fun MembershipScreen(onDismiss: () -> Unit) {
                         horizontalArrangement = Arrangement.spacedBy(PhotonSpacing.xs)
                     ) {
                         Text(
-                            text = "Photon Pro",
+                            text = "Phonla Pro",
                             style = PhotonTypography.titleMedium,
                             color = PhotonColors.textInverted
                         )

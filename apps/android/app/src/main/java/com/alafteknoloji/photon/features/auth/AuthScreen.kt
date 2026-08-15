@@ -159,7 +159,7 @@ fun AuthScreen(
                     verticalArrangement = Arrangement.spacedBy(PhotonSpacing.xxs)
                 ) {
                     Text(
-                        text = "PHOTON",
+                        text = "PHONLA",
                         style = PhotonTypography.titleLarge.copy(
                             letterSpacing = 4.sp,
                             color = PhotonColors.textPrimary

@@ -69,7 +69,7 @@ fun SplashScreen(
                 )
 
                 Text(
-                    text = "PHOTON",
+                    text = "PHONLA",
                     style = PhotonTypography.hero.copy(
                         letterSpacing = 4.sp,
                         color = PhotonColors.textPrimary
