@@ -94,7 +94,7 @@ export const PrivacySection: React.FC = () => {
             </h2>
 
             <p style={{ color: 'var(--text-secondary)', fontSize: '15px', lineHeight: 1.6, marginBottom: '32px' }}>
-              Fotoğraflarınız yalnızca size aittir. Phonla, tüm düzenleme ve renk hesaplama işlemlerini doğrudan mobil cihazınızın yerel GPU donanımı üzerinde gerçekleştirir.
+              Fotoğraflarınız yalnızca size aittir. Photonla, tüm düzenleme ve renk hesaplama işlemlerini doğrudan mobil cihazınızın yerel GPU donanımı üzerinde gerçekleştirir.
             </p>
 
             {/* 3 Pillars */}

@@ -114,10 +114,10 @@ export const InteractiveComparison: React.FC = () => {
             <span>İnteraktif Kıyaslama Stüdyosu</span>
           </div>
           <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', marginBottom: '14px' }}>
-            Orijinal vs <span className="gradient-text-cyan">Phonla Grade</span>
+            Orijinal vs <span className="gradient-text-cyan">Photonla Grade</span>
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '15px', maxWidth: '580px', margin: '0 auto' }}>
-            Çizgiyi parmağınızla veya fareyle sağa sola kaydırın ve Phonla analog tonlama motorunun ham fotoğrafları nasıl işlediğini görün.
+            Çizgiyi parmağınızla veya fareyle sağa sola kaydırın ve Photonla analog tonlama motorunun ham fotoğrafları nasıl işlediğini görün.
           </p>
         </div>
 

@@ -51,10 +51,10 @@ export const AdjustmentSimulator: React.FC = () => {
             <span>Canlı Ayar Motoru</span>
           </div>
           <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', marginBottom: '14px' }}>
-            Phonla <span className="gradient-text-amber">Adjustment Deck</span>
+            Photonla <span className="gradient-text-amber">Adjustment Deck</span>
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '15px', maxWidth: '580px', margin: '0 auto' }}>
-            Aşağıdaki sürgüleri hareket ettirerek Phonla'nın anlık renk ve ışık işleme tepkisini tarayıcınızda deneyimleyin.
+            Aşağıdaki sürgüleri hareket ettirerek Photonla'nın anlık renk ve ışık işleme tepkisini tarayıcınızda deneyimleyin.
           </p>
         </div>
 

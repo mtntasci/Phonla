@@ -26,7 +26,7 @@ public struct MembershipView: View {
                 VStack(spacing: PhotonSpacing.xl) {
                     // Header Description
                     VStack(spacing: PhotonSpacing.xs) {
-                        Text("Phonla Üyelikleri")
+                        Text("Photonla Üyelikleri")
                             .font(PhotonTypography.titleLarge)
                             .foregroundColor(PhotonColors.textPrimary)
                         
@@ -41,7 +41,7 @@ public struct MembershipView: View {
                     VStack(alignment: .leading, spacing: PhotonSpacing.md) {
                         HStack {
                             VStack(alignment: .leading, spacing: PhotonSpacing.xxs) {
-                                Text("Phonla Standart")
+                                Text("Photonla Standart")
                                     .font(PhotonTypography.titleMedium)
                                     .foregroundColor(PhotonColors.textPrimary)
                                 
@@ -81,7 +81,7 @@ public struct MembershipView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: PhotonSpacing.xxs) {
                                 HStack(spacing: PhotonSpacing.xs) {
-                                    Text("Phonla Pro")
+                                    Text("Photonla Pro")
                                         .font(PhotonTypography.titleMedium)
                                         .foregroundColor(PhotonColors.textInverted)
                                     
@@ -132,7 +132,7 @@ public struct MembershipView: View {
                             if subscriptionService.isProUser {
                                 HStack {
                                     Spacer()
-                                    Label("Phonla Pro Aktif", systemImage: "checkmark.circle.fill")
+                                    Label("Photonla Pro Aktif", systemImage: "checkmark.circle.fill")
                                         .font(PhotonTypography.bodyMedium.weight(.semibold))
                                         .foregroundColor(Color.black)
                                     Spacer()
@@ -155,7 +155,7 @@ public struct MembershipView: View {
                                                 .foregroundColor(Color.black)
                                         } else {
                                             let priceText = subscriptionService.proProduct?.displayPrice ?? ""
-                                            Text(priceText.isEmpty ? "Phonla Pro'ya Geç" : "Pro'ya Geç • \(priceText) / Ay")
+                                            Text(priceText.isEmpty ? "Photonla Pro'ya Geç" : "Pro'ya Geç • \(priceText) / Ay")
                                                 .font(PhotonTypography.bodyMedium.weight(.semibold))
                                                 .foregroundColor(Color.black)
                                         }

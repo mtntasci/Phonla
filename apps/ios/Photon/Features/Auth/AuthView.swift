@@ -25,7 +25,7 @@ public struct AuthView: View {
                 PhotonLogoMark(size: 72, color: PhotonColors.textPrimary)
                 
                 VStack(spacing: PhotonSpacing.xxs) {
-                    Text("PHONLA")
+                    Text("PHOTONLA")
                         .font(PhotonTypography.titleLarge)
                         .tracking(4)
                         .foregroundColor(PhotonColors.textPrimary)

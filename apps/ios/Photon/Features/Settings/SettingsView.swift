@@ -168,7 +168,7 @@ public struct SettingsView: View {
                 }
                 
                 VStack(alignment: .leading, spacing: PhotonSpacing.xxs) {
-                    Text(session.displayName ?? "Phonla Kullanıcısı")
+                    Text(session.displayName ?? "Photonla Kullanıcısı")
                         .font(PhotonTypography.headline)
                         .foregroundColor(PhotonColors.textPrimary)
                         .lineLimit(1)
@@ -422,7 +422,7 @@ public struct SettingsView: View {
                         .foregroundColor(subscriptionService.isProUser ? Color.yellow : PhotonColors.textPrimary)
                         .frame(width: 28)
                     
-                    Text("phonla Pro & Planlar")
+                    Text("Photonla Pro & Planlar")
                         .font(PhotonTypography.bodyMedium)
                         .foregroundColor(PhotonColors.textPrimary)
                     

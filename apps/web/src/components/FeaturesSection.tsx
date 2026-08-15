@@ -48,10 +48,10 @@ export const FeaturesSection: React.FC = () => {
             <span>Mühendislik ve Tasarım</span>
           </div>
           <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', marginBottom: '14px' }}>
-            Phonla'yı Benzersiz Kılan <span className="gradient-text">4 Temel İlke</span>
+            Photonla'yı Benzersiz Kılan <span className="gradient-text">4 Temel İlke</span>
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '15px', maxWidth: '580px', margin: '0 auto' }}>
-            Native mobil teknolojileriyle (Swift & Kotlin) sıfırdan geliştirilen Phonla, masaüstü sınıfı renk derecelendirme gücünü cebinize getiriyor.
+            Native mobil teknolojileriyle (Swift & Kotlin) sıfırdan geliştirilen Photonla, masaüstü sınıfı renk derecelendirme gücünü cebinize getiriyor.
           </p>
         </div>
 

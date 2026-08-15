@@ -72,12 +72,12 @@
       "id" : "21689452",
       "localizations" : [
         {
-          "description" : "Phonla Pro Premium Fotoğraf Düzenleme",
-          "displayName" : "Phonla Pro Planları",
+          "description" : "Photonla Pro Premium Fotoğraf Düzenleme",
+          "displayName" : "Photonla Pro Planları",
           "locale" : "tr"
         }
       ],
-      "name" : "Phonla Pro Subscriptions",
+      "name" : "Photonla Pro Subscriptions",
       "subscriptions" : [
         {
           "adHocOffers" : [
@@ -94,13 +94,13 @@
           "localizations" : [
             {
               "description" : "Reklamsız dışa aktarma ve premium düzenleme araçları.",
-              "displayName" : "Phonla Pro (Aylık)",
+              "displayName" : "Photonla Pro (Aylık)",
               "locale" : "tr"
             }
           ],
           "productID" : "com.alafteknoloji.photon.pro.monthly",
           "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "Phonla Pro Monthly",
+          "referenceName" : "Photonla Pro Monthly",
           "subscriptionGroupID" : "21689452",
           "type" : "RecurringSubscription",
           "winbackOffers" : [

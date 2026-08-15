@@ -10,7 +10,7 @@ import android.net.Uri
 data class UserSession(
     val uid: String,
     val email: String? = null,
-    val displayName: String = "Phonla Üyesi",
+    val displayName: String = "Photonla Üyesi",
     val photoUrl: String? = null,
     val phoneNumber: String? = null,
     val providerId: String = "Firebase",

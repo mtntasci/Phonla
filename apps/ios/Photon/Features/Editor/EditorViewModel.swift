@@ -271,7 +271,7 @@ public final class EditorViewModel {
                 
             case .dismissedWithoutReward:
                 // User closed ad before reward was earned -> Do not export
-                self.exportErrorMessage = "Fotoğrafı kaydetmek için lütfen kısa reklamı tamamlayın veya Phonla Pro'ya geçin."
+                self.exportErrorMessage = "Fotoğrafı kaydetmek için lütfen kısa reklamı tamamlayın veya Photonla Pro'ya geçin."
                 
                 // Auto-clear error after 4 seconds
                 Task {

@@ -144,7 +144,7 @@ public final class ConsentManager: NSObject {
         let targetVC = viewController ?? topViewController()
         
         guard let targetVC = targetVC else {
-            completion?(NSError(domain: "PhonlaConsent", code: -1, userInfo: [NSLocalizedDescriptionKey: "Görünüm denetleyicisi bulunamadı."]))
+            completion?(NSError(domain: "PhotonlaConsent", code: -1, userInfo: [NSLocalizedDescriptionKey: "Görünüm denetleyicisi bulunamadı."]))
             return
         }
         

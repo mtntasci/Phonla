@@ -102,7 +102,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
             Last Updated: August 15, 2026
           </p>
           <p style={{ fontSize: '16px', color: '#cbd5e1', lineHeight: 1.6, borderLeft: '3px solid #3b82f6', paddingLeft: '16px' }}>
-            phonla respects your privacy and is designed to process your photos primarily on your device.
+            photonla respects your privacy and is designed to process your photos primarily on your device.
           </p>
         </div>
 
@@ -115,10 +115,10 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               1. Photo Processing
             </h2>
             <p>
-              Photos selected for editing in phonla are processed locally on your device using native and hardware-accelerated image processing technologies.
+              Photos selected for editing in photonla are processed locally on your device using native and hardware-accelerated image processing technologies.
             </p>
             <p style={{ marginTop: '8px' }}>
-              phonla does not upload your photos to our servers for the standard photo editing features available in the application.
+              photonla does not upload your photos to our servers for the standard photo editing features available in the application.
             </p>
             <p style={{ marginTop: '8px' }}>
               Edited photos are saved to your device&apos;s photo library only when you request an export.
@@ -131,7 +131,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               2. Account Information
             </h2>
             <p>
-              phonla uses Firebase Authentication to provide account and session functionality.
+              photonla uses Firebase Authentication to provide account and session functionality.
             </p>
             <p style={{ marginTop: '8px' }}>
               Depending on your selected sign-in provider, we may process limited account information such as:
@@ -144,7 +144,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               <li>User identifier required for authentication</li>
             </ul>
             <p style={{ marginTop: '8px' }}>
-              phonla supports authentication providers such as Sign in with Apple and Google where available.
+              photonla supports authentication providers such as Sign in with Apple and Google where available.
             </p>
           </section>
 
@@ -154,7 +154,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               3. Advertising
             </h2>
             <p>
-              The free version of phonla may display rewarded advertisements before certain actions, such as exporting an edited photo.
+              The free version of photonla may display rewarded advertisements before certain actions, such as exporting an edited photo.
             </p>
             <p style={{ marginTop: '8px' }}>
               We use Google AdMob to provide advertisements.
@@ -163,10 +163,10 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               Google and its advertising partners may process information such as device identifiers, advertising data, product interaction information and technical or diagnostic information in accordance with their own privacy policies and applicable consent requirements.
             </p>
             <p style={{ marginTop: '8px' }}>
-              Where required, phonla will request appropriate privacy or tracking consent before enabling relevant advertising functionality.
+              Where required, photonla will request appropriate privacy or tracking consent before enabling relevant advertising functionality.
             </p>
             <p style={{ marginTop: '8px' }}>
-              Users who do not grant tracking permission can continue using phonla. Advertising functionality may operate with limited or non-personalized advertising where applicable.
+              Users who do not grant tracking permission can continue using photonla. Advertising functionality may operate with limited or non-personalized advertising where applicable.
             </p>
           </section>
 
@@ -176,13 +176,13 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               4. Subscriptions
             </h2>
             <p>
-              phonla may offer paid subscriptions such as phonla Pro.
+              photonla may offer paid subscriptions such as photonla Pro.
             </p>
             <p style={{ marginTop: '8px' }}>
               Subscriptions and payments on iOS are processed by Apple through the App Store and StoreKit.
             </p>
             <p style={{ marginTop: '8px' }}>
-              phonla does not receive or store your complete payment card information.
+              photonla does not receive or store your complete payment card information.
             </p>
             <p style={{ marginTop: '8px' }}>
               Subscription status may be processed to determine whether features such as an ad-free experience should be enabled.
@@ -195,7 +195,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               5. Notifications
             </h2>
             <p>
-              phonla may request permission to send notifications.
+              photonla may request permission to send notifications.
             </p>
             <p style={{ marginTop: '8px' }}>
               Notifications may be used to inform users about:
@@ -204,7 +204,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               <li>New features</li>
               <li>Product updates</li>
               <li>Important application information</li>
-              <li>Relevant phonla announcements</li>
+              <li>Relevant photonla announcements</li>
             </ul>
             <p style={{ marginTop: '8px' }}>
               Notification permission is optional and can be changed through your device settings.
@@ -217,7 +217,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               6. Photo Library Access
             </h2>
             <p>
-              phonla may request permission to add edited photos to your photo library.
+              photonla may request permission to add edited photos to your photo library.
             </p>
             <p style={{ marginTop: '8px' }}>
               We request only the access necessary for application functionality whenever technically possible.
@@ -233,7 +233,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               7. Analytics, Diagnostics and Device Information
             </h2>
             <p>
-              Third-party services integrated with phonla, including Firebase and Google advertising technologies, may process limited technical information required for application functionality, diagnostics, security, advertising or performance measurement.
+              Third-party services integrated with photonla, including Firebase and Google advertising technologies, may process limited technical information required for application functionality, diagnostics, security, advertising or performance measurement.
             </p>
             <p style={{ marginTop: '8px' }}>
               This may include device identifiers, application interactions, crash information and performance information depending on the services enabled and permissions granted.
@@ -246,13 +246,13 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               8. Tracking and Consent
             </h2>
             <p>
-              Where required by applicable law or platform rules, phonla asks for consent before using information for tracking or personalized advertising.
+              Where required by applicable law or platform rules, photonla asks for consent before using information for tracking or personalized advertising.
             </p>
             <p style={{ marginTop: '8px' }}>
               On Apple platforms, users may also be presented with Apple&apos;s App Tracking Transparency permission.
             </p>
             <p style={{ marginTop: '8px' }}>
-              Refusing tracking permission does not prevent access to the core photo editing functionality of phonla.
+              Refusing tracking permission does not prevent access to the core photo editing functionality of photonla.
             </p>
           </section>
 
@@ -262,7 +262,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               9. Children and Young Users
             </h2>
             <p>
-              phonla is a general-audience photo editing application and is not specifically designed or marketed as an application for children.
+              photonla is a general-audience photo editing application and is not specifically designed or marketed as an application for children.
             </p>
             <p style={{ marginTop: '8px' }}>
               We seek to minimize personal information collection and do not require unnecessary personal information to use the photo editing functionality.
@@ -275,10 +275,10 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               10. Data Security
             </h2>
             <p>
-              We use reasonable technical and organizational safeguards designed to protect information processed through phonla and its supporting services.
+              We use reasonable technical and organizational safeguards designed to protect information processed through photonla and its supporting services.
             </p>
             <p style={{ marginTop: '8px' }}>
-              Photos used with the standard editing tools are processed locally on the user&apos;s device and are not intentionally uploaded to phonla servers.
+              Photos used with the standard editing tools are processed locally on the user&apos;s device and are not intentionally uploaded to photonla servers.
             </p>
           </section>
 
@@ -288,7 +288,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               11. Account Deletion
             </h2>
             <p>
-              Users can request deletion of their phonla account directly from within the application.
+              Users can request deletion of their photonla account directly from within the application.
             </p>
             <p style={{ marginTop: '8px' }}>
               Go to:
@@ -297,10 +297,10 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               Profile / Settings → Delete My Account
             </p>
             <p style={{ marginTop: '8px' }}>
-              Deleting an account removes the associated phonla authentication account and applicable account data under our control, subject to information we may be legally required to retain.
+              Deleting an account removes the associated photonla authentication account and applicable account data under our control, subject to information we may be legally required to retain.
             </p>
             <p style={{ marginTop: '8px' }}>
-              Deleting a phonla account does not automatically cancel an active App Store subscription. App Store subscriptions are managed through the user&apos;s Apple account.
+              Deleting a photonla account does not automatically cancel an active App Store subscription. App Store subscriptions are managed through the user&apos;s Apple account.
             </p>
           </section>
 
@@ -310,7 +310,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               12. Third-Party Services
             </h2>
             <p>
-              phonla may use services provided by third parties, including:
+              photonla may use services provided by third parties, including:
             </p>
             <ul style={{ paddingLeft: '24px', marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <li>Apple App Store / StoreKit</li>
@@ -330,10 +330,10 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               13. Changes to This Policy
             </h2>
             <p>
-              We may update this Privacy Policy as phonla evolves or when legal, platform or technical requirements change.
+              We may update this Privacy Policy as photonla evolves or when legal, platform or technical requirements change.
             </p>
             <p style={{ marginTop: '8px' }}>
-              The latest version will be published on the phonla website.
+              The latest version will be published on the photonla website.
             </p>
           </section>
 
@@ -346,8 +346,8 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigate
               For privacy questions, data requests or account-related privacy matters, please contact us through the contact information published on:
             </p>
             <p style={{ marginTop: '8px' }}>
-              <a href="https://phonla.com" style={{ color: '#60a5fa', textDecoration: 'none', fontWeight: 600 }}>
-                https://phonla.com
+              <a href="https://photonla.com" style={{ color: '#60a5fa', textDecoration: 'none', fontWeight: 600 }}>
+                https://photonla.com
               </a>
             </p>
           </section>

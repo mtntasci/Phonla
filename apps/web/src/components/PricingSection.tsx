@@ -13,7 +13,7 @@ export const PricingSection: React.FC = () => {
             <span>Şeffaf Model</span>
           </div>
           <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', marginBottom: '14px' }}>
-            Phonla <span className="gradient-text">Üyelik Planları</span>
+            Photonla <span className="gradient-text">Üyelik Planları</span>
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '15px', maxWidth: '580px', margin: '0 auto' }}>
             Temel profesyonel fotoğraf düzenleme araçları her zaman ücretsiz.
@@ -44,7 +44,7 @@ export const PricingSection: React.FC = () => {
           >
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <h3 style={{ fontSize: '22px', color: '#ffffff' }}>Phonla Standart</h3>
+                <h3 style={{ fontSize: '22px', color: '#ffffff' }}>Photonla Standart</h3>
                 <span
                   style={{
                     background: 'rgba(255, 255, 255, 0.1)',
@@ -124,7 +124,7 @@ export const PricingSection: React.FC = () => {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <h3 style={{ fontSize: '22px', color: '#ffffff' }}>Phonla Pro</h3>
+                  <h3 style={{ fontSize: '22px', color: '#ffffff' }}>Photonla Pro</h3>
                   <Sparkles size={16} color="var(--accent-amber)" />
                 </div>
                 <span

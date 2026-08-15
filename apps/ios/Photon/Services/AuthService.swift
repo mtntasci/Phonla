@@ -122,7 +122,7 @@ public final class AuthService: NSObject, AuthServiceProtocol {
             self.currentSession = UserSession(
                 uid: firebaseUser.uid,
                 email: firebaseUser.email,
-                displayName: firebaseUser.displayName ?? (firebaseUser.email?.components(separatedBy: "@").first?.capitalized ?? "Phonla Üyesi"),
+                displayName: firebaseUser.displayName ?? (firebaseUser.email?.components(separatedBy: "@").first?.capitalized ?? "Photonla Üyesi"),
                 photoURL: firebaseUser.photoURL,
                 providerId: resolveProviderName(from: firebaseUser),
                 isAnonymous: firebaseUser.isAnonymous

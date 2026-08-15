@@ -102,7 +102,7 @@ export const UserPrivacyRights: React.FC<UserPrivacyRightsProps> = ({ onBack, on
             Last Updated: August 15, 2026
           </p>
           <p style={{ fontSize: '16px', color: '#cbd5e1', lineHeight: 1.6, borderLeft: '3px solid #10b981', paddingLeft: '16px' }}>
-            phonla gives users control over their account, permissions and privacy choices.
+            photonla gives users control over their account, permissions and privacy choices.
           </p>
         </div>
 
@@ -115,13 +115,13 @@ export const UserPrivacyRights: React.FC<UserPrivacyRightsProps> = ({ onBack, on
               Your Photos
             </h2>
             <p>
-              Your photos remain on your device during standard phonla photo editing.
+              Your photos remain on your device during standard photonla photo editing.
             </p>
             <p style={{ marginTop: '8px' }}>
               Standard editing operations are performed locally on the device.
             </p>
             <p style={{ marginTop: '8px' }}>
-              phonla does not require your photos to be uploaded to our servers to use the standard editing tools.
+              photonla does not require your photos to be uploaded to our servers to use the standard editing tools.
             </p>
           </section>
 
@@ -131,7 +131,7 @@ export const UserPrivacyRights: React.FC<UserPrivacyRightsProps> = ({ onBack, on
               Your Account
             </h2>
             <p>
-              If you sign in to phonla, limited account information may be provided by your authentication provider.
+              If you sign in to photonla, limited account information may be provided by your authentication provider.
             </p>
             <p style={{ marginTop: '8px' }}>
               This can include:
@@ -144,7 +144,7 @@ export const UserPrivacyRights: React.FC<UserPrivacyRightsProps> = ({ onBack, on
               <li>Authentication user identifier</li>
             </ul>
             <p style={{ marginTop: '8px' }}>
-              We do not require a telephone number for a phonla account.
+              We do not require a telephone number for a photonla account.
             </p>
           </section>
 
@@ -154,7 +154,7 @@ export const UserPrivacyRights: React.FC<UserPrivacyRightsProps> = ({ onBack, on
               Delete Your Account
             </h2>
             <p>
-              You can delete your account directly from the phonla application.
+              You can delete your account directly from the photonla application.
             </p>
             <p style={{ marginTop: '8px' }}>
               Navigate to:
@@ -163,7 +163,7 @@ export const UserPrivacyRights: React.FC<UserPrivacyRightsProps> = ({ onBack, on
               Profile / Settings → Delete My Account
             </p>
             <p style={{ marginTop: '8px' }}>
-              After confirmation, phonla will initiate deletion of your authentication account and applicable user information controlled by phonla.
+              After confirmation, photonla will initiate deletion of your authentication account and applicable user information controlled by photonla.
             </p>
             <p style={{ marginTop: '8px' }}>
               You may be required to authenticate again before account deletion for security reasons.
@@ -176,7 +176,7 @@ export const UserPrivacyRights: React.FC<UserPrivacyRightsProps> = ({ onBack, on
               App Store Subscriptions
             </h2>
             <p>
-              Deleting your phonla account does not automatically cancel an active Apple App Store subscription.
+              Deleting your photonla account does not automatically cancel an active Apple App Store subscription.
             </p>
             <p style={{ marginTop: '8px' }}>
               Subscriptions can be managed or cancelled through your Apple account:
@@ -192,7 +192,7 @@ export const UserPrivacyRights: React.FC<UserPrivacyRightsProps> = ({ onBack, on
               Sign Out
             </h2>
             <p>
-              You can sign out of your phonla account through the Profile / Settings screen.
+              You can sign out of your photonla account through the Profile / Settings screen.
             </p>
             <p style={{ marginTop: '8px' }}>
               Signing out does not delete your account.
@@ -218,7 +218,7 @@ export const UserPrivacyRights: React.FC<UserPrivacyRightsProps> = ({ onBack, on
               Photo Library Permission
             </h2>
             <p>
-              phonla requires appropriate system permission when saving an edited photo to your photo library.
+              photonla requires appropriate system permission when saving an edited photo to your photo library.
             </p>
             <p style={{ marginTop: '8px' }}>
               You can manage photo permissions through iOS Settings.
@@ -234,7 +234,7 @@ export const UserPrivacyRights: React.FC<UserPrivacyRightsProps> = ({ onBack, on
               Free users may be offered rewarded advertisements for certain actions such as exporting edited photos.
             </p>
             <p style={{ marginTop: '8px' }}>
-              phonla uses Google AdMob for advertising.
+              photonla uses Google AdMob for advertising.
             </p>
             <p style={{ marginTop: '8px' }}>
               Where required, you will be provided with privacy choices relating to advertising and tracking.
@@ -243,7 +243,7 @@ export const UserPrivacyRights: React.FC<UserPrivacyRightsProps> = ({ onBack, on
               On supported Apple devices, tracking permission may also be controlled through Apple&apos;s App Tracking Transparency system.
             </p>
             <p style={{ marginTop: '8px' }}>
-              Declining tracking does not disable phonla&apos;s core photo editing functionality.
+              Declining tracking does not disable photonla&apos;s core photo editing functionality.
             </p>
           </section>
 
@@ -253,7 +253,7 @@ export const UserPrivacyRights: React.FC<UserPrivacyRightsProps> = ({ onBack, on
               Paid Users
             </h2>
             <p>
-              Users with an active phonla Pro subscription may receive an ad-free experience according to the benefits displayed in the application.
+              Users with an active photonla Pro subscription may receive an ad-free experience according to the benefits displayed in the application.
             </p>
             <p style={{ marginTop: '8px' }}>
               Subscription purchases, renewals and cancellations are managed through Apple&apos;s App Store.
@@ -282,8 +282,8 @@ export const UserPrivacyRights: React.FC<UserPrivacyRightsProps> = ({ onBack, on
               For privacy or data-related requests, contact us using the information available at:
             </p>
             <p style={{ marginTop: '8px' }}>
-              <a href="https://phonla.com" style={{ color: '#60a5fa', textDecoration: 'none', fontWeight: 600 }}>
-                https://phonla.com
+              <a href="https://photonla.com" style={{ color: '#60a5fa', textDecoration: 'none', fontWeight: 600 }}>
+                https://photonla.com
               </a>
             </p>
           </section>

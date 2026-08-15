@@ -114,7 +114,7 @@ export const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onUserPrivacyCli
           }}
         >
           <div>
-            © 2026 Phonla. Tüm hakları saklıdır. Swift & Kotlin native mimari.
+            © 2026 Photonla. Tüm hakları saklıdır. Swift & Kotlin native mimari.
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

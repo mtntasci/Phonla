@@ -22,7 +22,7 @@ public struct SplashView: View {
             // Transparent Photon Vector Brandmark
             PhotonLogoMark(size: 76, color: PhotonColors.textPrimary)
             
-            Text("PHONLA")
+            Text("PHOTONLA")
                 .font(PhotonTypography.titleMedium)
                 .tracking(5)
                 .foregroundColor(PhotonColors.textPrimary)
