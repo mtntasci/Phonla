@@ -189,11 +189,11 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
             }
             
             // 2. Synthesize clean surrounding skin texture over the blemish area
+            // (Using CIGaussianBlur to avoid Metal shader crash/white-out on large radius with CIBilateralFilter)
             let patchPatch = healed
                 .clampedToExtent()
-                .applyingFilter("CIBilateralFilter", parameters: [
-                    "inputRadius": NSNumber(value: sampleRadius),
-                    "inputDistanceRange": NSNumber(value: 0.18)
+                .applyingFilter("CIGaussianBlur", parameters: [
+                    kCIInputRadiusKey: NSNumber(value: spotPixelRadius * 0.6)
                 ])
                 .cropped(to: image.extent)
             
