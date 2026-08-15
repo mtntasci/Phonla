@@ -1,8 +1,12 @@
 import React from 'react';
-import { Smartphone, Heart } from 'lucide-react';
+import { Smartphone, Heart, Shield } from 'lucide-react';
 import { PhotonLogo } from './PhotonLogo';
 
-export const Footer: React.FC = () => {
+interface FooterProps {
+  onPrivacyClick?: () => void;
+}
+
+export const Footer: React.FC<FooterProps> = ({ onPrivacyClick }) => {
   return (
     <footer
       style={{
@@ -30,8 +34,30 @@ export const Footer: React.FC = () => {
             Işık • Sinematik • Siyah & Beyaz — Native Mobil Fotoğraf Editörü
           </div>
 
-          {/* Download Link */}
-          <div>
+          {/* Navigation Links */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <button
+              onClick={onPrivacyClick}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#a0a5b5',
+                fontSize: '13px',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                padding: 0,
+                transition: 'color 0.2s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#a0a5b5')}
+            >
+              <Shield size={15} />
+              <span>Gizlilik Politikası</span>
+            </button>
+
             <a
               href="#pricing"
               style={{
@@ -78,3 +104,4 @@ export const Footer: React.FC = () => {
     </footer>
   );
 };
+
