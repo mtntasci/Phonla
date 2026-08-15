@@ -9,28 +9,37 @@ import { PrivacySection } from './components/PrivacySection';
 import { PricingSection } from './components/PricingSection';
 import { Footer } from './components/Footer';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
+import { UserPrivacyRights } from './components/UserPrivacyRights';
 
 export function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'privacy'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'privacy' | 'user-privacy'>('home');
 
   useEffect(() => {
-    const handleHashChange = () => {
+    const handleNavigation = () => {
       const hash = window.location.hash;
       const pathname = window.location.pathname;
+
       if (hash === '#privacy' || hash === '#privacy-policy' || pathname === '/privacy') {
         setCurrentPage('privacy');
+      } else if (
+        hash === '#user-privacy' ||
+        hash === '#user-privacy-rights' ||
+        pathname === '/user-privacy' ||
+        pathname === '/user-privacy-rights'
+      ) {
+        setCurrentPage('user-privacy');
       } else {
         setCurrentPage('home');
       }
     };
 
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    window.addEventListener('popstate', handleHashChange);
+    handleNavigation();
+    window.addEventListener('hashchange', handleNavigation);
+    window.addEventListener('popstate', handleNavigation);
 
     return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-      window.removeEventListener('popstate', handleHashChange);
+      window.removeEventListener('hashchange', handleNavigation);
+      window.removeEventListener('popstate', handleNavigation);
     };
   }, []);
 
@@ -39,13 +48,22 @@ export function App() {
     setCurrentPage('privacy');
   };
 
+  const navigateToUserPrivacy = () => {
+    window.location.hash = '#user-privacy';
+    setCurrentPage('user-privacy');
+  };
+
   const navigateToHome = () => {
     window.location.hash = '';
     setCurrentPage('home');
   };
 
   if (currentPage === 'privacy') {
-    return <PrivacyPolicy onBack={navigateToHome} />;
+    return <PrivacyPolicy onBack={navigateToHome} onNavigateUserPrivacy={navigateToUserPrivacy} />;
+  }
+
+  if (currentPage === 'user-privacy') {
+    return <UserPrivacyRights onBack={navigateToHome} onNavigatePrivacyPolicy={navigateToPrivacy} />;
   }
 
   return (
@@ -77,10 +95,11 @@ export function App() {
       </main>
 
       {/* Footer */}
-      <Footer onPrivacyClick={navigateToPrivacy} />
+      <Footer onPrivacyClick={navigateToPrivacy} onUserPrivacyClick={navigateToUserPrivacy} />
     </div>
   );
 }
 
 export default App;
+
 

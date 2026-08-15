@@ -1,19 +1,20 @@
 import React, { useEffect } from 'react';
-import { ArrowLeft, ShieldCheck, Lock, Cpu, EyeOff, UserX, Database, Mail } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, FileText } from 'lucide-react';
 import { PhotonLogo } from './PhotonLogo';
 
 interface PrivacyPolicyProps {
   onBack: () => void;
+  onNavigateUserPrivacy?: () => void;
 }
 
-export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
+export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack, onNavigateUserPrivacy }) => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
   return (
     <div style={{ minHeight: '100vh', background: '#090a0f', color: '#ffffff', paddingBottom: '80px' }}>
-      {/* Header */}
+      {/* Top Navigation Bar */}
       <header
         style={{
           borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
@@ -44,17 +45,38 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
             }}
           >
             <ArrowLeft size={16} />
-            <span>Ana Sayfaya Dön</span>
+            <span>Home</span>
           </button>
 
           <PhotonLogo size={24} showText={true} />
+
+          {onNavigateUserPrivacy && (
+            <button
+              onClick={onNavigateUserPrivacy}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'transparent',
+                border: 'none',
+                color: '#60a5fa',
+                fontSize: '13px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                padding: '8px 12px',
+              }}
+            >
+              <FileText size={15} />
+              <span>User Privacy Rights</span>
+            </button>
+          )}
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="container" style={{ maxWidth: '800px', margin: '48px auto 0 auto', padding: '0 20px' }}>
-        {/* Title */}
-        <div style={{ marginBottom: '40px', textAlign: 'center' }}>
+      {/* Main Document Content */}
+      <div className="container" style={{ maxWidth: '820px', margin: '48px auto 0 auto', padding: '0 20px' }}>
+        {/* Title Header */}
+        <div style={{ marginBottom: '40px' }}>
           <div
             style={{
               display: 'inline-flex',
@@ -70,137 +92,266 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
             }}
           >
             <ShieldCheck size={14} color="#10b981" />
-            <span>Gizlilik ve Veri Güvenliği</span>
+            <span>Legal & Privacy</span>
           </div>
-          <h1 style={{ fontSize: '36px', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '12px' }}>
-            Phonla Gizlilik Politikası
+
+          <h1 style={{ fontSize: '36px', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
+            Privacy Policy
           </h1>
-          <p style={{ color: '#8e95a5', fontSize: '14px' }}>
-            Son Güncelleme: 15 Ağustos 2026 • Yürürlük Tarihi: 15 Ağustos 2026
+          <p style={{ color: '#8e95a5', fontSize: '14px', marginBottom: '24px' }}>
+            Last Updated: August 15, 2026
+          </p>
+          <p style={{ fontSize: '16px', color: '#cbd5e1', lineHeight: 1.6, borderLeft: '3px solid #3b82f6', paddingLeft: '16px' }}>
+            phonla respects your privacy and is designed to process your photos primarily on your device.
           </p>
         </div>
 
-        {/* Core Principles Grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '16px',
-            marginBottom: '48px',
-          }}
-        >
-          <div
-            style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '16px',
-              padding: '20px',
-            }}
-          >
-            <Cpu size={24} color="#3b82f6" style={{ marginBottom: '12px' }} />
-            <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '6px' }}>%100 Cihaz Üzerinde İşleme</h3>
-            <p style={{ fontSize: '13px', color: '#8e95a5', lineHeight: 1.5 }}>
-              Fotoğraflarınız sunucularımıza yüklenmez; tüm düzenlemeler doğrudan telefonunuzun GPU/Metal motorunda gerçekleşir.
-            </p>
-          </div>
-
-          <div
-            style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '16px',
-              padding: '20px',
-            }}
-          >
-            <EyeOff size={24} color="#10b981" style={{ marginBottom: '12px' }} />
-            <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '6px' }}>Sıfır Görsel İzleme</h3>
-            <p style={{ fontSize: '13px', color: '#8e95a5', lineHeight: 1.5 }}>
-              Düzenlediğiniz veya dışa aktardığınız fotoğraflar reklam ağları veya 3. parti şirketlerle asla paylaşılmaz.
-            </p>
-          </div>
-
-          <div
-            style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '16px',
-              padding: '20px',
-            }}
-          >
-            <UserX size={24} color="#ef4444" style={{ marginBottom: '12px' }} />
-            <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '6px' }}>Kalıcı Hesap Silme</h3>
-            <p style={{ fontSize: '13px', color: '#8e95a5', lineHeight: 1.5 }}>
-              Uygulama içerisinden tek dokunuşla Firebase hesabınızı ve oturum verilerinizi kalıcı olarak silebilirsiniz.
-            </p>
-          </div>
-        </div>
-
-        {/* Detailed Sections */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', lineHeight: 1.7, fontSize: '14px', color: '#cbd5e1' }}>
+        {/* Policy Body */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', lineHeight: 1.7, fontSize: '15px', color: '#cbd5e1' }}>
+          
+          {/* Section 1 */}
           <section>
-            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Lock size={18} color="#60a5fa" />
-              1. Toplanan Veriler ve Kullanım Amaçları
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px' }}>
+              1. Photo Processing
             </h2>
             <p>
-              <strong>Phonla</strong> (&quot;Uygulama&quot;), kullanıcı gizliliğini temel tasarım prensibi olarak kabul eder. Uygulamayı kullandığınızda aşağıdaki sınırlı veriler işlenebilir:
-            </p>
-            <ul style={{ paddingLeft: '20px', marginTop: '8px' }}>
-              <li>
-                <strong>Kimlik Doğrulama Bilgileri:</strong> Apple Sign-In veya Google Sign-In ile giriş yaptığınızda sağlanan ad-soyad, e-posta adresi ve benzersiz kullanıcı kimliği (UID). Bu veriler yalnızca oturumunuzu yönetmek ve abonelik durumunuzu eşleştirmek için Firebase Authentication altyapısında güvenle saklanır.
-              </li>
-              <li>
-                <strong>Fotoğraf Verileri:</strong> Düzenlemek için seçtiğiniz fotoğraflar yalnızca cihazınızın geçici belleğinde (RAM) işlenir. <u>Fotoğraflarınız hiçbir sunucuya yüklenmez, kaydedilmez veya analiz edilmez.</u>
-              </li>
-              <li>
-                <strong>Abonelik ve Satın Alma Verileri:</strong> Phonla Pro abonelikleri Apple StoreKit 2 altyapısı üzerinden güvenle işlenir. Ödeme ve kredi kartı bilgileriniz doğrudan Apple tarafından yönetilir ve Phonla sunucularına asla ulaşmaz.
-              </li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Database size={18} color="#60a5fa" />
-              2. Üçüncü Taraf Servisler ve SDK&apos;lar
-            </h2>
-            <p>
-              Phonla, uygulamanın temel işlevlerini sağlamak amacıyla yalnızca aşağıdaki güvenilir servis sağlayıcıları kullanır:
-            </p>
-            <ul style={{ paddingLeft: '20px', marginTop: '8px' }}>
-              <li>
-                <strong>Google Firebase Authentication:</strong> Güvenli oturum açma, jeton yönetimi ve kullanıcı hesap altyapısı.
-              </li>
-              <li>
-                <strong>Google AdMob (Rewarded Ads):</strong> Free (Ücretsiz) kullanıcılarımızın dışa aktarma öncesi ödüllü reklam izleyebilmesi için kullanılır. Reklam servisinde çocuk koruma (COPPA) ve muhafazakar gizlilik ayarları aktiftir. Fotoğraflarınız veya kişisel görselleriniz asla reklam SDK&apos;sına iletilmez.
-              </li>
-              <li>
-                <strong>Apple StoreKit:</strong> Uygulama içi abonelik ve satın alma yönetimi.
-              </li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <UserX size={18} color="#60a5fa" />
-              3. Veri Saklama ve Hesap Silme Hakları
-            </h2>
-            <p>
-              Kullanıcılar diledikleri zaman uygulamamız içerisindeki <strong>Profil &amp; Ayarlar &gt; Hesabımı Sil</strong> seçeneğini kullanarak Firebase Authentication hesaplarını ve tüm yerel oturum verilerini anında ve kalıcı olarak silebilirler.
-            </p>
-          </section>
-
-          <section>
-            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Mail size={18} color="#60a5fa" />
-              4. İletişim
-            </h2>
-            <p>
-              Gizlilik politikamız veya veri haklarınız ile ilgili her türlü soru, öneri veya talepleriniz için bizimle iletişime geçebilirsiniz:
+              Photos selected for editing in phonla are processed locally on your device using native and hardware-accelerated image processing technologies.
             </p>
             <p style={{ marginTop: '8px' }}>
-              <strong>E-posta:</strong> <a href="mailto:destek@phonla.app" style={{ color: '#60a5fa', textDecoration: 'none' }}>destek@phonla.app</a>
+              phonla does not upload your photos to our servers for the standard photo editing features available in the application.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              Edited photos are saved to your device&apos;s photo library only when you request an export.
             </p>
           </section>
+
+          {/* Section 2 */}
+          <section>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px' }}>
+              2. Account Information
+            </h2>
+            <p>
+              phonla uses Firebase Authentication to provide account and session functionality.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              Depending on your selected sign-in provider, we may process limited account information such as:
+            </p>
+            <ul style={{ paddingLeft: '24px', marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <li>Name</li>
+              <li>Email address</li>
+              <li>Profile image</li>
+              <li>Authentication provider information</li>
+              <li>User identifier required for authentication</li>
+            </ul>
+            <p style={{ marginTop: '8px' }}>
+              phonla supports authentication providers such as Sign in with Apple and Google where available.
+            </p>
+          </section>
+
+          {/* Section 3 */}
+          <section>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px' }}>
+              3. Advertising
+            </h2>
+            <p>
+              The free version of phonla may display rewarded advertisements before certain actions, such as exporting an edited photo.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              We use Google AdMob to provide advertisements.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              Google and its advertising partners may process information such as device identifiers, advertising data, product interaction information and technical or diagnostic information in accordance with their own privacy policies and applicable consent requirements.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              Where required, phonla will request appropriate privacy or tracking consent before enabling relevant advertising functionality.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              Users who do not grant tracking permission can continue using phonla. Advertising functionality may operate with limited or non-personalized advertising where applicable.
+            </p>
+          </section>
+
+          {/* Section 4 */}
+          <section>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px' }}>
+              4. Subscriptions
+            </h2>
+            <p>
+              phonla may offer paid subscriptions such as phonla Pro.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              Subscriptions and payments on iOS are processed by Apple through the App Store and StoreKit.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              phonla does not receive or store your complete payment card information.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              Subscription status may be processed to determine whether features such as an ad-free experience should be enabled.
+            </p>
+          </section>
+
+          {/* Section 5 */}
+          <section>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px' }}>
+              5. Notifications
+            </h2>
+            <p>
+              phonla may request permission to send notifications.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              Notifications may be used to inform users about:
+            </p>
+            <ul style={{ paddingLeft: '24px', marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <li>New features</li>
+              <li>Product updates</li>
+              <li>Important application information</li>
+              <li>Relevant phonla announcements</li>
+            </ul>
+            <p style={{ marginTop: '8px' }}>
+              Notification permission is optional and can be changed through your device settings.
+            </p>
+          </section>
+
+          {/* Section 6 */}
+          <section>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px' }}>
+              6. Photo Library Access
+            </h2>
+            <p>
+              phonla may request permission to add edited photos to your photo library.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              We request only the access necessary for application functionality whenever technically possible.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              Your original photo is not intentionally overwritten during the normal editing and export process.
+            </p>
+          </section>
+
+          {/* Section 7 */}
+          <section>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px' }}>
+              7. Analytics, Diagnostics and Device Information
+            </h2>
+            <p>
+              Third-party services integrated with phonla, including Firebase and Google advertising technologies, may process limited technical information required for application functionality, diagnostics, security, advertising or performance measurement.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              This may include device identifiers, application interactions, crash information and performance information depending on the services enabled and permissions granted.
+            </p>
+          </section>
+
+          {/* Section 8 */}
+          <section>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px' }}>
+              8. Tracking and Consent
+            </h2>
+            <p>
+              Where required by applicable law or platform rules, phonla asks for consent before using information for tracking or personalized advertising.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              On Apple platforms, users may also be presented with Apple&apos;s App Tracking Transparency permission.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              Refusing tracking permission does not prevent access to the core photo editing functionality of phonla.
+            </p>
+          </section>
+
+          {/* Section 9 */}
+          <section>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px' }}>
+              9. Children and Young Users
+            </h2>
+            <p>
+              phonla is a general-audience photo editing application and is not specifically designed or marketed as an application for children.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              We seek to minimize personal information collection and do not require unnecessary personal information to use the photo editing functionality.
+            </p>
+          </section>
+
+          {/* Section 10 */}
+          <section>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px' }}>
+              10. Data Security
+            </h2>
+            <p>
+              We use reasonable technical and organizational safeguards designed to protect information processed through phonla and its supporting services.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              Photos used with the standard editing tools are processed locally on the user&apos;s device and are not intentionally uploaded to phonla servers.
+            </p>
+          </section>
+
+          {/* Section 11 */}
+          <section>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px' }}>
+              11. Account Deletion
+            </h2>
+            <p>
+              Users can request deletion of their phonla account directly from within the application.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              Go to:
+            </p>
+            <p style={{ fontWeight: 600, color: '#ffffff', padding: '8px 14px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px', display: 'inline-block', margin: '6px 0' }}>
+              Profile / Settings → Delete My Account
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              Deleting an account removes the associated phonla authentication account and applicable account data under our control, subject to information we may be legally required to retain.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              Deleting a phonla account does not automatically cancel an active App Store subscription. App Store subscriptions are managed through the user&apos;s Apple account.
+            </p>
+          </section>
+
+          {/* Section 12 */}
+          <section>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px' }}>
+              12. Third-Party Services
+            </h2>
+            <p>
+              phonla may use services provided by third parties, including:
+            </p>
+            <ul style={{ paddingLeft: '24px', marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <li>Apple App Store / StoreKit</li>
+              <li>Sign in with Apple</li>
+              <li>Google Firebase</li>
+              <li>Google Authentication services</li>
+              <li>Google AdMob</li>
+            </ul>
+            <p style={{ marginTop: '8px' }}>
+              These providers process information according to their respective privacy policies and terms.
+            </p>
+          </section>
+
+          {/* Section 13 */}
+          <section>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px' }}>
+              13. Changes to This Policy
+            </h2>
+            <p>
+              We may update this Privacy Policy as phonla evolves or when legal, platform or technical requirements change.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              The latest version will be published on the phonla website.
+            </p>
+          </section>
+
+          {/* Section 14 */}
+          <section>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '12px' }}>
+              14. Contact
+            </h2>
+            <p>
+              For privacy questions, data requests or account-related privacy matters, please contact us through the contact information published on:
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <a href="https://phonla.com" style={{ color: '#60a5fa', textDecoration: 'none', fontWeight: 600 }}>
+                https://phonla.com
+              </a>
+            </p>
+          </section>
+
         </div>
       </div>
     </div>

@@ -4,9 +4,10 @@ import { PhotonLogo } from './PhotonLogo';
 
 interface FooterProps {
   onPrivacyClick?: () => void;
+  onUserPrivacyClick?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onPrivacyClick }) => {
+export const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onUserPrivacyClick }) => {
   return (
     <footer
       style={{
@@ -35,7 +36,7 @@ export const Footer: React.FC<FooterProps> = ({ onPrivacyClick }) => {
           </div>
 
           {/* Navigation Links */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
             <button
               onClick={onPrivacyClick}
               style={{
@@ -55,7 +56,29 @@ export const Footer: React.FC<FooterProps> = ({ onPrivacyClick }) => {
               onMouseLeave={(e) => (e.currentTarget.style.color = '#a0a5b5')}
             >
               <Shield size={15} />
-              <span>Gizlilik Politikası</span>
+              <span>Privacy Policy</span>
+            </button>
+
+            <button
+              onClick={onUserPrivacyClick}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#a0a5b5',
+                fontSize: '13px',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                padding: 0,
+                transition: 'color 0.2s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#a0a5b5')}
+            >
+              <Shield size={15} />
+              <span>User Privacy</span>
             </button>
 
             <a
