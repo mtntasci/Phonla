@@ -16,6 +16,7 @@ public struct SettingsView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var authService = AuthService.shared
     @State private var subscriptionService = SubscriptionService.shared
+    @State private var consentManager = ConsentManager.shared
     
     // Runtime Permission States
     @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
@@ -208,11 +209,11 @@ public struct SettingsView: View {
         .photonCard()
     }
     
-    // MARK: - 2. Permissions Section (Notifications & Photos Add-Only)
+    // MARK: - 2. Permissions Section (Notifications, Photos Add-Only & Ad Privacy)
     
     private var permissionsSection: some View {
         VStack(alignment: .leading, spacing: PhotonSpacing.sm) {
-            Text("İzinler")
+            Text("İzinler & Gizlilik")
                 .font(PhotonTypography.caption)
                 .foregroundColor(PhotonColors.textTertiary)
                 .padding(.horizontal, PhotonSpacing.xs)
@@ -225,10 +226,62 @@ public struct SettingsView: View {
                 
                 // 2. Fotoğraflara Kaydetme (Lowest Privilege: Add Only)
                 photoLibraryPermissionRow
+                
+                Divider().foregroundColor(PhotonColors.divider)
+                
+                // 3. Reklam Gizliliği (Google UMP Privacy Options Form & Consent Revocation)
+                adPrivacyRow
             }
             .padding(.horizontal, PhotonSpacing.md)
             .photonCard()
         }
+    }
+    
+    private var adPrivacyRow: some View {
+        HStack {
+            Image(systemName: "hand.raised.square.fill")
+                .font(.system(size: 16))
+                .foregroundColor(PhotonColors.textPrimary)
+                .frame(width: 28)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Reklam Gizliliği")
+                    .font(PhotonTypography.bodyMedium)
+                    .foregroundColor(PhotonColors.textPrimary)
+                
+                Text("Gizlilik tercihleri ve rıza yönetimi")
+                    .font(PhotonTypography.caption)
+                    .foregroundColor(PhotonColors.textTertiary)
+            }
+            
+            Spacer()
+            
+            Button {
+                consentManager.presentPrivacyOptionsForm { error in
+                    if let error = error {
+                        print("[SettingsView] Privacy options error: \(error.localizedDescription)")
+                    }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Text(consentManager.isPrivacyOptionsRequired ? "Düzenle" : "Tercihler")
+                        .font(PhotonTypography.caption.weight(.semibold))
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10, weight: .bold))
+                }
+                .foregroundColor(PhotonColors.textPrimary)
+                .padding(.horizontal, PhotonSpacing.sm)
+                .padding(.vertical, 6)
+                .background(PhotonColors.surfaceSecondary)
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule()
+                        .strokeBorder(PhotonColors.border, lineWidth: 0.8)
+                )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.vertical, PhotonSpacing.md)
     }
     
     private var notificationPermissionRow: some View {

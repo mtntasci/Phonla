@@ -377,5 +377,13 @@ struct PhotonTests {
         
         #expect(await !viewModel.isExporting)
     }
+    
+    // MARK: - Consent & ATT Tests
+    
+    @Test func testConsentManagerInitialState() async throws {
+        let manager = await ConsentManager.shared
+        #expect(await manager.trackingStatus == .notDetermined || manager.trackingStatus == .denied || manager.trackingStatus == .authorized || manager.trackingStatus == .restricted)
+    }
 }
+
 

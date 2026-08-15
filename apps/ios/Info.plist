@@ -36,6 +36,8 @@
 	<string>Düzenlenen fotoğraflarınızı galerinize kaydetmek için izin gereklidir.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Fotoğraflarınızı düzenlemek için fotoğraf seçmeniz gerekmektedir.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Bu izin, ücretsiz sürümde size uygun reklamların gösterilebilmesi için kullanılır.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

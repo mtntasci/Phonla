@@ -24,8 +24,10 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
             }
         }
         
-        // Initialize Google Mobile Ads SDK and start rewarded ad preloading
-        RewardedAdService.shared.initialize()
+        // Initialize Google UMP Consent, ATT if appropriate, and Mobile Ads SDK
+        Task { @MainActor in
+            ConsentManager.shared.gatherConsentAndInitializeAds()
+        }
         
         return true
     }
