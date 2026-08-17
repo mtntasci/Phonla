@@ -17,6 +17,11 @@ public protocol ImageProcessingServiceProtocol: Sendable {
     func renderFullResolution(from input: CIImage, state: PhotoEditState, skinMask: CIImage?) -> CGImage?
 }
 
+public enum SkinSmoothPreset: String, CaseIterable, Sendable {
+    case natural
+    case silky
+}
+
 /// Metal-accelerated Core Image processing engine.
 /// Reuses a single CIContext for optimal GPU throughput and memory stability.
 public final class ImageProcessingService: ImageProcessingServiceProtocol, @unchecked Sendable {
@@ -103,7 +108,8 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
         
         // 8. Portrait & Skin Smoothing Engine (Frequency Separation)
         if state.skinSmoothing > 0.0 {
-            output = applySkinSmoothing(to: output, intensity: state.skinSmoothing, skinMask: skinMask)
+            let preset: SkinSmoothPreset = (state.skinSmoothing > 60.0) ? .silky : .natural
+            output = applySkinSmoothingInternal(to: output, preset: preset, intensity: state.skinSmoothing / 100.0, skinMask: skinMask)
         }
         
         return output
@@ -111,49 +117,64 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
     
     // MARK: - Portrait & Skin Smoothing Pipeline (Frequency Separation)
     
-    private func applySkinSmoothing(to image: CIImage, intensity: Float, skinMask: CIImage?) -> CIImage {
-        guard intensity > 0.001 else {
-            return image
+    public func applySkinSmoothing(
+        to inputImage: CIImage,
+        preset: SkinSmoothPreset = .natural,
+        intensity: Float = 0.7,
+        orientation: CGImagePropertyOrientation = .up
+    ) -> CIImage? {
+        guard let skinMask = FaceDetectionService.shared.generateSkinMask(for: inputImage, orientation: orientation) else {
+            return inputImage
         }
         
-        let normIntensity = CGFloat(min(max(intensity / 100.0, 0.0), 1.0))
-        let maxDim = max(image.extent.width, image.extent.height)
-        let scale = max(0.5, (maxDim > 0 ? maxDim : 1920.0) / 1920.0)
+        return applySkinSmoothingInternal(to: inputImage, preset: preset, intensity: intensity, skinMask: skinMask)
+    }
+    
+    private func applySkinSmoothingInternal(
+        to inputImage: CIImage,
+        preset: SkinSmoothPreset,
+        intensity: Float,
+        skinMask: CIImage?
+    ) -> CIImage {
+        guard intensity > 0.001 else { return inputImage }
         
-        // 1. Low-Frequency Tone Smoothing: Level redness, blotchiness, uneven tones
-        let blurRadius = (28.0 * normIntensity + 8.0) * scale
-        let lowFrequencyTone = image
-            .clampedToExtent()
-            .applyingFilter("CIGaussianBlur", parameters: [
-                kCIInputRadiusKey: NSNumber(value: blurRadius)
-            ])
-            .cropped(to: image.extent)
+        let extent = inputImage.extent
+        let clamped = inputImage.clampedToExtent()
+        let smoothedBase: CIImage
         
-        // 2. High-Frequency Micro-Texture Layer: Preserves skin pores and fine natural detail
-        let microDetailRadius = max(1.0, 1.6 * scale)
-        let textureSharpen = image.applyingFilter("CIUnsharpMask", parameters: [
-            kCIInputRadiusKey: NSNumber(value: microDetailRadius),
-            kCIInputIntensityKey: NSNumber(value: 0.80)
-        ])
-        
-        // 3. Re-combine Low-Frequency Smooth Tone + High-Frequency Crisp Texture
-        let smoothSkinComposite = blendImages(base: lowFrequencyTone, overlay: textureSharpen, alpha: Float(0.40 - 0.15 * normIntensity))
-        
-        // 4. Blend between original and frequency-separated skin according to slider intensity
-        let blendedSkin = blendImages(base: image, overlay: smoothSkinComposite, alpha: Float(normIntensity))
-        
-        // 5. Composite STRICTLY over skin region using Vision Mask if available
-        if let mask = skinMask {
-            let maskedOutput = CIFilter(name: "CIBlendWithMask", parameters: [
-                kCIInputImageKey: blendedSkin,
-                kCIInputBackgroundImageKey: image,
-                kCIInputMaskImageKey: mask
-            ])?.outputImage ?? blendedSkin
-            
-            return maskedOutput.cropped(to: image.extent)
-        } else {
-            return blendedSkin.cropped(to: image.extent)
+        switch preset {
+        case .natural:
+            let blurRadius = Double(intensity) * 6.0 + 2.5
+            smoothedBase = clamped
+                .applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: NSNumber(value: blurRadius)])
+                .cropped(to: extent)
+        case .silky:
+            let blurRadius = Double(intensity) * 14.0 + 4.5
+            smoothedBase = clamped
+                .applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: NSNumber(value: blurRadius)])
+                .cropped(to: extent)
         }
+        
+        let blendFilter = CIFilter.blendWithMask()
+        blendFilter.inputImage = smoothedBase
+        blendFilter.backgroundImage = inputImage
+        blendFilter.maskImage = skinMask
+        
+        guard let result = blendFilter.outputImage?.cropped(to: extent) else {
+            return inputImage
+        }
+        
+        let sharpen = CIFilter.unsharpMask()
+        sharpen.inputImage = result
+        sharpen.radius = preset == .natural ? 2.5 : 1.5
+        sharpen.intensity = preset == .natural ? (intensity * 0.45) : (intensity * 0.2)
+        
+        return sharpen.outputImage?.cropped(to: extent) ?? result
+    }
+    
+    public func render(ciImage: CIImage) -> UIImage? {
+        guard let cg = context.createCGImage(ciImage, from: ciImage.extent) else { return nil }
+        return UIImage(cgImage: cg)
     }
     
     // MARK: - Spot Healing Engine (Adaptive Nearest-Patch Synthesis & Texture Preservation)

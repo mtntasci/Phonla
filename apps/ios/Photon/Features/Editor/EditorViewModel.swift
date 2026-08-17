@@ -252,16 +252,17 @@ public final class EditorViewModel {
             _ = await diskCacheService.saveOriginalPreview(image: photo.previewUIImage, sessionId: newSession)
         }
         
-        // Asynchronously perform face detection once per photo load
+        // Asynchronously perform face detection once per photo load with EXIF orientation awareness
         Task { [faceDetectionService] in
-            let faces = await faceDetectionService.detectFaces(in: photo.previewCIImage)
+            let orientation = CGImagePropertyOrientation(photo.previewUIImage.imageOrientation)
+            let faces = await faceDetectionService.detectFaces(in: photo.previewCIImage, orientation: orientation)
             let skinMaskCI = !faces.isEmpty ? faceDetectionService.generateSkinMask(
-                targetExtent: photo.previewCIImage.extent,
-                faces: faces
+                for: photo.previewCIImage,
+                orientation: orientation
             ) : nil
             let visualMask = !faces.isEmpty ? faceDetectionService.generateVisualSkinMask(
-                targetExtent: photo.previewCIImage.extent,
-                faces: faces
+                for: photo.previewCIImage,
+                orientation: orientation
             ) : nil
             
             await MainActor.run {
@@ -528,9 +529,10 @@ public final class EditorViewModel {
             // Generate full-resolution skin mask if faces were detected
             let fullResSkinMask: CIImage?
             if !detectedFaces.isEmpty {
+                let orientation = CGImagePropertyOrientation(photo.previewUIImage.imageOrientation)
                 fullResSkinMask = faceDetectionService.generateSkinMask(
-                    targetExtent: photo.originalCIImage.extent,
-                    faces: detectedFaces
+                    for: photo.originalCIImage,
+                    orientation: orientation
                 )
             } else {
                 fullResSkinMask = nil
@@ -583,5 +585,23 @@ public final class EditorViewModel {
     
     public var isEdited: Bool {
         editState.isEdited
+    }
+}
+
+// MARK: - EXIF Orientation Mapping Extension
+
+extension CGImagePropertyOrientation {
+    public init(_ uiOrientation: UIImage.Orientation) {
+        switch uiOrientation {
+        case .up: self = .up
+        case .upMirrored: self = .upMirrored
+        case .down: self = .down
+        case .downMirrored: self = .downMirrored
+        case .left: self = .left
+        case .leftMirrored: self = .leftMirrored
+        case .right: self = .right
+        case .rightMirrored: self = .rightMirrored
+        @unknown default: self = .up
+        }
     }
 }
