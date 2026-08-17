@@ -356,7 +356,16 @@ public final class EditorViewModel {
                 successFeedback.notificationOccurred(.success)
                 
                 self.requestPreviewRender()
-                // Mask remains visible on face so user can inspect and refine. User taps "Uygula" to dismiss.
+                
+                // Show face lock-on mask for 1.4s then smoothly fade away to reveal retouched skin
+                Task {
+                    try? await Task.sleep(nanoseconds: 1_400_000_000)
+                    await MainActor.run {
+                        withAnimation(.easeOut(duration: 0.35)) {
+                            self.isShowingSkinMaskOverlay = false
+                        }
+                    }
+                }
             }
         }
     }
@@ -370,11 +379,15 @@ public final class EditorViewModel {
     }
     
     public func selectWizardMode(_ mode: WizardRetouchMode) {
-        guard selectedWizardMode != mode || editState.skinSmoothing == 0 else { return }
         self.selectedWizardMode = mode
         self.isWizardActive = true
         recordHistorySnapshot()
         self.editState.skinSmoothing = mode.intensity
+        
+        // Immediately dismiss mask on preset selection to reveal retouched skin
+        withAnimation(.easeOut(duration: 0.25)) {
+            self.isShowingSkinMaskOverlay = false
+        }
         
         let generator = UIImpactFeedbackGenerator(style: .light)
         generator.impactOccurred()

@@ -46,7 +46,7 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
     // MARK: - Skin Mask Generation (Core Image Pipeline)
     
     /// Generates a smooth, high-precision grayscale mask (white = skin, black = background/eyes/lips/brows)
-    /// with EXIF orientation handling and landmark exclusion.
+    /// with EXIF orientation handling and exact bounding-box-relative landmark projection.
     public func generateSkinMask(for ciImage: CIImage, orientation: CGImagePropertyOrientation = .up) -> CIImage? {
         let handler = VNImageRequestHandler(ciImage: ciImage, orientation: orientation, options: [:])
         let request = VNDetectFaceLandmarksRequest()
@@ -68,22 +68,40 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
         UIGraphicsBeginImageContextWithOptions(imageSize, false, 1.0)
         guard let context = UIGraphicsGetCurrentContext() else { return nil }
         
-        // 1. Black background
+        // 1. Black background (No smoothing outside face)
         context.setFillColor(UIColor.black.cgColor)
         context.fill(CGRect(origin: .zero, size: imageSize))
         
         for face in observations {
-            // Draw Face Base Contour (White = Skin)
+            let box = face.boundingBox
+            let faceX = box.origin.x * imageSize.width
+            let faceY = (1.0 - box.origin.y - box.height) * imageSize.height
+            let faceW = box.width * imageSize.width
+            let faceH = box.height * imageSize.height
+            
+            // Draw Forehead & Face Base Oval (White = Skin)
+            let foreheadOval = CGRect(
+                x: faceX - faceW * 0.04,
+                y: faceY - faceH * 0.06,
+                width: faceW * 1.08,
+                height: faceH * 1.10
+            )
+            context.setFillColor(UIColor.white.cgColor)
+            context.fillEllipse(in: foreheadOval)
+            
+            // Draw Face Contour Path
             if let contour = face.landmarks?.faceContour {
-                let pts = contour.normalizedPoints.map {
-                    CGPoint(x: $0.x * imageSize.width, y: (1.0 - $0.y) * imageSize.height)
+                let pts = contour.normalizedPoints.map { pt in
+                    CGPoint(
+                        x: (box.origin.x + pt.x * box.width) * imageSize.width,
+                        y: (1.0 - (box.origin.y + pt.y * box.height)) * imageSize.height
+                    )
                 }
                 let path = UIBezierPath()
                 if let first = pts.first {
                     path.move(to: first)
                     for pt in pts.dropFirst() { path.addLine(to: pt) }
                     path.close()
-                    context.setFillColor(UIColor.white.cgColor)
                     context.addPath(path.cgPath)
                     context.fillPath()
                 }
@@ -97,13 +115,17 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
                 face.landmarks?.rightEyebrow,
                 face.landmarks?.outerLips,
                 face.landmarks?.innerLips,
-                face.landmarks?.noseCrest
+                face.landmarks?.noseCrest,
+                face.landmarks?.nose
             ]
             
             context.setFillColor(UIColor.black.cgColor)
             for landmark in exclusions.compactMap({ $0 }) {
-                let pts = landmark.normalizedPoints.map {
-                    CGPoint(x: $0.x * imageSize.width, y: (1.0 - $0.y) * imageSize.height)
+                let pts = landmark.normalizedPoints.map { pt in
+                    CGPoint(
+                        x: (box.origin.x + pt.x * box.width) * imageSize.width,
+                        y: (1.0 - (box.origin.y + pt.y * box.height)) * imageSize.height
+                    )
                 }
                 guard pts.count >= 2 else { continue }
                 let path = UIBezierPath()
@@ -125,15 +147,16 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
         UIGraphicsEndImageContext()
         
         let rawMask = CIImage(cgImage: cgMask)
+        let blurRadius = max(6.0, targetExtent.width * 0.012)
         return rawMask
             .clampedToExtent()
-            .applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: 12.0])
+            .applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: NSNumber(value: blurRadius)])
             .cropped(to: targetExtent)
     }
     
     // MARK: - Visual Skin Mask Overlay (Translucent Cyan UI Feedback)
     
-    /// Generates a translucent cyan overlay showing the detected face mask in real-time.
+    /// Generates a translucent cyan overlay accurately locked onto the face in real-time.
     public func generateVisualSkinMask(for ciImage: CIImage, orientation: CGImagePropertyOrientation = .up) -> UIImage? {
         let handler = VNImageRequestHandler(ciImage: ciImage, orientation: orientation, options: [:])
         let request = VNDetectFaceLandmarksRequest()
@@ -159,18 +182,35 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
         let skinOverlayColor = UIColor(red: 0.05, green: 0.70, blue: 1.0, alpha: 0.42).cgColor
         
         for face in observations {
-            // Draw Face Base (Cyan)
+            let box = face.boundingBox
+            let faceX = box.origin.x * imageSize.width
+            let faceY = (1.0 - box.origin.y - box.height) * imageSize.height
+            let faceW = box.width * imageSize.width
+            let faceH = box.height * imageSize.height
+            
+            // Draw Face Oval (Cyan)
+            let foreheadOval = CGRect(
+                x: faceX - faceW * 0.04,
+                y: faceY - faceH * 0.06,
+                width: faceW * 1.08,
+                height: faceH * 1.10
+            )
+            context.setBlendMode(.normal)
+            context.setFillColor(skinOverlayColor)
+            context.fillEllipse(in: foreheadOval)
+            
             if let contour = face.landmarks?.faceContour {
-                let pts = contour.normalizedPoints.map {
-                    CGPoint(x: $0.x * imageSize.width, y: (1.0 - $0.y) * imageSize.height)
+                let pts = contour.normalizedPoints.map { pt in
+                    CGPoint(
+                        x: (box.origin.x + pt.x * box.width) * imageSize.width,
+                        y: (1.0 - (box.origin.y + pt.y * box.height)) * imageSize.height
+                    )
                 }
                 let path = UIBezierPath()
                 if let first = pts.first {
                     path.move(to: first)
                     for pt in pts.dropFirst() { path.addLine(to: pt) }
                     path.close()
-                    context.setBlendMode(.normal)
-                    context.setFillColor(skinOverlayColor)
                     context.addPath(path.cgPath)
                     context.fillPath()
                 }
@@ -184,13 +224,17 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
                 face.landmarks?.rightEyebrow,
                 face.landmarks?.outerLips,
                 face.landmarks?.innerLips,
-                face.landmarks?.noseCrest
+                face.landmarks?.noseCrest,
+                face.landmarks?.nose
             ]
             
             context.setBlendMode(.clear)
             for landmark in exclusions.compactMap({ $0 }) {
-                let pts = landmark.normalizedPoints.map {
-                    CGPoint(x: $0.x * imageSize.width, y: (1.0 - $0.y) * imageSize.height)
+                let pts = landmark.normalizedPoints.map { pt in
+                    CGPoint(
+                        x: (box.origin.x + pt.x * box.width) * imageSize.width,
+                        y: (1.0 - (box.origin.y + pt.y * box.height)) * imageSize.height
+                    )
                 }
                 guard pts.count >= 2 else { continue }
                 let path = UIBezierPath()
@@ -209,8 +253,11 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
             context.setLineWidth(max(2.0, targetExtent.width * 0.002))
             
             if let contour = face.landmarks?.faceContour {
-                let pts = contour.normalizedPoints.map {
-                    CGPoint(x: $0.x * imageSize.width, y: (1.0 - $0.y) * imageSize.height)
+                let pts = contour.normalizedPoints.map { pt in
+                    CGPoint(
+                        x: (box.origin.x + pt.x * box.width) * imageSize.width,
+                        y: (1.0 - (box.origin.y + pt.y * box.height)) * imageSize.height
+                    )
                 }
                 let path = UIBezierPath()
                 if let first = pts.first {
@@ -231,7 +278,7 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
         
         guard let cgMask = maskUIImage.cgImage else { return nil }
         let ciMask = CIImage(cgImage: cgMask)
-        let blurRadius = max(4.0, targetExtent.width * 0.008)
+        let blurRadius = max(3.0, targetExtent.width * 0.006)
         let blurredCI = ciMask.applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: NSNumber(value: blurRadius)])
             .cropped(to: targetExtent)
         
