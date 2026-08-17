@@ -72,13 +72,37 @@ public enum ColorSubTool: String, CaseIterable, Identifiable, Sendable {
 
 /// Sub-tools under Portrait (Cilt) category
 public enum PortraitSubTool: String, CaseIterable, Identifiable, Sendable {
+    case smoothing = "Sihirbaz"
     case healing = "Leke Silme"
     
     public var id: String { rawValue }
     
     public var systemIcon: String {
         switch self {
+        case .smoothing: return "wand.and.stars"
         case .healing: return "bandage.fill"
+        }
+    }
+}
+
+/// Retouch presets under Sihirbaz (Doğal vs İpeksi)
+public enum WizardRetouchMode: String, CaseIterable, Identifiable, Sendable {
+    case natural = "Doğal"
+    case silky = "İpeksi"
+    
+    public var id: String { rawValue }
+    
+    public var intensity: Float {
+        switch self {
+        case .natural: return 40.0
+        case .silky: return 80.0
+        }
+    }
+    
+    public var systemIcon: String {
+        switch self {
+        case .natural: return "leaf.fill"
+        case .silky: return "sparkles"
         }
     }
 }
@@ -124,7 +148,16 @@ public final class EditorViewModel {
     // Sub-tool selections
     public var selectedLightSubTool: LightSubTool = .exposure
     public var selectedColorSubTool: ColorSubTool = .temperature
-    public var selectedPortraitSubTool: PortraitSubTool = .healing
+    public var selectedPortraitSubTool: PortraitSubTool = .smoothing
+    
+    // Sihirbaz (Wizard) & Face Scan State
+    public var isWizardScanning: Bool = false
+    public var isWizardActive: Bool = false
+    public var selectedWizardMode: WizardRetouchMode = .natural
+    
+    // Skin Mask Overlay (Translucent Cyan Visual Feedback)
+    public var isShowingSkinMaskOverlay: Bool = false
+    public private(set) var visualSkinMaskImage: UIImage? = nil
     
     // Spot Healing & Loupe Magnifier Parameters
     public var selectedBrushPreset: HealingBrushPreset = .medium {
@@ -204,6 +237,12 @@ public final class EditorViewModel {
         self.exportSuccessMessage = nil
         self.exportErrorMessage = nil
         self.activeCategory = .light
+        self.selectedPortraitSubTool = .smoothing
+        self.isWizardScanning = false
+        self.isWizardActive = false
+        self.selectedWizardMode = .natural
+        self.isShowingSkinMaskOverlay = false
+        self.visualSkinMaskImage = nil
         self.detectedFaces.removeAll()
         self.previewSkinMask = nil
         self.isDetectingFaces = true
@@ -216,15 +255,20 @@ public final class EditorViewModel {
         // Asynchronously perform face detection once per photo load
         Task { [faceDetectionService] in
             let faces = await faceDetectionService.detectFaces(in: photo.previewCIImage)
+            let skinMaskCI = !faces.isEmpty ? faceDetectionService.generateSkinMask(
+                targetExtent: photo.previewCIImage.extent,
+                faces: faces
+            ) : nil
+            let visualMask = !faces.isEmpty ? faceDetectionService.generateVisualSkinMask(
+                targetExtent: photo.previewCIImage.extent,
+                faces: faces
+            ) : nil
+            
             await MainActor.run {
                 self.detectedFaces = faces
+                self.previewSkinMask = skinMaskCI
+                self.visualSkinMaskImage = visualMask
                 self.isDetectingFaces = false
-                if !faces.isEmpty {
-                    self.previewSkinMask = self.faceDetectionService.generateSkinMask(
-                        targetExtent: photo.previewCIImage.extent,
-                        faces: faces
-                    )
-                }
             }
         }
     }
@@ -284,6 +328,76 @@ public final class EditorViewModel {
     }
     
     // MARK: - Portrait & Spot Healing Mutators
+    
+    public func runWizardRetouch(mode: WizardRetouchMode? = nil) {
+        let targetMode = mode ?? selectedWizardMode
+        self.selectedWizardMode = targetMode
+        self.isWizardScanning = true
+        
+        withAnimation(.easeInOut(duration: 0.22)) {
+            self.isShowingSkinMaskOverlay = true
+        }
+        
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+        
+        Task {
+            // Realistic face scan & lock-on phase (~700ms)
+            try? await Task.sleep(nanoseconds: 700_000_000)
+            
+            await MainActor.run {
+                self.isWizardScanning = false
+                self.isWizardActive = true
+                self.recordHistorySnapshot()
+                self.editState.skinSmoothing = targetMode.intensity
+                
+                let successFeedback = UINotificationFeedbackGenerator()
+                successFeedback.notificationOccurred(.success)
+                
+                self.requestPreviewRender()
+                // Mask remains visible on face so user can inspect and refine. User taps "Uygula" to dismiss.
+            }
+        }
+    }
+    
+    public func applyWizardAndDismissMask() {
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+        withAnimation(.easeInOut(duration: 0.25)) {
+            self.isShowingSkinMaskOverlay = false
+        }
+    }
+    
+    public func selectWizardMode(_ mode: WizardRetouchMode) {
+        guard selectedWizardMode != mode || editState.skinSmoothing == 0 else { return }
+        self.selectedWizardMode = mode
+        self.isWizardActive = true
+        recordHistorySnapshot()
+        self.editState.skinSmoothing = mode.intensity
+        
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+        
+        requestPreviewRender()
+    }
+    
+    public func toggleSkinMaskOverlay() {
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
+            self.isShowingSkinMaskOverlay.toggle()
+        }
+    }
+    
+    public func applyAutoSkinRetouch(intensity: Float = 60.0) {
+        recordHistorySnapshot()
+        self.editState.skinSmoothing = intensity
+        
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+        
+        requestPreviewRender()
+    }
     
     public func updateSkinSmoothing(_ value: Float) {
         self.editState.skinSmoothing = value

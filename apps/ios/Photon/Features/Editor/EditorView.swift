@@ -241,6 +241,17 @@ public struct EditorView: View {
                                 RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous)
                                     .strokeBorder(PhotonColors.border, lineWidth: 0.5)
                             )
+                            // Visual Cyan Skin Mask Overlay (Vision feedback)
+                            .overlay {
+                                if viewModel.activeCategory == .portrait && viewModel.isShowingSkinMaskOverlay, let visualMask = viewModel.visualSkinMaskImage {
+                                    Image(uiImage: visualMask)
+                                        .resizable()
+                                        .frame(width: fittedWidth, height: fittedHeight)
+                                        .clipShape(RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous))
+                                        .allowsHitTesting(false)
+                                        .transition(.opacity)
+                                }
+                            }
                             // Spot Healing interactive tap and drag overlay when Healing subtool is active
                             .overlay {
                                 if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing && !viewModel.isComparingOriginal {
@@ -429,13 +440,53 @@ public struct EditorView: View {
                         .tint(PhotonColors.textPrimary)
                 }
                 
-                // MARK: - Floating Canvas Overlay Controls (Zoom Reset & High-Contrast Orijinal)
+                // MARK: - Floating Canvas Overlay Controls (Skin Mask Tag, Zoom Reset & High-Contrast Orijinal)
                 if !viewModel.isLoupeActive {
                     VStack {
                         HStack(spacing: 8) {
+                            // 1. Skin Mask / Wizard Scan Active Tag
+                            if viewModel.activeCategory == .portrait && (viewModel.isShowingSkinMaskOverlay || viewModel.isWizardScanning) {
+                                HStack(spacing: 6) {
+                                    if viewModel.isWizardScanning {
+                                        ProgressView()
+                                            .scaleEffect(0.65)
+                                            .tint(Color.cyan)
+                                        Text("Yüz Taranıyor...")
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .foregroundColor(.white)
+                                    } else {
+                                        Circle()
+                                            .fill(Color.cyan)
+                                            .frame(width: 7, height: 7)
+                                        Text("Cilt Maskesi")
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .foregroundColor(.white)
+                                        
+                                        Button {
+                                            viewModel.applyWizardAndDismissMask()
+                                        } label: {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .font(.system(size: 13))
+                                                .foregroundColor(.white.opacity(0.85))
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color(red: 0.05, green: 0.20, blue: 0.35).opacity(0.92))
+                                .clipShape(Capsule())
+                                .overlay(
+                                    Capsule()
+                                        .strokeBorder(Color.cyan.opacity(0.6), lineWidth: 1.0)
+                                )
+                                .shadow(color: Color.black.opacity(0.35), radius: 8, x: 0, y: 3)
+                                .transition(.move(edge: .top).combined(with: .opacity))
+                            }
+                            
                             Spacer()
                             
-                            // 1. Zoom Reset Button (Visible when canvas is zoomed or panned)
+                            // 2. Zoom Reset Button (Visible when canvas is zoomed or panned)
                             if zoomScale > 1.05 || panOffset != .zero {
                                 Button {
                                     let generator = UIImpactFeedbackGenerator(style: .light)
@@ -856,19 +907,35 @@ public struct EditorView: View {
             }
             
         case .portrait:
-            VerticalAdjustmentSlider(
-                systemIcon: "circle.dashed",
-                title: "Fırça Boyutu",
-                value: Binding(
-                    get: { viewModel.healingBrushRadius },
-                    set: { newVal in viewModel.healingBrushRadius = newVal }
-                ),
-                range: 0.010...0.050,
-                defaultValue: 0.022,
-                step: 0.002,
-                valueFormatter: { val in "\(Int(val * 1000)) px" },
-                onEditingEnded: {}
-            )
+            if viewModel.selectedPortraitSubTool == .smoothing {
+                VerticalAdjustmentSlider(
+                    systemIcon: "sparkles",
+                    title: "Pürüzsüzlük",
+                    value: Binding(
+                        get: { viewModel.editState.skinSmoothing },
+                        set: { newVal in viewModel.updateSkinSmoothing(newVal) }
+                    ),
+                    range: 0.0...100.0,
+                    defaultValue: 0.0,
+                    step: 1.0,
+                    valueFormatter: { val in "\(Int(val))%" },
+                    onEditingEnded: { viewModel.recordHistorySnapshot() }
+                )
+            } else {
+                VerticalAdjustmentSlider(
+                    systemIcon: "circle.dashed",
+                    title: "Fırça Boyutu",
+                    value: Binding(
+                        get: { viewModel.healingBrushRadius },
+                        set: { newVal in viewModel.healingBrushRadius = newVal }
+                    ),
+                    range: 0.010...0.050,
+                    defaultValue: 0.022,
+                    step: 0.002,
+                    valueFormatter: { val in "\(Int(val * 1000)) px" },
+                    onEditingEnded: {}
+                )
+            }
             
         case .cinematic:
             if viewModel.editState.selectedLookId != nil {
