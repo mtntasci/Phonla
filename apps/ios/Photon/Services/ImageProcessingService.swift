@@ -140,36 +140,74 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
         
         let extent = inputImage.extent
         let clamped = inputImage.clampedToExtent()
-        let smoothedBase: CIImage
+        let maxDim = max(extent.width, extent.height)
+        let scale = max(0.5, (maxDim > 0 ? maxDim : 1920.0) / 1920.0)
+        let normIntensity = CGFloat(min(max(intensity, 0.0), 1.0))
+        
+        // Frequency Separation Parameters
+        let toneBlurRadius: CGFloat
+        let textureSharpenRadius: CGFloat
+        let textureSharpenIntensity: Float
+        let textureBlendAlpha: Float
+        let overallBlendAlpha: Float
         
         switch preset {
         case .natural:
-            let blurRadius = Double(intensity) * 6.0 + 2.5
-            smoothedBase = clamped
-                .applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: NSNumber(value: blurRadius)])
-                .cropped(to: extent)
+            // Doğal: Subtle redness & blotch leveling, 100% natural pore texture (No foggy blur!)
+            toneBlurRadius = (10.0 * normIntensity + 3.0) * scale
+            textureSharpenRadius = max(1.0, 1.4 * scale)
+            textureSharpenIntensity = Float(0.90 + 0.40 * normIntensity)
+            textureBlendAlpha = 0.65
+            overallBlendAlpha = Float(0.55 * normIntensity)
+            
         case .silky:
-            let blurRadius = Double(intensity) * 14.0 + 4.5
-            smoothedBase = clamped
-                .applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: NSNumber(value: blurRadius)])
-                .cropped(to: extent)
+            // İpeksi: Studio-grade porcelain polish, luminous tone leveling + preserved micro-pores
+            toneBlurRadius = (20.0 * normIntensity + 6.0) * scale
+            textureSharpenRadius = max(1.2, 1.8 * scale)
+            textureSharpenIntensity = Float(0.70 + 0.35 * normIntensity)
+            textureBlendAlpha = 0.45
+            overallBlendAlpha = Float(0.85 * normIntensity)
         }
         
-        let blendFilter = CIFilter.blendWithMask()
-        blendFilter.inputImage = smoothedBase
-        blendFilter.backgroundImage = inputImage
-        blendFilter.maskImage = skinMask
+        // 1. Low-Frequency Tone Layer: Levels out redness, uneven pigment and dark blotches
+        let lowFrequencyTone = clamped
+            .applyingFilter("CIGaussianBlur", parameters: [
+                kCIInputRadiusKey: NSNumber(value: toneBlurRadius)
+            ])
+            .cropped(to: extent)
         
-        guard let result = blendFilter.outputImage?.cropped(to: extent) else {
-            return inputImage
+        // 2. High-Frequency Micro-Texture Layer: Preserves crisp skin pores, natural light reflections and fine details
+        let highFrequencyTexture = inputImage
+            .applyingFilter("CIUnsharpMask", parameters: [
+                kCIInputRadiusKey: NSNumber(value: textureSharpenRadius),
+                kCIInputIntensityKey: NSNumber(value: textureSharpenIntensity)
+            ])
+        
+        // 3. Re-combine Low-Frequency Smooth Tone with High-Frequency Crisp Texture
+        let frequencySeparatedSkin = blendImages(
+            base: lowFrequencyTone,
+            overlay: highFrequencyTexture,
+            alpha: textureBlendAlpha
+        )
+        
+        // 4. Blend original image with frequency-separated skin according to preset intensity
+        let retouchedSkin = blendImages(
+            base: inputImage,
+            overlay: frequencySeparatedSkin,
+            alpha: overallBlendAlpha
+        )
+        
+        // 5. Strictly apply to face skin (Forehead, cheeks, chin) - leaving eyes, brows, lips, hair 100% crisp
+        if let mask = skinMask {
+            let blendFilter = CIFilter.blendWithMask()
+            blendFilter.inputImage = retouchedSkin
+            blendFilter.backgroundImage = inputImage
+            blendFilter.maskImage = mask
+            
+            return blendFilter.outputImage?.cropped(to: extent) ?? retouchedSkin
+        } else {
+            return retouchedSkin.cropped(to: extent)
         }
-        
-        let sharpen = CIFilter.unsharpMask()
-        sharpen.inputImage = result
-        sharpen.radius = preset == .natural ? 2.5 : 1.5
-        sharpen.intensity = preset == .natural ? (intensity * 0.45) : (intensity * 0.2)
-        
-        return sharpen.outputImage?.cropped(to: extent) ?? result
     }
     
     public func render(ciImage: CIImage) -> UIImage? {

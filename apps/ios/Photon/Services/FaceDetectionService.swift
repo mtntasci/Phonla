@@ -45,7 +45,7 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
     
     // MARK: - Skin Mask Generation (Core Image Pipeline)
     
-    /// Generates a smooth, high-precision grayscale mask (white = skin, black = background/eyes/lips/brows)
+    /// Generates a smooth, high-precision grayscale mask (white = skin including full forehead, black = background/eyes/lips/brows)
     /// with EXIF orientation handling and exact bounding-box-relative landmark projection.
     public func generateSkinMask(for ciImage: CIImage, orientation: CGImagePropertyOrientation = .up) -> CIImage? {
         let handler = VNImageRequestHandler(ciImage: ciImage, orientation: orientation, options: [:])
@@ -79,17 +79,20 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
             let faceW = box.width * imageSize.width
             let faceH = box.height * imageSize.height
             
-            // Draw Forehead & Face Base Oval (White = Skin)
-            let foreheadOval = CGRect(
-                x: faceX - faceW * 0.04,
-                y: faceY - faceH * 0.06,
-                width: faceW * 1.08,
-                height: faceH * 1.10
+            // Forehead extension: Covers all the way up from eyebrows to hairline
+            let foreheadExtension = faceH * 0.35
+            
+            // 2. Draw Full Face Base (White = Skin, covering forehead, temples, cheeks, chin)
+            let fullFaceOval = CGRect(
+                x: faceX - faceW * 0.06,
+                y: faceY - foreheadExtension,
+                width: faceW * 1.12,
+                height: faceH + foreheadExtension * 1.06
             )
             context.setFillColor(UIColor.white.cgColor)
-            context.fillEllipse(in: foreheadOval)
+            context.fillEllipse(in: fullFaceOval)
             
-            // Draw Face Contour Path
+            // Draw Face Jawline Contour Path
             if let contour = face.landmarks?.faceContour {
                 let pts = contour.normalizedPoints.map { pt in
                     CGPoint(
@@ -107,7 +110,7 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
                 }
             }
             
-            // 2. Exclude Critical Facial Features (Eyes, Eyebrows, Lips, Nostrils = Black)
+            // 3. Exclude Critical Facial Features (Eyes, Eyebrows, Lips, Nostrils = Black)
             let exclusions = [
                 face.landmarks?.leftEye,
                 face.landmarks?.rightEye,
@@ -156,7 +159,7 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
     
     // MARK: - Visual Skin Mask Overlay (Translucent Cyan UI Feedback)
     
-    /// Generates a translucent cyan overlay accurately locked onto the face in real-time.
+    /// Generates a translucent cyan overlay accurately locked onto the face and forehead in real-time.
     public func generateVisualSkinMask(for ciImage: CIImage, orientation: CGImagePropertyOrientation = .up) -> UIImage? {
         let handler = VNImageRequestHandler(ciImage: ciImage, orientation: orientation, options: [:])
         let request = VNDetectFaceLandmarksRequest()
@@ -188,16 +191,19 @@ public final class FaceDetectionService: FaceDetectionServiceProtocol, @unchecke
             let faceW = box.width * imageSize.width
             let faceH = box.height * imageSize.height
             
-            // Draw Face Oval (Cyan)
-            let foreheadOval = CGRect(
-                x: faceX - faceW * 0.04,
-                y: faceY - faceH * 0.06,
-                width: faceW * 1.08,
-                height: faceH * 1.10
+            // Forehead extension: Covers all the way up from eyebrows to hairline
+            let foreheadExtension = faceH * 0.35
+            
+            // Draw Full Face & Forehead Base (Cyan)
+            let fullFaceOval = CGRect(
+                x: faceX - faceW * 0.06,
+                y: faceY - foreheadExtension,
+                width: faceW * 1.12,
+                height: faceH + foreheadExtension * 1.06
             )
             context.setBlendMode(.normal)
             context.setFillColor(skinOverlayColor)
-            context.fillEllipse(in: foreheadOval)
+            context.fillEllipse(in: fullFaceOval)
             
             if let contour = face.landmarks?.faceContour {
                 let pts = contour.normalizedPoints.map { pt in
