@@ -23,6 +23,11 @@ public struct EditorView: View {
     @State private var canvasSize: CGSize = .zero
     @State private var isPanning: Bool = false
     
+    // MARK: - Healing Gesture States (Tap to heal vs Hold to compare)
+    @State private var healingHoldTask: Task<Void, Never>? = nil
+    @State private var isHoldingForOriginalComparison: Bool = false
+    @State private var healingTouchStartLocation: CGPoint? = nil
+    
     public init() {}
     
     public var body: some View {
@@ -181,6 +186,31 @@ public struct EditorView: View {
             
             Spacer()
             
+            // Compare / Eye Button (Press & hold to see Before/After)
+            if viewModel.isEdited {
+                Button {} label: {
+                    Image(systemName: viewModel.isComparingOriginal ? "eye.fill" : "eye")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(viewModel.isComparingOriginal ? PhotonColors.accent : PhotonColors.textPrimary)
+                        .frame(width: 36, height: 36)
+                        .background(PhotonColors.surfaceSecondary)
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { _ in
+                            if !viewModel.isComparingOriginal {
+                                viewModel.isComparingOriginal = true
+                            }
+                        }
+                        .onEnded { _ in
+                            viewModel.isComparingOriginal = false
+                        }
+                )
+                .transition(.opacity)
+            }
+            
             // Reset Button (Right aligned next to Kaydet)
             if viewModel.isEdited {
                 Button {
@@ -248,22 +278,64 @@ public struct EditorView: View {
                                         let imgH = imgGeo.size.height
                                         
                                         ZStack {
-                                            // Only capture touches when brush is explicitly ARMED
-                                            if viewModel.isBrushArmed {
-                                                Color.clear
-                                                    .contentShape(Rectangle())
-                                                    .gesture(
-                                                        DragGesture(minimumDistance: 0, coordinateSpace: .local)
-                                                            .onChanged { value in
-                                                                guard imgW > 0, imgH > 0 else { return }
-                                                                let normX = min(max(value.location.x / imgW, 0.0), 1.0)
-                                                                let normY = min(max(value.location.y / imgH, 0.0), 1.0)
+                                            Color.clear
+                                                .contentShape(Rectangle())
+                                                .gesture(
+                                                    DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                                                        .onChanged { value in
+                                                            guard imgW > 0, imgH > 0 else { return }
+                                                            
+                                                            let dragDist = hypot(value.translation.width, value.translation.height)
+                                                            
+                                                            // If zoomed in and dragging across photo (> 10pt) -> Pan the photo freely!
+                                                            if zoomScale > 1.05 && dragDist > 10 {
+                                                                healingHoldTask?.cancel()
+                                                                healingHoldTask = nil
+                                                                isHoldingForOriginalComparison = false
+                                                                viewModel.isLoupeActive = false
+                                                                isPanning = true
                                                                 
-                                                                // Calculate screen location on canvas geometry
-                                                                let canvasCenter = CGPoint(x: availableWidth / 2.0 + panOffset.width, y: availableHeight / 2.0 + panOffset.height)
-                                                                let screenX = canvasCenter.x + (value.location.x - imgW / 2.0) * zoomScale
-                                                                let screenY = canvasCenter.y + (value.location.y - imgH / 2.0) * zoomScale
+                                                                panOffset = CGSize(
+                                                                    width: lastPanOffset.width + value.translation.width,
+                                                                    height: lastPanOffset.height + value.translation.height
+                                                                )
+                                                                return
+                                                            }
+                                                            
+                                                            if isPanning { return }
+                                                            
+                                                            let normX = min(max(value.location.x / imgW, 0.0), 1.0)
+                                                            let normY = min(max(value.location.y / imgH, 0.0), 1.0)
+                                                            
+                                                            // Calculate screen location on canvas geometry
+                                                            let canvasCenter = CGPoint(x: availableWidth / 2.0 + panOffset.width, y: availableHeight / 2.0 + panOffset.height)
+                                                            let screenX = canvasCenter.x + (value.location.x - imgW / 2.0) * zoomScale
+                                                            let screenY = canvasCenter.y + (value.location.y - imgH / 2.0) * zoomScale
+                                                            
+                                                            if healingTouchStartLocation == nil {
+                                                                healingTouchStartLocation = value.location
+                                                                isHoldingForOriginalComparison = false
                                                                 
+                                                                // Start 300ms hold timer to inspect Before/After
+                                                                healingHoldTask?.cancel()
+                                                                healingHoldTask = Task { @MainActor in
+                                                                    try? await Task.sleep(nanoseconds: 300_000_000)
+                                                                    guard !Task.isCancelled else { return }
+                                                                    if viewModel.isEdited {
+                                                                        withAnimation(.easeInOut(duration: 0.15)) {
+                                                                            isHoldingForOriginalComparison = true
+                                                                            viewModel.isComparingOriginal = true
+                                                                            viewModel.isLoupeActive = false
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                            
+                                                            // If user is holding to compare original, don't show brush
+                                                            if isHoldingForOriginalComparison {
+                                                                viewModel.isComparingOriginal = true
+                                                                viewModel.isLoupeActive = false
+                                                            } else {
                                                                 viewModel.loupeTouchPoint = CGPoint(x: screenX, y: screenY)
                                                                 viewModel.loupeNormalizedPoint = CGPoint(x: normX, y: normY)
                                                                 if !viewModel.isLoupeActive {
@@ -272,18 +344,36 @@ public struct EditorView: View {
                                                                     }
                                                                 }
                                                             }
-                                                            .onEnded { value in
+                                                        }
+                                                        .onEnded { value in
+                                                            healingHoldTask?.cancel()
+                                                            healingHoldTask = nil
+                                                            
+                                                            if isPanning {
+                                                                lastPanOffset = panOffset
+                                                                isPanning = false
+                                                                healingTouchStartLocation = nil
+                                                                return
+                                                            }
+                                                            
+                                                            let wasHolding = isHoldingForOriginalComparison
+                                                            isHoldingForOriginalComparison = false
+                                                            healingTouchStartLocation = nil
+                                                            
+                                                            withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                                                                viewModel.isLoupeActive = false
+                                                                viewModel.isComparingOriginal = false
+                                                            }
+                                                            
+                                                            if !wasHolding {
+                                                                // Quick tap: Apply spot healing!
                                                                 guard imgW > 0, imgH > 0 else { return }
                                                                 let normX = min(max(value.location.x / imgW, 0.0), 1.0)
                                                                 let normY = min(max(value.location.y / imgH, 0.0), 1.0)
-                                                                
-                                                                withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
-                                                                    viewModel.isLoupeActive = false
-                                                                }
                                                                 viewModel.addHealedSpot(x: normX, y: normY)
                                                             }
-                                                    )
-                                            }
+                                                        }
+                                                )
                                             
                                             // Visual Brush Effects & Dissolve Animations
                                             ZStack {
@@ -348,7 +438,7 @@ public struct EditorView: View {
                                 MagnificationGesture()
                                     .onChanged { scale in
                                         let newScale = lastZoomScale * scale
-                                        zoomScale = min(max(newScale, 1.0), 5.0)
+                                        zoomScale = min(max(newScale, 1.0), 6.0)
                                     }
                                     .onEnded { _ in
                                         lastZoomScale = zoomScale
@@ -361,13 +451,13 @@ public struct EditorView: View {
                             .simultaneousGesture(
                                 DragGesture(minimumDistance: 0)
                                     .onChanged { value in
-                                        // Only ignore compare/pan if the brush is explicitly armed for a spot
-                                        if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing && viewModel.isBrushArmed {
+                                        // When in Healing mode, the healing touch gesture handles gestures
+                                        if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing {
                                             return
                                         }
                                         
                                         let distance = hypot(value.translation.width, value.translation.height)
-                                        if zoomScale > 1.05 && distance > 10 {
+                                        if zoomScale > 1.05 && distance > 8 {
                                             isPanning = true
                                             viewModel.isComparingOriginal = false
                                             panOffset = CGSize(
@@ -380,7 +470,7 @@ public struct EditorView: View {
                                         }
                                     }
                                     .onEnded { _ in
-                                        if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing && viewModel.isBrushArmed {
+                                        if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing {
                                             return
                                         }
                                         viewModel.isComparingOriginal = false
@@ -390,7 +480,7 @@ public struct EditorView: View {
                                         }
                                     }
                             )
-                            // Double Tap to toggle between face/detailed zoom and normal view
+                            // Double Tap to toggle between detailed zoom and normal view
                             .simultaneousGesture(
                                 TapGesture(count: 2)
                                     .onEnded {
@@ -440,61 +530,99 @@ public struct EditorView: View {
                     )
                 }
                 
-                // MARK: - Floating Bottom-Right Spot Actions (Geri Al & Çöp Kutusu on Canvas)
-                if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing && !viewModel.editState.healedSpots.isEmpty && !viewModel.isComparingOriginal {
+                // MARK: - Floating Spot Healing Controls (Above Bottom Menu on Photo Canvas)
+                if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing && !viewModel.isComparingOriginal {
                     VStack {
                         Spacer()
-                        HStack {
-                            Spacer()
-                            HStack(spacing: 8) {
-                                // Undo Spot Button
-                                Button {
-                                    withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
-                                        viewModel.undoLastHealedSpot()
-                                    }
-                                } label: {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "arrow.uturn.backward")
-                                            .font(.system(size: 12, weight: .bold))
-                                        Text("Geri Al (\(viewModel.editState.healedSpots.count))")
-                                            .font(.system(size: 12, weight: .semibold))
-                                    }
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 8)
-                                    .background(PhotonColors.surfacePrimary)
-                                    .foregroundColor(PhotonColors.textPrimary)
-                                    .clipShape(Capsule())
-                                    .shadow(color: Color.black.opacity(0.14), radius: 8, x: 0, y: 3)
-                                    .overlay(
-                                        Capsule()
-                                            .strokeBorder(PhotonColors.border, lineWidth: 0.8)
-                                    )
-                                }
-                                .buttonStyle(.plain)
-                                
-                                // Clear All Spots Button
-                                Button {
-                                    withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
-                                        viewModel.clearAllHealedSpots()
-                                    }
-                                } label: {
-                                    Image(systemName: "trash.fill")
-                                        .font(.system(size: 12, weight: .bold))
-                                        .padding(9)
-                                        .background(PhotonColors.surfacePrimary)
-                                        .foregroundColor(Color.red.opacity(0.9))
-                                        .clipShape(Circle())
-                                        .shadow(color: Color.black.opacity(0.14), radius: 8, x: 0, y: 3)
-                                        .overlay(
+                        
+                        HStack(spacing: 8) {
+                            // Brush Size Selector Chips
+                            HStack(spacing: 4) {
+                                ForEach(HealingBrushPreset.allCases) { preset in
+                                    let isPresetSelected = viewModel.selectedBrushPreset == preset
+                                    Button {
+                                        withAnimation(.spring(response: 0.22, dampingFraction: 0.8)) {
+                                            viewModel.selectedBrushPreset = preset
+                                        }
+                                    } label: {
+                                        HStack(spacing: 4) {
                                             Circle()
-                                                .strokeBorder(PhotonColors.border, lineWidth: 0.8)
+                                                .fill(isPresetSelected ? PhotonColors.textInverted : PhotonColors.textSecondary)
+                                                .frame(width: preset.iconSize * 0.45, height: preset.iconSize * 0.45)
+                                            
+                                            Text(preset.rawValue)
+                                                .font(.system(size: 12, weight: isPresetSelected ? .bold : .medium))
+                                        }
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 7)
+                                        .background(isPresetSelected ? PhotonColors.textPrimary : PhotonColors.surfaceSecondary.opacity(0.85))
+                                        .foregroundColor(isPresetSelected ? PhotonColors.textInverted : PhotonColors.textSecondary)
+                                        .clipShape(Capsule())
+                                        .overlay(
+                                            Capsule()
+                                                .strokeBorder(isPresetSelected ? Color.clear : PhotonColors.border.opacity(0.5), lineWidth: 0.8)
                                         )
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
-                            .padding(.trailing, 16)
-                            .padding(.bottom, 16)
+                            
+                            // Undo & Clear buttons if spots exist
+                            if !viewModel.editState.healedSpots.isEmpty {
+                                HStack(spacing: 5) {
+                                    Button {
+                                        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                                            viewModel.undoLastHealedSpot()
+                                        }
+                                    } label: {
+                                        HStack(spacing: 3) {
+                                            Image(systemName: "arrow.uturn.backward")
+                                                .font(.system(size: 11, weight: .bold))
+                                            Text("\(viewModel.editState.healedSpots.count)")
+                                                .font(.system(size: 11, weight: .bold))
+                                        }
+                                        .padding(.horizontal, 9)
+                                        .padding(.vertical, 7)
+                                        .background(PhotonColors.surfaceSecondary.opacity(0.85))
+                                        .foregroundColor(PhotonColors.textPrimary)
+                                        .clipShape(Capsule())
+                                        .overlay(
+                                            Capsule()
+                                                .strokeBorder(PhotonColors.border.opacity(0.5), lineWidth: 0.8)
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+                                    
+                                    Button {
+                                        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                                            viewModel.clearAllHealedSpots()
+                                        }
+                                    } label: {
+                                        Image(systemName: "trash.fill")
+                                            .font(.system(size: 11, weight: .bold))
+                                            .padding(7)
+                                            .background(PhotonColors.surfaceSecondary.opacity(0.85))
+                                            .foregroundColor(Color.red.opacity(0.9))
+                                            .clipShape(Circle())
+                                            .overlay(
+                                                Circle()
+                                                    .strokeBorder(PhotonColors.border.opacity(0.5), lineWidth: 0.8)
+                                            )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
                         }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Capsule())
+                        .shadow(color: Color.black.opacity(0.18), radius: 10, x: 0, y: 4)
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.8)
+                        )
+                        .padding(.bottom, 12)
                     }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
@@ -822,7 +950,7 @@ public struct EditorView: View {
                     MonoToolView(viewModel: viewModel)
                 }
             }
-            .frame(height: 44)
+            .frame(height: 48)
             .padding(.horizontal, PhotonSpacing.xxs)
             .animation(.spring(response: 0.28, dampingFraction: 0.85), value: viewModel.activeCategory)
             

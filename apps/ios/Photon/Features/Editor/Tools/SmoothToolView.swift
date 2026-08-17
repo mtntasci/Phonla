@@ -88,61 +88,19 @@ public struct SmoothToolView: View {
                 .foregroundColor(PhotonColors.textSecondary)
                 .clipShape(Capsule())
             } else {
-                // Spot Healing Controls (Select size to arm brush)
-                HStack(spacing: PhotonSpacing.xs) {
-                    // Brush Size Selector Chips
+                // Spot Healing Info Tag
+                if healedSpotsCount > 0 {
                     HStack(spacing: 4) {
-                        ForEach(HealingBrushPreset.allCases) { preset in
-                            let isPresetArmed = viewModel.armedBrushPreset == preset
-                            Button {
-                                withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
-                                    if viewModel.armedBrushPreset == preset {
-                                        viewModel.armedBrushPreset = nil
-                                    } else {
-                                        viewModel.armedBrushPreset = preset
-                                    }
-                                }
-                            } label: {
-                                HStack(spacing: 4) {
-                                    Circle()
-                                        .fill(isPresetArmed ? PhotonColors.textInverted : PhotonColors.textSecondary)
-                                        .frame(width: preset.iconSize * 0.45, height: preset.iconSize * 0.45)
-                                    
-                                    Text(preset.rawValue)
-                                        .font(.system(size: 11, weight: isPresetArmed ? .bold : .medium))
-                                }
-                                .padding(.horizontal, 9)
-                                .padding(.vertical, 6)
-                                .background(isPresetArmed ? PhotonColors.textPrimary : PhotonColors.surfaceSecondary)
-                                .foregroundColor(isPresetArmed ? PhotonColors.textInverted : PhotonColors.textSecondary)
-                                .clipShape(Capsule())
-                                .overlay(
-                                    Capsule()
-                                        .strokeBorder(isPresetArmed ? PhotonColors.accent.opacity(0.8) : PhotonColors.border.opacity(0.4), lineWidth: isPresetArmed ? 1.2 : 0.8)
-                                )
-                            }
-                            .buttonStyle(.plain)
-                        }
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 11))
+                            .foregroundColor(PhotonColors.accent)
+                        Text("\(healedSpotsCount) Leke Temizlendi")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(PhotonColors.textSecondary)
                     }
-                    
-                    // Status Hint Tag
-                    HStack(spacing: 4) {
-                        if let armed = viewModel.armedBrushPreset {
-                            Circle()
-                                .fill(PhotonColors.accent)
-                                .frame(width: 5, height: 5)
-                            Text("Lekeye dokunun")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(PhotonColors.textPrimary)
-                        } else {
-                            Text("Boyut seçin")
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(PhotonColors.textTertiary)
-                        }
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(PhotonColors.surfaceSecondary.opacity(0.6))
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 6)
+                    .background(PhotonColors.surfaceSecondary.opacity(0.8))
                     .clipShape(Capsule())
                 }
             }

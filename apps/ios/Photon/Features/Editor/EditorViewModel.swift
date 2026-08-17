@@ -128,17 +128,13 @@ public final class EditorViewModel {
     public var selectedColorSubTool: ColorSubTool = .temperature
     public var selectedPortraitSubTool: PortraitSubTool = .smoothing
     
-    // Spot Healing & Loupe Magnifier Parameters (Explicit Arming)
-    public var armedBrushPreset: HealingBrushPreset? = nil {
+    // Spot Healing & Loupe Magnifier Parameters
+    public var selectedBrushPreset: HealingBrushPreset = .medium {
         didSet {
-            if let preset = armedBrushPreset {
-                healingBrushRadius = preset.radius
-            }
+            healingBrushRadius = selectedBrushPreset.radius
         }
     }
-    public var isBrushArmed: Bool {
-        armedBrushPreset != nil
-    }
+    public var isBrushArmed: Bool = true
     public var healingBrushRadius: Float = 0.022
     public var lastHealedSpotPoint: CGPoint? = nil
     
@@ -280,9 +276,6 @@ public final class EditorViewModel {
         // Haptic feedback for tactile brush wipe feel
         let generator = UIImpactFeedbackGenerator(style: .light)
         generator.impactOccurred()
-        
-        // Disarm brush so user must select size again for the next spot
-        self.armedBrushPreset = nil
         
         requestPreviewRender()
         
