@@ -45,6 +45,7 @@ public struct EditorView: View {
         ) {
             Button("Değişiklikleri Sil ve Çık", role: .destructive) {
                 resetZoom(animated: false)
+                viewModel.cleanupCurrentSession()
                 viewModel.resetState()
                 navigationState.navigateToHome()
             }
@@ -428,50 +429,88 @@ public struct EditorView: View {
                         .tint(PhotonColors.textPrimary)
                 }
                 
-                // MARK: - Floating "Orijinal" Compare Button (Press & Hold across all tools)
-                if viewModel.isEdited && !viewModel.isLoupeActive {
+                // MARK: - Floating Canvas Overlay Controls (Zoom Reset & High-Contrast Orijinal)
+                if !viewModel.isLoupeActive {
                     VStack {
-                        HStack {
+                        HStack(spacing: 8) {
                             Spacer()
                             
-                            HStack(spacing: 5) {
-                                Image(systemName: viewModel.isComparingOriginal ? "eye.fill" : "eye")
-                                    .font(.system(size: 13, weight: .bold))
-                                Text("Orijinal")
-                                    .font(.system(size: 12, weight: .semibold))
+                            // 1. Zoom Reset Button (Visible when canvas is zoomed or panned)
+                            if zoomScale > 1.05 || panOffset != .zero {
+                                Button {
+                                    let generator = UIImpactFeedbackGenerator(style: .light)
+                                    generator.impactOccurred()
+                                    resetZoom(animated: true)
+                                } label: {
+                                    HStack(spacing: 5) {
+                                        Image(systemName: "arrow.down.right.and.arrow.up.left")
+                                            .font(.system(size: 11, weight: .bold))
+                                        Text("Sıfırla")
+                                            .font(.system(size: 12, weight: .semibold))
+                                    }
+                                    .padding(.horizontal, 11)
+                                    .padding(.vertical, 7)
+                                    .background(Color(red: 0.12, green: 0.12, blue: 0.14).opacity(0.90))
+                                    .foregroundColor(.white)
+                                    .clipShape(Capsule())
+                                    .shadow(color: Color.black.opacity(0.35), radius: 8, x: 0, y: 3)
+                                    .overlay(
+                                        Capsule()
+                                            .strokeBorder(Color.white.opacity(0.3), lineWidth: 1.0)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                .transition(.opacity.combined(with: .scale(scale: 0.9)))
                             }
-                            .padding(.horizontal, 13)
-                            .padding(.vertical, 8)
-                            .background(
-                                viewModel.isComparingOriginal
-                                ? AnyShapeStyle(Color.black.opacity(0.85))
-                                : AnyShapeStyle(.ultraThinMaterial)
-                            )
-                            .foregroundColor(.white)
-                            .clipShape(Capsule())
-                            .shadow(color: Color.black.opacity(0.22), radius: 8, x: 0, y: 3)
-                            .overlay(
-                                Capsule()
-                                    .strokeBorder(Color.white.opacity(viewModel.isComparingOriginal ? 0.4 : 0.25), lineWidth: 1.0)
-                            )
-                            .simultaneousGesture(
-                                DragGesture(minimumDistance: 0)
-                                    .onChanged { _ in
-                                        if !viewModel.isComparingOriginal {
-                                            viewModel.isComparingOriginal = true
+                            
+                            // 2. High-Contrast "Orijinal" Compare Button (Press & Hold)
+                            if viewModel.isEdited {
+                                HStack(spacing: 5) {
+                                    Image(systemName: viewModel.isComparingOriginal ? "eye.fill" : "eye")
+                                        .font(.system(size: 12, weight: .bold))
+                                    Text("Orijinal")
+                                        .font(.system(size: 12, weight: .semibold))
+                                }
+                                .padding(.horizontal, 13)
+                                .padding(.vertical, 7)
+                                .background(
+                                    viewModel.isComparingOriginal
+                                    ? Color.white
+                                    : Color(red: 0.12, green: 0.12, blue: 0.14).opacity(0.90)
+                                )
+                                .foregroundColor(viewModel.isComparingOriginal ? Color.black : Color.white)
+                                .clipShape(Capsule())
+                                .shadow(color: Color.black.opacity(0.35), radius: 8, x: 0, y: 3)
+                                .overlay(
+                                    Capsule()
+                                        .strokeBorder(
+                                            viewModel.isComparingOriginal ? Color.white : Color.white.opacity(0.3),
+                                            lineWidth: 1.0
+                                        )
+                                )
+                                .scaleEffect(viewModel.isComparingOriginal ? 0.96 : 1.0)
+                                .animation(.spring(response: 0.2, dampingFraction: 0.8), value: viewModel.isComparingOriginal)
+                                .simultaneousGesture(
+                                    DragGesture(minimumDistance: 0)
+                                        .onChanged { _ in
+                                            if !viewModel.isComparingOriginal {
+                                                let generator = UIImpactFeedbackGenerator(style: .medium)
+                                                generator.impactOccurred()
+                                                viewModel.isComparingOriginal = true
+                                            }
                                         }
-                                    }
-                                    .onEnded { _ in
-                                        viewModel.isComparingOriginal = false
-                                    }
-                            )
+                                        .onEnded { _ in
+                                            viewModel.isComparingOriginal = false
+                                        }
+                                )
+                                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                            }
                         }
                         .padding(.top, 14)
                         .padding(.trailing, 16)
                         
                         Spacer()
                     }
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
                 }
                 
                 // MARK: - Floating Magnifier Loupe Overlay (Renders above entire canvas)
@@ -817,36 +856,19 @@ public struct EditorView: View {
             }
             
         case .portrait:
-            switch viewModel.selectedPortraitSubTool {
-            case .smoothing:
-                VerticalAdjustmentSlider(
-                    systemIcon: "sparkles",
-                    title: "Pürüzsüzlük",
-                    value: Binding(
-                        get: { viewModel.editState.skinSmoothing },
-                        set: { newVal in viewModel.updateStateDirectly { $0.skinSmoothing = newVal } }
-                    ),
-                    range: 0.0...100.0,
-                    defaultValue: 0.0,
-                    step: 1.0,
-                    valueFormatter: { val in "\(Int(val))%" },
-                    onEditingEnded: { viewModel.recordHistorySnapshot() }
-                )
-            case .healing:
-                VerticalAdjustmentSlider(
-                    systemIcon: "circle.dashed",
-                    title: "Fırça Boyutu",
-                    value: Binding(
-                        get: { viewModel.healingBrushRadius },
-                        set: { newVal in viewModel.healingBrushRadius = newVal }
-                    ),
-                    range: 0.010...0.050,
-                    defaultValue: 0.022,
-                    step: 0.002,
-                    valueFormatter: { val in "\(Int(val * 1000)) px" },
-                    onEditingEnded: {}
-                )
-            }
+            VerticalAdjustmentSlider(
+                systemIcon: "circle.dashed",
+                title: "Fırça Boyutu",
+                value: Binding(
+                    get: { viewModel.healingBrushRadius },
+                    set: { newVal in viewModel.healingBrushRadius = newVal }
+                ),
+                range: 0.010...0.050,
+                defaultValue: 0.022,
+                step: 0.002,
+                valueFormatter: { val in "\(Int(val * 1000)) px" },
+                onEditingEnded: {}
+            )
             
         case .cinematic:
             if viewModel.editState.selectedLookId != nil {

@@ -15,94 +15,83 @@ public struct SmoothToolView: View {
         self.viewModel = viewModel
     }
     
-    private var isSmoothingModified: Bool {
-        viewModel.editState.skinSmoothing > 0.001
-    }
-    
     private var healedSpotsCount: Int {
         viewModel.editState.healedSpots.count
     }
     
     public var body: some View {
         HStack(spacing: PhotonSpacing.sm) {
-            // Subtool Segments: Pürüzsüzlük vs Leke Silme
-            ForEach(PortraitSubTool.allCases) { subTool in
-                let isSelected = viewModel.selectedPortraitSubTool == subTool
-                let isSubModified = subTool == .smoothing ? isSmoothingModified : healedSpotsCount > 0
-                
-                Button {
-                    withAnimation(.spring(response: 0.28, dampingFraction: 0.8)) {
-                        viewModel.selectedPortraitSubTool = subTool
-                    }
-                } label: {
-                    HStack(spacing: 5) {
-                        ZStack(alignment: .topTrailing) {
-                            Image(systemName: subTool.systemIcon)
-                                .font(.system(size: 13, weight: .semibold))
-                            
-                            if isSubModified {
-                                Circle()
-                                    .fill(PhotonColors.accent)
-                                    .frame(width: 5, height: 5)
-                                    .offset(x: 3, y: -2)
-                            }
-                        }
-                        
-                        Text(subTool.rawValue)
-                            .font(.system(size: 12, weight: .semibold))
-                    }
-                    .padding(.horizontal, 11)
-                    .padding(.vertical, 7)
-                    .background(isSelected ? PhotonColors.textPrimary : PhotonColors.surfaceSecondary)
-                    .foregroundColor(isSelected ? PhotonColors.textInverted : PhotonColors.textSecondary)
-                    .clipShape(Capsule())
-                    .overlay(
-                        Capsule()
-                            .strokeBorder(isSelected ? Color.clear : PhotonColors.border.opacity(0.4), lineWidth: 0.8)
-                    )
+            // Primary Leke Silme Button (Cilt main tool)
+            Button {
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.8)) {
+                    viewModel.selectedPortraitSubTool = .healing
                 }
-                .buttonStyle(.plain)
+            } label: {
+                HStack(spacing: 5) {
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "bandage.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                        
+                        if healedSpotsCount > 0 {
+                            Circle()
+                                .fill(PhotonColors.accent)
+                                .frame(width: 5, height: 5)
+                                .offset(x: 3, y: -2)
+                        }
+                    }
+                    
+                    Text("Leke Silme")
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(PhotonColors.textPrimary)
+                .foregroundColor(PhotonColors.textInverted)
+                .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            
+            // Brush Size Chips
+            HStack(spacing: 4) {
+                ForEach(HealingBrushPreset.allCases) { preset in
+                    let isPresetSelected = viewModel.selectedBrushPreset == preset
+                    Button {
+                        withAnimation(.spring(response: 0.22, dampingFraction: 0.8)) {
+                            viewModel.selectedBrushPreset = preset
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(isPresetSelected ? PhotonColors.textInverted : PhotonColors.textSecondary)
+                                .frame(width: preset.iconSize * 0.45, height: preset.iconSize * 0.45)
+                            
+                            Text(preset.rawValue)
+                                .font(.system(size: 11, weight: isPresetSelected ? .bold : .medium))
+                        }
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 6)
+                        .background(isPresetSelected ? PhotonColors.textPrimary : PhotonColors.surfaceSecondary)
+                        .foregroundColor(isPresetSelected ? PhotonColors.textInverted : PhotonColors.textSecondary)
+                        .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
             }
             
-            // Sub-mode Contextual Actions / Status Tags
-            if viewModel.selectedPortraitSubTool == .smoothing {
-                // Detected Faces Tag
+            // Spot Healing Info Tag
+            if healedSpotsCount > 0 {
                 HStack(spacing: 4) {
-                    Image(systemName: "face.smiling")
+                    Image(systemName: "sparkles")
                         .font(.system(size: 11))
-                    
-                    if viewModel.isDetectingFaces {
-                        Text("Taranıyor...")
-                            .font(.system(size: 11, weight: .medium))
-                    } else if viewModel.detectedFaces.isEmpty {
-                        Text("Yüz algılanmadı")
-                            .font(.system(size: 11, weight: .medium))
-                    } else {
-                        Text("\(viewModel.detectedFaces.count) Yüz")
-                            .font(.system(size: 11, weight: .medium))
-                    }
+                        .foregroundColor(PhotonColors.accent)
+                    Text("\(healedSpotsCount) Leke")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(PhotonColors.textSecondary)
                 }
-                .padding(.horizontal, 9)
-                .padding(.vertical, 6)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
                 .background(PhotonColors.surfaceSecondary.opacity(0.8))
-                .foregroundColor(PhotonColors.textSecondary)
                 .clipShape(Capsule())
-            } else {
-                // Spot Healing Info Tag
-                if healedSpotsCount > 0 {
-                    HStack(spacing: 4) {
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 11))
-                            .foregroundColor(PhotonColors.accent)
-                        Text("\(healedSpotsCount) Leke Temizlendi")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(PhotonColors.textSecondary)
-                    }
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 6)
-                    .background(PhotonColors.surfaceSecondary.opacity(0.8))
-                    .clipShape(Capsule())
-                }
             }
             
             Spacer()

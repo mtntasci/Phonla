@@ -397,35 +397,41 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
     
     /// Renders the preview image for interactive 60fps UI display.
     public func renderPreview(from input: CIImage, state: PhotoEditState, skinMask: CIImage? = nil) -> UIImage? {
-        let processed = processImage(input, state: state, skinMask: skinMask)
-        guard let cgImage = context.createCGImage(processed, from: processed.extent) else {
-            return nil
+        autoreleasepool {
+            let processed = processImage(input, state: state, skinMask: skinMask)
+            guard let cgImage = context.createCGImage(processed, from: processed.extent) else {
+                return nil
+            }
+            return UIImage(cgImage: cgImage)
         }
-        return UIImage(cgImage: cgImage)
     }
     
     /// Renders the full resolution image for final photo library export.
     public func renderFullResolution(from input: CIImage, state: PhotoEditState, skinMask: CIImage? = nil) -> CGImage? {
-        let processed = processImage(input, state: state, skinMask: skinMask)
-        return context.createCGImage(processed, from: processed.extent)
+        autoreleasepool {
+            let processed = processImage(input, state: state, skinMask: skinMask)
+            return context.createCGImage(processed, from: processed.extent)
+        }
     }
     
     // MARK: - Downsampling Helper
     
     /// Downsamples a full-resolution CIImage into an optimized preview CIImage and UIImage.
     public func generatePreview(from source: CIImage, maxDimension: CGFloat = 1920) -> (previewCI: CIImage, previewUI: UIImage)? {
-        let extent = source.extent
-        guard extent.width > 0 && extent.height > 0 else { return nil }
-        
-        let largestSide = max(extent.width, extent.height)
-        let scale = min(1.0, maxDimension / largestSide)
-        
-        let resizedCI = source.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
-        guard let cgImage = context.createCGImage(resizedCI, from: resizedCI.extent) else {
-            return nil
+        autoreleasepool {
+            let extent = source.extent
+            guard extent.width > 0 && extent.height > 0 else { return nil }
+            
+            let largestSide = max(extent.width, extent.height)
+            let scale = min(1.0, maxDimension / largestSide)
+            
+            let resizedCI = source.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+            guard let cgImage = context.createCGImage(resizedCI, from: resizedCI.extent) else {
+                return nil
+            }
+            
+            let previewUI = UIImage(cgImage: cgImage)
+            return (previewCI: resizedCI, previewUI: previewUI)
         }
-        
-        let previewUI = UIImage(cgImage: cgImage)
-        return (previewCI: resizedCI, previewUI: previewUI)
     }
 }

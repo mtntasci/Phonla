@@ -72,14 +72,12 @@ public enum ColorSubTool: String, CaseIterable, Identifiable, Sendable {
 
 /// Sub-tools under Portrait (Cilt) category
 public enum PortraitSubTool: String, CaseIterable, Identifiable, Sendable {
-    case smoothing = "Pürüzsüzlük"
     case healing = "Leke Silme"
     
     public var id: String { rawValue }
     
     public var systemIcon: String {
         switch self {
-        case .smoothing: return "sparkles"
         case .healing: return "bandage.fill"
         }
     }
@@ -126,7 +124,7 @@ public final class EditorViewModel {
     // Sub-tool selections
     public var selectedLightSubTool: LightSubTool = .exposure
     public var selectedColorSubTool: ColorSubTool = .temperature
-    public var selectedPortraitSubTool: PortraitSubTool = .smoothing
+    public var selectedPortraitSubTool: PortraitSubTool = .healing
     
     // Spot Healing & Loupe Magnifier Parameters
     public var selectedBrushPreset: HealingBrushPreset = .medium {
@@ -155,6 +153,11 @@ public final class EditorViewModel {
     public private(set) var isDetectingFaces: Bool = false
     private var previewSkinMask: CIImage?
     
+    // Disk-Backed Temp Checkpoints & History Tracking
+    private var activeSessionId: String?
+    private var editActionCounter: Int = 0
+    private let checkpointInterval: Int = 3
+    
     // Undo / Redo History Stacks
     private var undoStack: [PhotoEditState] = []
     private var redoStack: [PhotoEditState] = []
@@ -166,21 +169,33 @@ public final class EditorViewModel {
     private let processingService: ImageProcessingServiceProtocol
     private let photoLibraryService: PhotoLibraryServiceProtocol
     private let faceDetectionService: FaceDetectionServiceProtocol
+    private let diskCacheService: TempDiskCacheServiceProtocol
     private var renderTask: Task<Void, Never>?
     
     public init(
         processingService: ImageProcessingServiceProtocol = ImageProcessingService.shared,
         photoLibraryService: PhotoLibraryServiceProtocol = PhotoLibraryService.shared,
-        faceDetectionService: FaceDetectionServiceProtocol = FaceDetectionService.shared
+        faceDetectionService: FaceDetectionServiceProtocol = FaceDetectionService.shared,
+        diskCacheService: TempDiskCacheServiceProtocol = TempDiskCacheService.shared
     ) {
         self.processingService = processingService
         self.photoLibraryService = photoLibraryService
         self.faceDetectionService = faceDetectionService
+        self.diskCacheService = diskCacheService
     }
     
-    // MARK: - Photo Binding
+    // MARK: - Photo Binding & Session Lifecycle
     
     public func setPhoto(_ photo: LoadedPhoto) {
+        // Cleanup old session if any
+        if let oldSession = activeSessionId {
+            diskCacheService.cleanupSession(sessionId: oldSession)
+        }
+        
+        let newSession = diskCacheService.startNewSession()
+        self.activeSessionId = newSession
+        self.editActionCounter = 0
+        
         self.loadedPhoto = photo
         self.editState = .identity
         self.renderedPreview = photo.previewUIImage
@@ -193,6 +208,11 @@ public final class EditorViewModel {
         self.previewSkinMask = nil
         self.isDetectingFaces = true
         
+        // Cache original preview image to disk asynchronously
+        Task { [diskCacheService] in
+            _ = await diskCacheService.saveOriginalPreview(image: photo.previewUIImage, sessionId: newSession)
+        }
+        
         // Asynchronously perform face detection once per photo load
         Task { [faceDetectionService] in
             let faces = await faceDetectionService.detectFaces(in: photo.previewCIImage)
@@ -204,15 +224,12 @@ public final class EditorViewModel {
                         targetExtent: photo.previewCIImage.extent,
                         faces: faces
                     )
-                    if self.editState.skinSmoothing > 0 {
-                        self.requestPreviewRender()
-                    }
                 }
             }
         }
     }
     
-    // MARK: - History Snapshot (Undo / Redo Management)
+    // MARK: - History Snapshot (Disk-Backed Checkpoint & Undo / Redo)
     
     public func recordHistorySnapshot() {
         undoStack.append(editState)
@@ -220,6 +237,16 @@ public final class EditorViewModel {
             undoStack.removeFirst()
         }
         redoStack.removeAll()
+        
+        editActionCounter += 1
+        
+        // Checkpoint every 3 changes or on spot healing to bound memory footprint
+        if editActionCounter % checkpointInterval == 0, let session = activeSessionId, let imageToSave = renderedPreview ?? loadedPhoto?.previewUIImage {
+            let currentIndex = editActionCounter
+            Task { [diskCacheService] in
+                _ = await diskCacheService.saveCheckpoint(image: imageToSave, index: currentIndex, sessionId: session)
+            }
+        }
     }
     
     public func undo() {
@@ -403,6 +430,11 @@ public final class EditorViewModel {
             // Save as new photo asset without overwriting
             try await photoLibraryService.savePhotoToLibrary(renderedCGImage: fullResCG)
             
+            // Clean up temporary checkpoint files on disk after export
+            if let session = activeSessionId {
+                diskCacheService.cleanupSession(sessionId: session)
+            }
+            
             self.exportSuccessMessage = "Fotoğraf galerinize başarıyla kaydedildi."
             
             // Auto-clear success message after delay
@@ -417,6 +449,13 @@ public final class EditorViewModel {
         }
         
         isExporting = false
+    }
+    
+    public func cleanupCurrentSession() {
+        if let session = activeSessionId {
+            diskCacheService.cleanupSession(sessionId: session)
+            self.activeSessionId = nil
+        }
     }
     
     // MARK: - Display Image Resolver

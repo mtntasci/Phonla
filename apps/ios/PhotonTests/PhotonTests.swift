@@ -421,12 +421,31 @@ struct PhotonTests {
         #expect(await !viewModel.isExporting)
     }
     
-    // MARK: - Consent & ATT Tests
+    // MARK: - Temp Disk Cache Tests
     
-    @Test @MainActor func testConsentManagerInitialState() async throws {
-        let manager = ConsentManager.shared
-        let status = manager.trackingStatus
-        #expect(status == .notDetermined || status == .denied || status == .authorized || status == .restricted)
+    @Test func testTempDiskCacheLifecycle() async throws {
+        let cacheService = TempDiskCacheService.shared
+        let sessionId = cacheService.startNewSession()
+        #expect(!sessionId.isEmpty)
+        
+        let testImage = UIImage(systemName: "photo") ?? UIImage()
+        
+        // Save & Load original preview
+        let savedOriginalURL = await cacheService.saveOriginalPreview(image: testImage, sessionId: sessionId)
+        #expect(savedOriginalURL != nil)
+        
+        let loadedOriginal = await cacheService.loadOriginalPreview(sessionId: sessionId)
+        #expect(loadedOriginal != nil)
+        
+        // Save & Load checkpoint
+        let checkpointURL = await cacheService.saveCheckpoint(image: testImage, index: 1, sessionId: sessionId)
+        #expect(checkpointURL != nil)
+        
+        let loadedCheckpoint = await cacheService.loadCheckpoint(index: 1, sessionId: sessionId)
+        #expect(loadedCheckpoint != nil)
+        
+        // Cleanup session
+        cacheService.cleanupSession(sessionId: sessionId)
     }
 }
 
