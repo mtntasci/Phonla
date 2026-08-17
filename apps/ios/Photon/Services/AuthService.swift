@@ -35,6 +35,12 @@ public enum AuthError: LocalizedError, Sendable {
     case cancelled
     case notAuthenticated
     case requiresRecentLogin
+    case invalidEmail
+    case wrongPassword
+    case userNotFound
+    case userDisabled
+    case tooManyRequests
+    case networkError
     case unknown(String)
     
     public var errorDescription: String? {
@@ -49,6 +55,18 @@ public enum AuthError: LocalizedError, Sendable {
             return "Aktif bir oturum bulunamadı."
         case .requiresRecentLogin:
             return "Güvenlik nedeniyle hesabınızı silmeden önce lütfen yeniden giriş yapınız."
+        case .invalidEmail:
+            return "Lütfen geçerli bir e-posta adresi giriniz."
+        case .wrongPassword:
+            return "Hatalı şifre girdiniz. Lütfen tekrar deneyiniz."
+        case .userNotFound:
+            return "Bu e-posta adresine ait bir hesap bulunamadı."
+        case .userDisabled:
+            return "Bu kullanıcı hesabı devre dışı bırakılmıştır."
+        case .tooManyRequests:
+            return "Çok fazla başarısız deneme yapıldı. Lütfen biraz sonra tekrar deneyiniz."
+        case .networkError:
+            return "Bağlantı hatası oluştu. Lütfen internet bağlantınızı kontrol ediniz."
         case .unknown(let message):
             return message
         }
@@ -63,6 +81,8 @@ public protocol AuthServiceProtocol: Sendable {
     
     func checkCurrentSession() async -> UserSession?
     func signIn(with provider: AuthProvider) async throws -> UserSession
+    func signInWithEmail(email: String, password: String) async throws -> UserSession
+    func sendPasswordReset(email: String) async throws
     func signOut() async throws
     func deleteAccount() async throws
 }
@@ -237,9 +257,107 @@ public final class AuthService: NSObject, AuthServiceProtocol {
             self.currentSession = session
             return session
         } catch {
-            self.lastError = error.localizedDescription
-            throw error
+            let mappedError = mapFirebaseAuthError(error)
+            self.lastError = mappedError.localizedDescription
+            throw mappedError
         }
+    }
+    
+    // MARK: - Email / Password Sign In
+    
+    public func signInWithEmail(email: String, password: String) async throws -> UserSession {
+        isLoading = true
+        lastError = nil
+        defer { isLoading = false }
+        
+        guard ensureFirebaseConfigured() else {
+            throw AuthError.missingConfiguration("Firebase yapılandırılmamış.")
+        }
+        
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedEmail.isEmpty else {
+            throw AuthError.invalidEmail
+        }
+        
+        guard !password.isEmpty else {
+            throw AuthError.wrongPassword
+        }
+        
+        do {
+            let authResult = try await Auth.auth().signIn(withEmail: trimmedEmail, password: password)
+            let user = authResult.user
+            
+            let displayName = user.displayName ?? (user.email?.components(separatedBy: "@").first?.capitalized ?? "Photonla Üyesi")
+            let session = UserSession(
+                uid: user.uid,
+                email: user.email,
+                displayName: displayName,
+                photoURL: user.photoURL,
+                providerId: "E-posta",
+                isAnonymous: user.isAnonymous
+            )
+            
+            self.currentSession = session
+            return session
+        } catch {
+            let mappedError = mapFirebaseAuthError(error)
+            self.lastError = mappedError.localizedDescription
+            throw mappedError
+        }
+    }
+    
+    // MARK: - Password Reset
+    
+    public func sendPasswordReset(email: String) async throws {
+        isLoading = true
+        lastError = nil
+        defer { isLoading = false }
+        
+        guard ensureFirebaseConfigured() else {
+            throw AuthError.missingConfiguration("Firebase yapılandırılmamış.")
+        }
+        
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedEmail.isEmpty else {
+            throw AuthError.invalidEmail
+        }
+        
+        do {
+            try await Auth.auth().sendPasswordReset(withEmail: trimmedEmail)
+        } catch {
+            let mappedError = mapFirebaseAuthError(error)
+            self.lastError = mappedError.localizedDescription
+            throw mappedError
+        }
+    }
+    
+    // MARK: - Error Mapping Helper
+    
+    private func mapFirebaseAuthError(_ error: Error) -> Error {
+        let nsError = error as NSError
+        guard nsError.domain == AuthErrorDomain else {
+            return error
+        }
+        
+        if let errorCode = AuthErrorCode(rawValue: nsError.code) {
+            switch errorCode {
+            case .invalidEmail:
+                return AuthError.invalidEmail
+            case .wrongPassword, .invalidCredential:
+                return AuthError.wrongPassword
+            case .userNotFound:
+                return AuthError.userNotFound
+            case .userDisabled:
+                return AuthError.userDisabled
+            case .tooManyRequests:
+                return AuthError.tooManyRequests
+            case .networkError:
+                return AuthError.networkError
+            default:
+                return AuthError.unknown(error.localizedDescription)
+            }
+        }
+        return error
     }
     
     // MARK: - Sign Out

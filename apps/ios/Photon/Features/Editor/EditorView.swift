@@ -240,36 +240,99 @@ public struct EditorView: View {
                                 RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous)
                                     .strokeBorder(PhotonColors.border, lineWidth: 0.5)
                             )
-                            // Spot Healing interactive tap overlay when Healing subtool is active
+                            // Spot Healing interactive tap and drag overlay when Healing subtool is active
                             .overlay {
                                 if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing && !viewModel.isComparingOriginal {
                                     GeometryReader { imgGeo in
-                                        Color.clear
-                                            .contentShape(Rectangle())
-                                            .onTapGesture { location in
-                                                let w = imgGeo.size.width
-                                                let h = imgGeo.size.height
-                                                guard w > 0, h > 0 else { return }
-                                                let normX = location.x / w
-                                                let normY = location.y / h
-                                                viewModel.addHealedSpot(x: normX, y: normY)
+                                        let imgW = imgGeo.size.width
+                                        let imgH = imgGeo.size.height
+                                        
+                                        ZStack {
+                                            // Only capture touches when brush is explicitly ARMED
+                                            if viewModel.isBrushArmed {
+                                                Color.clear
+                                                    .contentShape(Rectangle())
+                                                    .gesture(
+                                                        DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                                                            .onChanged { value in
+                                                                guard imgW > 0, imgH > 0 else { return }
+                                                                let normX = min(max(value.location.x / imgW, 0.0), 1.0)
+                                                                let normY = min(max(value.location.y / imgH, 0.0), 1.0)
+                                                                
+                                                                // Calculate screen location on canvas geometry
+                                                                let canvasCenter = CGPoint(x: availableWidth / 2.0 + panOffset.width, y: availableHeight / 2.0 + panOffset.height)
+                                                                let screenX = canvasCenter.x + (value.location.x - imgW / 2.0) * zoomScale
+                                                                let screenY = canvasCenter.y + (value.location.y - imgH / 2.0) * zoomScale
+                                                                
+                                                                viewModel.loupeTouchPoint = CGPoint(x: screenX, y: screenY)
+                                                                viewModel.loupeNormalizedPoint = CGPoint(x: normX, y: normY)
+                                                                if !viewModel.isLoupeActive {
+                                                                    withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+                                                                        viewModel.isLoupeActive = true
+                                                                    }
+                                                                }
+                                                            }
+                                                            .onEnded { value in
+                                                                guard imgW > 0, imgH > 0 else { return }
+                                                                let normX = min(max(value.location.x / imgW, 0.0), 1.0)
+                                                                let normY = min(max(value.location.y / imgH, 0.0), 1.0)
+                                                                
+                                                                withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                                                                    viewModel.isLoupeActive = false
+                                                                }
+                                                                viewModel.addHealedSpot(x: normX, y: normY)
+                                                            }
+                                                    )
                                             }
-                                            .overlay {
-                                                // Render clean visual circular markers on healed spots
+                                            
+                                            // Visual Markers & Animations
+                                            ZStack {
+                                                // 1. Render clean visual circular markers on healed spots
                                                 ForEach(viewModel.editState.healedSpots) { spot in
-                                                    let spotX = spot.x * imgGeo.size.width
-                                                    let spotY = spot.y * imgGeo.size.height
-                                                    let spotPx = max(20, spot.radius * max(imgGeo.size.width, imgGeo.size.height) * 2)
+                                                    let spotX = spot.x * imgW
+                                                    let spotY = spot.y * imgH
+                                                    let spotPx = max(16, spot.radius * max(imgW, imgH) * 2.0)
                                                     
                                                     Circle()
-                                                        .strokeBorder(Color.white.opacity(0.9), lineWidth: 1.5)
+                                                        .strokeBorder(Color.white.opacity(0.85), lineWidth: 1.2)
                                                         .background(Circle().fill(Color.white.opacity(0.08)))
-                                                        .shadow(color: Color.black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                                        .shadow(color: Color.black.opacity(0.4), radius: 2, x: 0, y: 1)
                                                         .frame(width: spotPx, height: spotPx)
                                                         .position(x: spotX, y: spotY)
                                                         .allowsHitTesting(false)
                                                 }
+                                                
+                                                // 2. Animated Ripple Pulse at the most recent healed spot
+                                                if viewModel.isShowingRipple, let ripplePoint = viewModel.lastHealedRipplePoint {
+                                                    let rippleX = ripplePoint.x * imgW
+                                                    let rippleY = ripplePoint.y * imgH
+                                                    let baseRadius = CGFloat(viewModel.healingBrushRadius) * max(imgW, imgH) * 2.0
+                                                    
+                                                    Circle()
+                                                        .stroke(PhotonColors.accent.opacity(0.8), lineWidth: 2)
+                                                        .frame(width: baseRadius * 1.6, height: baseRadius * 1.6)
+                                                        .position(x: rippleX, y: rippleY)
+                                                        .scaleEffect(1.3)
+                                                        .opacity(0.0)
+                                                        .animation(.easeOut(duration: 0.5), value: viewModel.isShowingRipple)
+                                                        .allowsHitTesting(false)
+                                                }
+                                                
+                                                // 3. Live Active Brush Footprint indicator when dragging/touching
+                                                if viewModel.isLoupeActive {
+                                                    let brushX = viewModel.loupeNormalizedPoint.x * imgW
+                                                    let brushY = viewModel.loupeNormalizedPoint.y * imgH
+                                                    let brushPx = CGFloat(viewModel.healingBrushRadius) * max(imgW, imgH) * 2.0
+                                                    
+                                                    Circle()
+                                                        .strokeBorder(Color.white.opacity(0.95), lineWidth: 1.5)
+                                                        .background(Circle().fill(PhotonColors.accent.opacity(0.20)))
+                                                        .frame(width: max(16, brushPx), height: max(16, brushPx))
+                                                        .position(x: brushX, y: brushY)
+                                                        .allowsHitTesting(false)
+                                                }
                                             }
+                                        }
                                     }
                                 }
                             }
@@ -294,6 +357,11 @@ public struct EditorView: View {
                             .simultaneousGesture(
                                 DragGesture(minimumDistance: 0)
                                     .onChanged { value in
+                                        // Only ignore compare/pan if the brush is explicitly armed for a spot
+                                        if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing && viewModel.isBrushArmed {
+                                            return
+                                        }
+                                        
                                         let distance = hypot(value.translation.width, value.translation.height)
                                         if zoomScale > 1.05 && distance > 10 {
                                             isPanning = true
@@ -308,6 +376,9 @@ public struct EditorView: View {
                                         }
                                     }
                                     .onEnded { _ in
+                                        if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing && viewModel.isBrushArmed {
+                                            return
+                                        }
                                         viewModel.isComparingOriginal = false
                                         if isPanning {
                                             lastPanOffset = panOffset
@@ -347,35 +418,81 @@ public struct EditorView: View {
                             .clipShape(Capsule())
                             .padding()
                         }
-                        
-                        // "Lekeye dokunun" floating hint
-                        if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing && viewModel.editState.healedSpots.isEmpty {
-                            VStack {
-                                Spacer()
-                                HStack {
-                                    Spacer()
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "hand.tap.fill")
-                                            .font(.system(size: 13))
-                                        Text("Lekeye dokunun")
-                                            .font(.system(size: 13, weight: .semibold))
-                                    }
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 10)
-                                    .background(.ultraThinMaterial)
-                                    .clipShape(Capsule())
-                                    .foregroundColor(.white)
-                                    .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
-                                }
-                                .padding(.bottom, 16)
-                                .padding(.trailing, 16)
-                            }
-                            .allowsHitTesting(false)
-                        }
                     }
                 } else {
                     ProgressView()
                         .tint(PhotonColors.textPrimary)
+                }
+                
+                // MARK: - Floating Magnifier Loupe Overlay (Renders above entire canvas)
+                if viewModel.isLoupeActive && viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing {
+                    MagnifierLoupeView(
+                        displayImage: viewModel.currentDisplayImage,
+                        touchLocation: viewModel.loupeTouchPoint,
+                        normalizedPoint: viewModel.loupeNormalizedPoint,
+                        brushRadius: viewModel.healingBrushRadius,
+                        canvasSize: canvasSize,
+                        zoomScale: zoomScale
+                    )
+                }
+                
+                // MARK: - Floating Bottom-Right Spot Actions (Geri Al & Çöp Kutusu on Canvas)
+                if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing && !viewModel.editState.healedSpots.isEmpty && !viewModel.isComparingOriginal {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            HStack(spacing: 8) {
+                                // Undo Spot Button
+                                Button {
+                                    withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                                        viewModel.undoLastHealedSpot()
+                                    }
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "arrow.uturn.backward")
+                                            .font(.system(size: 12, weight: .bold))
+                                        Text("Geri Al (\(viewModel.editState.healedSpots.count))")
+                                            .font(.system(size: 12, weight: .semibold))
+                                    }
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(PhotonColors.surfacePrimary)
+                                    .foregroundColor(PhotonColors.textPrimary)
+                                    .clipShape(Capsule())
+                                    .shadow(color: Color.black.opacity(0.14), radius: 8, x: 0, y: 3)
+                                    .overlay(
+                                        Capsule()
+                                            .strokeBorder(PhotonColors.border, lineWidth: 0.8)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                
+                                // Clear All Spots Button
+                                Button {
+                                    withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                                        viewModel.clearAllHealedSpots()
+                                    }
+                                } label: {
+                                    Image(systemName: "trash.fill")
+                                        .font(.system(size: 12, weight: .bold))
+                                        .padding(9)
+                                        .background(PhotonColors.surfacePrimary)
+                                        .foregroundColor(Color.red.opacity(0.9))
+                                        .clipShape(Circle())
+                                        .shadow(color: Color.black.opacity(0.14), radius: 8, x: 0, y: 3)
+                                        .overlay(
+                                            Circle()
+                                                .strokeBorder(PhotonColors.border, lineWidth: 0.8)
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(.trailing, 16)
+                            .padding(.bottom, 16)
+                        }
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
                 
                 // MARK: - Floating Vertical Adjustment Slider (Right Edge)

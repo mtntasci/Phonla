@@ -156,7 +156,7 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
         }
     }
     
-    // MARK: - Spot Healing Engine (Inpainting & Texture Synthesis)
+    // MARK: - Spot Healing Engine (Adaptive Nearest-Patch Synthesis & Texture Preservation)
     
     private func applySpotHealing(to image: CIImage, spots: [HealedSpot]) -> CIImage {
         guard !spots.isEmpty else { return image }
@@ -169,36 +169,69 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
         for spot in spots {
             // Convert normalized coordinates (0...1, top-left) to CIImage coordinate system (bottom-left origin)
             let centerPoint = CGPoint(x: spot.x * imgWidth, y: (1.0 - spot.y) * imgHeight)
-            let spotPixelRadius = max(14.0, spot.radius * maxDim)
-            let offsetDist = spotPixelRadius * 1.35
+            let spotPixelRadius = max(8.0, spot.radius * maxDim)
+            let innerOffset = spotPixelRadius * 1.30
+            let outerOffset = spotPixelRadius * 1.95
             
-            // 1. Synthesize clean surrounding skin by multi-directional offset sampling (Inpainting)
-            // We sample healthy skin from 8 surrounding directions (Left, Right, Up, Down, Diagonals)
-            let sampleRight = healed.transformed(by: CGAffineTransform(translationX: -offsetDist, y: 0)).cropped(to: image.extent)
-            let sampleLeft  = healed.transformed(by: CGAffineTransform(translationX:  offsetDist, y: 0)).cropped(to: image.extent)
-            let sampleUp    = healed.transformed(by: CGAffineTransform(translationX: 0, y: -offsetDist)).cropped(to: image.extent)
-            let sampleDown  = healed.transformed(by: CGAffineTransform(translationX: 0, y:  offsetDist)).cropped(to: image.extent)
+            // 1. Multi-tier concentric directional sampling (Inner & Outer Annular Ring)
+            // Samples immediate healthy surrounding skin from 12 angular directions
+            let offsets: [(dx: CGFloat, dy: CGFloat, weight: Float)] = [
+                // Inner ring samples (higher weight, immediate surrounding skin tone)
+                (dx: -innerOffset, dy: 0, weight: 0.25),
+                (dx: innerOffset, dy: 0, weight: 0.25),
+                (dx: 0, dy: -innerOffset, weight: 0.25),
+                (dx: 0, dy: innerOffset, weight: 0.25),
+                (dx: -innerOffset * 0.707, dy: -innerOffset * 0.707, weight: 0.18),
+                (dx: innerOffset * 0.707, dy: innerOffset * 0.707, weight: 0.18),
+                (dx: -innerOffset * 0.707, dy: innerOffset * 0.707, weight: 0.18),
+                (dx: innerOffset * 0.707, dy: -innerOffset * 0.707, weight: 0.18),
+                
+                // Outer ring samples (ambient skin gradient transition)
+                (dx: -outerOffset, dy: 0, weight: 0.12),
+                (dx: outerOffset, dy: 0, weight: 0.12),
+                (dx: 0, dy: -outerOffset, weight: 0.12),
+                (dx: 0, dy: outerOffset, weight: 0.12)
+            ]
             
-            let diag = offsetDist * 0.707
-            let sampleTR = healed.transformed(by: CGAffineTransform(translationX: -diag, y: -diag)).cropped(to: image.extent)
-            let sampleBL = healed.transformed(by: CGAffineTransform(translationX:  diag, y:  diag)).cropped(to: image.extent)
+            // Synthesize clean surrounding skin patch
+            var patchAccumulator: CIImage? = nil
+            var accumulatedWeight: Float = 0.0
             
-            // Average surrounding clean skin samples together to completely eliminate the blemish
-            let blendH = blendImages(base: sampleRight, overlay: sampleLeft, alpha: 0.5)
-            let blendV = blendImages(base: sampleUp, overlay: sampleDown, alpha: 0.5)
-            let blendDiag = blendImages(base: sampleTR, overlay: sampleBL, alpha: 0.5)
-            let blendCross = blendImages(base: blendH, overlay: blendV, alpha: 0.5)
-            let cleanSkinPatch = blendImages(base: blendCross, overlay: blendDiag, alpha: 0.35)
+            for offset in offsets {
+                let sampled = healed
+                    .transformed(by: CGAffineTransform(translationX: offset.dx, y: offset.dy))
+                    .cropped(to: image.extent)
+                
+                if let currentAcc = patchAccumulator {
+                    let blendFactor = offset.weight / (accumulatedWeight + offset.weight)
+                    patchAccumulator = blendImages(base: currentAcc, overlay: sampled, alpha: blendFactor)
+                    accumulatedWeight += offset.weight
+                } else {
+                    patchAccumulator = sampled
+                    accumulatedWeight = offset.weight
+                }
+            }
             
-            // Softly blur the synthesized skin patch to blend seamlessly with surrounding pore structure
-            let smoothedPatch = cleanSkinPatch
+            guard let cleanSkinPatch = patchAccumulator else { continue }
+            
+            // 2. High-Frequency Micro-Texture Preservation: Retains natural skin pores from surrounding clean area
+            let textureDetailRadius = max(1.0, spotPixelRadius * 0.12)
+            let highFreqTexture = cleanSkinPatch.applyingFilter("CIUnsharpMask", parameters: [
+                kCIInputRadiusKey: NSNumber(value: textureDetailRadius),
+                kCIInputIntensityKey: NSNumber(value: 0.70)
+            ])
+            
+            let smoothTone = cleanSkinPatch
                 .clampedToExtent()
                 .applyingFilter("CIGaussianBlur", parameters: [
-                    kCIInputRadiusKey: NSNumber(value: spotPixelRadius * 0.20)
+                    kCIInputRadiusKey: NSNumber(value: spotPixelRadius * 0.18)
                 ])
                 .cropped(to: image.extent)
             
-            // 2. Generate a smooth feathered radial circular mask at the spot location
+            // Recombine tone + texture for natural skin patch
+            let finalCleanPatch = blendImages(base: smoothTone, overlay: highFreqTexture, alpha: 0.35)
+            
+            // 3. Ultra-smooth feathered radial circular mask with quadratic falloff
             guard let radialMask = CIFilter(name: "CIRadialGradient", parameters: [
                 "inputCenter": CIVector(cgPoint: centerPoint),
                 "inputRadius0": NSNumber(value: spotPixelRadius * 0.15),
@@ -209,9 +242,9 @@ public final class ImageProcessingService: ImageProcessingServiceProtocol, @unch
                 continue
             }
             
-            // 3. Seamlessly blend patched clean skin over the blemish using the radial feathered mask
+            // 4. Seamlessly blend patched clean skin over the blemish using radial mask
             if let blended = CIFilter(name: "CIBlendWithMask", parameters: [
-                kCIInputImageKey: smoothedPatch,
+                kCIInputImageKey: finalCleanPatch,
                 kCIInputBackgroundImageKey: healed,
                 kCIInputMaskImageKey: radialMask
             ])?.outputImage {

@@ -13,6 +13,7 @@ public struct AuthView: View {
     @Environment(NavigationState.self) private var navigationState
     @State private var authService = AuthService.shared
     @State private var errorMessage: String?
+    @State private var showEmailLoginSheet: Bool = false
     
     public init() {}
     
@@ -71,6 +72,17 @@ public struct AuthView: View {
                     performSignIn(provider: .google)
                 }
                 
+                // Email Sign In (Test User & Review Login)
+                PhotonButton(
+                    "E-posta ile Giriş Yap",
+                    systemImage: "envelope.fill",
+                    variant: .secondary,
+                    size: .large,
+                    isLoading: false
+                ) {
+                    showEmailLoginSheet = true
+                }
+                
                 // Privacy Footnote
                 HStack(spacing: PhotonSpacing.xxs) {
                     Image(systemName: "lock.shield.fill")
@@ -86,6 +98,11 @@ public struct AuthView: View {
             .padding(.bottom, PhotonSpacing.xxxl)
         }
         .photonBackground()
+        .sheet(isPresented: $showEmailLoginSheet) {
+            EmailLoginSheet {
+                navigationState.navigateToHome()
+            }
+        }
     }
     
     private func performSignIn(provider: AuthProvider) {

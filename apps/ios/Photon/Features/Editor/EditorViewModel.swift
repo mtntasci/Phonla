@@ -85,6 +85,31 @@ public enum PortraitSubTool: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+/// Preset brush sizes for Spot Healing (Leke Silme)
+public enum HealingBrushPreset: String, CaseIterable, Identifiable, Sendable {
+    case small = "Küçük"
+    case medium = "Orta"
+    case large = "Büyük"
+    
+    public var id: String { rawValue }
+    
+    public var radius: Float {
+        switch self {
+        case .small: return 0.012
+        case .medium: return 0.022
+        case .large: return 0.038
+        }
+    }
+    
+    public var iconSize: CGFloat {
+        switch self {
+        case .small: return 8
+        case .medium: return 13
+        case .large: return 18
+        }
+    }
+}
+
 /// Central view model driving the interactive Core Image preview, undo/redo history, and export pipeline.
 @MainActor
 @Observable
@@ -103,9 +128,26 @@ public final class EditorViewModel {
     public var selectedColorSubTool: ColorSubTool = .temperature
     public var selectedPortraitSubTool: PortraitSubTool = .smoothing
     
-    // Spot Healing Parameters
+    // Spot Healing & Loupe Magnifier Parameters (Explicit Arming)
+    public var armedBrushPreset: HealingBrushPreset? = nil {
+        didSet {
+            if let preset = armedBrushPreset {
+                healingBrushRadius = preset.radius
+            }
+        }
+    }
+    public var isBrushArmed: Bool {
+        armedBrushPreset != nil
+    }
     public var healingBrushRadius: Float = 0.022
     public var lastHealedSpotPoint: CGPoint? = nil
+    
+    // Live Loupe / Magnifier Interactive State
+    public var isLoupeActive: Bool = false
+    public var loupeTouchPoint: CGPoint = .zero
+    public var loupeNormalizedPoint: CGPoint = .zero
+    public var lastHealedRipplePoint: CGPoint? = nil
+    public var isShowingRipple: Bool = false
     
     // Export Status
     public var isExporting: Bool = false
@@ -232,7 +274,20 @@ public final class EditorViewModel {
         let spot = HealedSpot(x: clampedX, y: clampedY, radius: CGFloat(healingBrushRadius))
         self.editState.healedSpots.append(spot)
         self.lastHealedSpotPoint = CGPoint(x: clampedX, y: clampedY)
+        self.lastHealedRipplePoint = CGPoint(x: clampedX, y: clampedY)
+        self.isShowingRipple = true
+        
+        // Disarm brush so user must select size again for the next spot
+        self.armedBrushPreset = nil
+        
         requestPreviewRender()
+        
+        Task {
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            if self.isShowingRipple {
+                self.isShowingRipple = false
+            }
+        }
     }
     
     public func undoLastHealedSpot() {
