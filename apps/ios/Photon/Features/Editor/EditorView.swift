@@ -285,51 +285,55 @@ public struct EditorView: View {
                                                     )
                                             }
                                             
-                                            // Visual Markers & Animations
+                                            // Visual Brush Effects & Dissolve Animations
                                             ZStack {
-                                                // 1. Render clean visual circular markers on healed spots
-                                                ForEach(viewModel.editState.healedSpots) { spot in
-                                                    let spotX = spot.x * imgW
-                                                    let spotY = spot.y * imgH
-                                                    let spotPx = max(16, spot.radius * max(imgW, imgH) * 2.0)
-                                                    
-                                                    Circle()
-                                                        .strokeBorder(Color.white.opacity(0.85), lineWidth: 1.2)
-                                                        .background(Circle().fill(Color.white.opacity(0.08)))
-                                                        .shadow(color: Color.black.opacity(0.4), radius: 2, x: 0, y: 1)
-                                                        .frame(width: spotPx, height: spotPx)
-                                                        .position(x: spotX, y: spotY)
-                                                        .allowsHitTesting(false)
-                                                }
-                                                
-                                                // 2. Animated Ripple Pulse at the most recent healed spot
+                                                // 1. Animated Brush Wipe & Sparkle Dissolve upon healing a spot
                                                 if viewModel.isShowingRipple, let ripplePoint = viewModel.lastHealedRipplePoint {
                                                     let rippleX = ripplePoint.x * imgW
                                                     let rippleY = ripplePoint.y * imgH
                                                     let baseRadius = CGFloat(viewModel.healingBrushRadius) * max(imgW, imgH) * 2.0
                                                     
-                                                    Circle()
-                                                        .stroke(PhotonColors.accent.opacity(0.8), lineWidth: 2)
-                                                        .frame(width: baseRadius * 1.6, height: baseRadius * 1.6)
+                                                    HealingWipeEffectView(radius: baseRadius)
                                                         .position(x: rippleX, y: rippleY)
-                                                        .scaleEffect(1.3)
-                                                        .opacity(0.0)
-                                                        .animation(.easeOut(duration: 0.5), value: viewModel.isShowingRipple)
                                                         .allowsHitTesting(false)
                                                 }
                                                 
-                                                // 3. Live Active Brush Footprint indicator when dragging/touching
+                                                // 2. Live Soft Cosmetic Brush Footprint indicator when dragging/touching
                                                 if viewModel.isLoupeActive {
                                                     let brushX = viewModel.loupeNormalizedPoint.x * imgW
                                                     let brushY = viewModel.loupeNormalizedPoint.y * imgH
                                                     let brushPx = CGFloat(viewModel.healingBrushRadius) * max(imgW, imgH) * 2.0
                                                     
-                                                    Circle()
-                                                        .strokeBorder(Color.white.opacity(0.95), lineWidth: 1.5)
-                                                        .background(Circle().fill(PhotonColors.accent.opacity(0.20)))
-                                                        .frame(width: max(16, brushPx), height: max(16, brushPx))
-                                                        .position(x: brushX, y: brushY)
-                                                        .allowsHitTesting(false)
+                                                    ZStack {
+                                                        // Soft feathered aura
+                                                        Circle()
+                                                            .fill(
+                                                                RadialGradient(
+                                                                    colors: [Color.white.opacity(0.35), Color.white.opacity(0.08), Color.clear],
+                                                                    center: .center,
+                                                                    startRadius: 0,
+                                                                    endRadius: max(16, brushPx) / 2.0
+                                                                )
+                                                            )
+                                                            .frame(width: max(20, brushPx * 1.25), height: max(20, brushPx * 1.25))
+                                                        
+                                                        // Fine dashed cosmetic brush perimeter
+                                                        Circle()
+                                                            .strokeBorder(
+                                                                Color.white.opacity(0.95),
+                                                                style: StrokeStyle(lineWidth: 1.2, dash: [4, 3])
+                                                            )
+                                                            .frame(width: max(16, brushPx), height: max(16, brushPx))
+                                                            .shadow(color: Color.black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                                        
+                                                        // Subtle glowing center touch point
+                                                        Circle()
+                                                            .fill(Color.white)
+                                                            .frame(width: 4, height: 4)
+                                                            .shadow(color: Color.black.opacity(0.6), radius: 1)
+                                                    }
+                                                    .position(x: brushX, y: brushY)
+                                                    .allowsHitTesting(false)
                                                 }
                                             }
                                         }
@@ -860,6 +864,47 @@ public struct EditorView: View {
             }
             .ignoresSafeArea(edges: .bottom)
         )
+    }
+}
+
+/// An organic cosmetic brush wipe and sparkle dissolve effect that animates when a spot is healed.
+public struct HealingWipeEffectView: View {
+    let radius: CGFloat
+    @State private var isAnimating: Bool = false
+    
+    public var body: some View {
+        ZStack {
+            // Expanding soft wipe aura
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            Color.white.opacity(0.65),
+                            PhotonColors.accent.opacity(0.35),
+                            Color.clear
+                        ],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: radius * 1.2
+                    )
+                )
+                .frame(width: radius * 2.2, height: radius * 2.2)
+                .scaleEffect(isAnimating ? 1.4 : 0.6)
+                .opacity(isAnimating ? 0.0 : 0.95)
+            
+            // Subtle rotating brush sparkle bristles
+            Image(systemName: "sparkle")
+                .font(.system(size: max(12, radius * 0.75)))
+                .foregroundColor(.white)
+                .rotationEffect(.degrees(isAnimating ? 45 : 0))
+                .scaleEffect(isAnimating ? 1.25 : 0.4)
+                .opacity(isAnimating ? 0.0 : 1.0)
+        }
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.45)) {
+                isAnimating = true
+            }
+        }
     }
 }
 

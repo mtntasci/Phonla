@@ -72,20 +72,34 @@ public struct MagnifierLoupeView: View {
                                 y: (0.5 - normalizedPoint.y) * imgH * magnification * zoomScale
                             )
                         
-                        // Center Reticle / Target Crosshair
+                        // Center Cosmetic Brush Reticle
                         ZStack {
-                            // Brush effective radius indicator
                             let effectiveBrushPx = CGFloat(brushRadius) * max(imgW, imgH) * magnification * 2.0
                             
+                            // Feathered brush aura
                             Circle()
-                                .strokeBorder(Color.white.opacity(0.95), lineWidth: 1.5)
-                                .background(Circle().fill(Color.white.opacity(0.12)))
+                                .fill(
+                                    RadialGradient(
+                                        colors: [Color.white.opacity(0.30), Color.white.opacity(0.08), Color.clear],
+                                        center: .center,
+                                        startRadius: 0,
+                                        endRadius: max(16, effectiveBrushPx) / 2.0
+                                    )
+                                )
+                                .frame(width: max(20, effectiveBrushPx * 1.2), height: max(20, effectiveBrushPx * 1.2))
+                            
+                            // Dashed brush boundary
+                            Circle()
+                                .strokeBorder(
+                                    Color.white.opacity(0.95),
+                                    style: StrokeStyle(lineWidth: 1.4, dash: [4, 3])
+                                )
                                 .frame(width: max(16, effectiveBrushPx), height: max(16, effectiveBrushPx))
                                 .shadow(color: Color.black.opacity(0.6), radius: 2, x: 0, y: 1)
                             
                             // Center target dot
                             Circle()
-                                .fill(PhotonColors.accent)
+                                .fill(Color.white)
                                 .frame(width: 4, height: 4)
                                 .shadow(color: Color.black.opacity(0.8), radius: 1)
                         }

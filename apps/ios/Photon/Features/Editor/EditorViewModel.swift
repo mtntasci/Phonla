@@ -277,13 +277,17 @@ public final class EditorViewModel {
         self.lastHealedRipplePoint = CGPoint(x: clampedX, y: clampedY)
         self.isShowingRipple = true
         
+        // Haptic feedback for tactile brush wipe feel
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+        
         // Disarm brush so user must select size again for the next spot
         self.armedBrushPreset = nil
         
         requestPreviewRender()
         
         Task {
-            try? await Task.sleep(nanoseconds: 600_000_000)
+            try? await Task.sleep(nanoseconds: 500_000_000)
             if self.isShowingRipple {
                 self.isShowingRipple = false
             }
