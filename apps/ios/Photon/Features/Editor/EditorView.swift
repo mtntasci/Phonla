@@ -23,11 +23,6 @@ public struct EditorView: View {
     @State private var canvasSize: CGSize = .zero
     @State private var isPanning: Bool = false
     
-    // MARK: - Healing Gesture States (Tap to heal vs Hold to compare)
-    @State private var healingHoldTask: Task<Void, Never>? = nil
-    @State private var isHoldingForOriginalComparison: Bool = false
-    @State private var healingTouchStartLocation: CGPoint? = nil
-    
     public init() {}
     
     public var body: some View {
@@ -186,31 +181,6 @@ public struct EditorView: View {
             
             Spacer()
             
-            // Compare / Eye Button (Press & hold to see Before/After)
-            if viewModel.isEdited {
-                Button {} label: {
-                    Image(systemName: viewModel.isComparingOriginal ? "eye.fill" : "eye")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(viewModel.isComparingOriginal ? PhotonColors.accent : PhotonColors.textPrimary)
-                        .frame(width: 36, height: 36)
-                        .background(PhotonColors.surfaceSecondary)
-                        .clipShape(Circle())
-                }
-                .buttonStyle(.plain)
-                .simultaneousGesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { _ in
-                            if !viewModel.isComparingOriginal {
-                                viewModel.isComparingOriginal = true
-                            }
-                        }
-                        .onEnded { _ in
-                            viewModel.isComparingOriginal = false
-                        }
-                )
-                .transition(.opacity)
-            }
-            
             // Reset Button (Right aligned next to Kaydet)
             if viewModel.isEdited {
                 Button {
@@ -287,11 +257,8 @@ public struct EditorView: View {
                                                             
                                                             let dragDist = hypot(value.translation.width, value.translation.height)
                                                             
-                                                            // If zoomed in and dragging across photo (> 10pt) -> Pan the photo freely!
-                                                            if zoomScale > 1.05 && dragDist > 10 {
-                                                                healingHoldTask?.cancel()
-                                                                healingHoldTask = nil
-                                                                isHoldingForOriginalComparison = false
+                                                            // If zoomed in and dragging across photo (> 8pt) -> Pan the photo freely!
+                                                            if zoomScale > 1.05 && dragDist > 8 {
                                                                 viewModel.isLoupeActive = false
                                                                 isPanning = true
                                                                 
@@ -312,66 +279,30 @@ public struct EditorView: View {
                                                             let screenX = canvasCenter.x + (value.location.x - imgW / 2.0) * zoomScale
                                                             let screenY = canvasCenter.y + (value.location.y - imgH / 2.0) * zoomScale
                                                             
-                                                            if healingTouchStartLocation == nil {
-                                                                healingTouchStartLocation = value.location
-                                                                isHoldingForOriginalComparison = false
-                                                                
-                                                                // Start 300ms hold timer to inspect Before/After
-                                                                healingHoldTask?.cancel()
-                                                                healingHoldTask = Task { @MainActor in
-                                                                    try? await Task.sleep(nanoseconds: 300_000_000)
-                                                                    guard !Task.isCancelled else { return }
-                                                                    if viewModel.isEdited {
-                                                                        withAnimation(.easeInOut(duration: 0.15)) {
-                                                                            isHoldingForOriginalComparison = true
-                                                                            viewModel.isComparingOriginal = true
-                                                                            viewModel.isLoupeActive = false
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                            
-                                                            // If user is holding to compare original, don't show brush
-                                                            if isHoldingForOriginalComparison {
-                                                                viewModel.isComparingOriginal = true
-                                                                viewModel.isLoupeActive = false
-                                                            } else {
-                                                                viewModel.loupeTouchPoint = CGPoint(x: screenX, y: screenY)
-                                                                viewModel.loupeNormalizedPoint = CGPoint(x: normX, y: normY)
-                                                                if !viewModel.isLoupeActive {
-                                                                    withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
-                                                                        viewModel.isLoupeActive = true
-                                                                    }
+                                                            viewModel.loupeTouchPoint = CGPoint(x: screenX, y: screenY)
+                                                            viewModel.loupeNormalizedPoint = CGPoint(x: normX, y: normY)
+                                                            if !viewModel.isLoupeActive {
+                                                                withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+                                                                    viewModel.isLoupeActive = true
                                                                 }
                                                             }
                                                         }
                                                         .onEnded { value in
-                                                            healingHoldTask?.cancel()
-                                                            healingHoldTask = nil
-                                                            
                                                             if isPanning {
                                                                 lastPanOffset = panOffset
                                                                 isPanning = false
-                                                                healingTouchStartLocation = nil
                                                                 return
                                                             }
                                                             
-                                                            let wasHolding = isHoldingForOriginalComparison
-                                                            isHoldingForOriginalComparison = false
-                                                            healingTouchStartLocation = nil
-                                                            
                                                             withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
                                                                 viewModel.isLoupeActive = false
-                                                                viewModel.isComparingOriginal = false
                                                             }
                                                             
-                                                            if !wasHolding {
-                                                                // Quick tap: Apply spot healing!
-                                                                guard imgW > 0, imgH > 0 else { return }
-                                                                let normX = min(max(value.location.x / imgW, 0.0), 1.0)
-                                                                let normY = min(max(value.location.y / imgH, 0.0), 1.0)
-                                                                viewModel.addHealedSpot(x: normX, y: normY)
-                                                            }
+                                                            // Apply spot healing directly!
+                                                            guard imgW > 0, imgH > 0 else { return }
+                                                            let normX = min(max(value.location.x / imgW, 0.0), 1.0)
+                                                            let normY = min(max(value.location.y / imgH, 0.0), 1.0)
+                                                            viewModel.addHealedSpot(x: normX, y: normY)
                                                         }
                                                 )
                                             
@@ -459,21 +390,16 @@ public struct EditorView: View {
                                         let distance = hypot(value.translation.width, value.translation.height)
                                         if zoomScale > 1.05 && distance > 8 {
                                             isPanning = true
-                                            viewModel.isComparingOriginal = false
                                             panOffset = CGSize(
                                                 width: lastPanOffset.width + value.translation.width,
                                                 height: lastPanOffset.height + value.translation.height
                                             )
-                                        } else if !isPanning && viewModel.isEdited {
-                                            // Press and hold anywhere on photo activates Before/After without shifting
-                                            viewModel.isComparingOriginal = true
                                         }
                                     }
                                     .onEnded { _ in
                                         if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing {
                                             return
                                         }
-                                        viewModel.isComparingOriginal = false
                                         if isPanning {
                                             lastPanOffset = panOffset
                                             isPanning = false
@@ -496,26 +422,56 @@ public struct EditorView: View {
                                         }
                                     }
                             )
-                        
-                        // "Orijinal" overlay tag when comparing
-                        if viewModel.isComparingOriginal {
-                            HStack(spacing: PhotonSpacing.xxs) {
-                                Image(systemName: "eye.fill")
-                                    .font(.system(size: 11))
-                                Text("Orijinal")
-                                    .font(PhotonTypography.caption.weight(.semibold))
-                            }
-                            .padding(.horizontal, PhotonSpacing.sm)
-                            .padding(.vertical, PhotonSpacing.xxs)
-                            .background(Color.black.opacity(0.65))
-                            .foregroundColor(.white)
-                            .clipShape(Capsule())
-                            .padding()
-                        }
                     }
                 } else {
                     ProgressView()
                         .tint(PhotonColors.textPrimary)
+                }
+                
+                // MARK: - Floating "Orijinal" Compare Button (Press & Hold across all tools)
+                if viewModel.isEdited && !viewModel.isLoupeActive {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            
+                            HStack(spacing: 5) {
+                                Image(systemName: viewModel.isComparingOriginal ? "eye.fill" : "eye")
+                                    .font(.system(size: 13, weight: .bold))
+                                Text("Orijinal")
+                                    .font(.system(size: 12, weight: .semibold))
+                            }
+                            .padding(.horizontal, 13)
+                            .padding(.vertical, 8)
+                            .background(
+                                viewModel.isComparingOriginal
+                                ? AnyShapeStyle(Color.black.opacity(0.85))
+                                : AnyShapeStyle(.ultraThinMaterial)
+                            )
+                            .foregroundColor(.white)
+                            .clipShape(Capsule())
+                            .shadow(color: Color.black.opacity(0.22), radius: 8, x: 0, y: 3)
+                            .overlay(
+                                Capsule()
+                                    .strokeBorder(Color.white.opacity(viewModel.isComparingOriginal ? 0.4 : 0.25), lineWidth: 1.0)
+                            )
+                            .simultaneousGesture(
+                                DragGesture(minimumDistance: 0)
+                                    .onChanged { _ in
+                                        if !viewModel.isComparingOriginal {
+                                            viewModel.isComparingOriginal = true
+                                        }
+                                    }
+                                    .onEnded { _ in
+                                        viewModel.isComparingOriginal = false
+                                    }
+                            )
+                        }
+                        .padding(.top, 14)
+                        .padding(.trailing, 16)
+                        
+                        Spacer()
+                    }
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
                 }
                 
                 // MARK: - Floating Magnifier Loupe Overlay (Renders above entire canvas)
