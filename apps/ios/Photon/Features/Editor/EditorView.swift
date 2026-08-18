@@ -134,6 +134,59 @@ public struct EditorView: View {
         }
     }
     
+    // MARK: - Spot Healing Gesture Handlers
+    
+    private func handleSpotHealingDragChanged(value: DragGesture.Value, imgW: CGFloat, imgH: CGFloat, availableWidth: CGFloat, availableHeight: CGFloat) {
+        guard imgW > 0, imgH > 0 else { return }
+        
+        let dragDist = hypot(value.translation.width, value.translation.height)
+        
+        if zoomScale > 1.05 && dragDist > 8 {
+            viewModel.isLoupeActive = false
+            isPanning = true
+            
+            panOffset = CGSize(
+                width: lastPanOffset.width + value.translation.width,
+                height: lastPanOffset.height + value.translation.height
+            )
+            return
+        }
+        
+        if isPanning { return }
+        
+        let normX = min(max(value.location.x / imgW, 0.0), 1.0)
+        let normY = min(max(value.location.y / imgH, 0.0), 1.0)
+        
+        let canvasCenter = CGPoint(x: availableWidth / 2.0 + panOffset.width, y: availableHeight / 2.0 + panOffset.height)
+        let screenX = canvasCenter.x + (value.location.x - imgW / 2.0) * zoomScale
+        let screenY = canvasCenter.y + (value.location.y - imgH / 2.0) * zoomScale
+        
+        viewModel.loupeTouchPoint = CGPoint(x: screenX, y: screenY)
+        viewModel.loupeNormalizedPoint = CGPoint(x: normX, y: normY)
+        if !viewModel.isLoupeActive {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+                viewModel.isLoupeActive = true
+            }
+        }
+    }
+    
+    private func handleSpotHealingDragEnded(value: DragGesture.Value, imgW: CGFloat, imgH: CGFloat) {
+        if isPanning {
+            lastPanOffset = panOffset
+            isPanning = false
+            return
+        }
+        
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+            viewModel.isLoupeActive = false
+        }
+        
+        guard imgW > 0, imgH > 0 else { return }
+        let normX = min(max(value.location.x / imgW, 0.0), 1.0)
+        let normY = min(max(value.location.y / imgH, 0.0), 1.0)
+        viewModel.addHealedSpot(x: normX, y: normY)
+    }
+    
     // MARK: - Top Toolbar
     
     private var topToolbar: some View {
@@ -241,17 +294,6 @@ public struct EditorView: View {
                                 RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous)
                                     .strokeBorder(PhotonColors.border, lineWidth: 0.5)
                             )
-                            // Visual Cyan Skin Mask Overlay (Vision feedback)
-                            .overlay {
-                                if viewModel.activeCategory == .portrait && viewModel.isShowingSkinMaskOverlay, let visualMask = viewModel.visualSkinMaskImage {
-                                    Image(uiImage: visualMask)
-                                        .resizable()
-                                        .frame(width: fittedWidth, height: fittedHeight)
-                                        .clipShape(RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous))
-                                        .allowsHitTesting(false)
-                                        .transition(.opacity)
-                                }
-                            }
                             // Spot Healing interactive tap and drag overlay when Healing subtool is active
                             .overlay {
                                 if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing && !viewModel.isComparingOriginal {
@@ -265,56 +307,20 @@ public struct EditorView: View {
                                                 .gesture(
                                                     DragGesture(minimumDistance: 0, coordinateSpace: .local)
                                                         .onChanged { value in
-                                                            guard imgW > 0, imgH > 0 else { return }
-                                                            
-                                                            let dragDist = hypot(value.translation.width, value.translation.height)
-                                                            
-                                                            // If zoomed in and dragging across photo (> 8pt) -> Pan the photo freely!
-                                                            if zoomScale > 1.05 && dragDist > 8 {
-                                                                viewModel.isLoupeActive = false
-                                                                isPanning = true
-                                                                
-                                                                panOffset = CGSize(
-                                                                    width: lastPanOffset.width + value.translation.width,
-                                                                    height: lastPanOffset.height + value.translation.height
-                                                                )
-                                                                return
-                                                            }
-                                                            
-                                                            if isPanning { return }
-                                                            
-                                                            let normX = min(max(value.location.x / imgW, 0.0), 1.0)
-                                                            let normY = min(max(value.location.y / imgH, 0.0), 1.0)
-                                                            
-                                                            // Calculate screen location on canvas geometry
-                                                            let canvasCenter = CGPoint(x: availableWidth / 2.0 + panOffset.width, y: availableHeight / 2.0 + panOffset.height)
-                                                            let screenX = canvasCenter.x + (value.location.x - imgW / 2.0) * zoomScale
-                                                            let screenY = canvasCenter.y + (value.location.y - imgH / 2.0) * zoomScale
-                                                            
-                                                            viewModel.loupeTouchPoint = CGPoint(x: screenX, y: screenY)
-                                                            viewModel.loupeNormalizedPoint = CGPoint(x: normX, y: normY)
-                                                            if !viewModel.isLoupeActive {
-                                                                withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
-                                                                    viewModel.isLoupeActive = true
-                                                                }
-                                                            }
+                                                            handleSpotHealingDragChanged(
+                                                                value: value,
+                                                                imgW: imgW,
+                                                                imgH: imgH,
+                                                                availableWidth: availableWidth,
+                                                                availableHeight: availableHeight
+                                                            )
                                                         }
                                                         .onEnded { value in
-                                                            if isPanning {
-                                                                lastPanOffset = panOffset
-                                                                isPanning = false
-                                                                return
-                                                            }
-                                                            
-                                                            withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
-                                                                viewModel.isLoupeActive = false
-                                                            }
-                                                            
-                                                            // Apply spot healing directly!
-                                                            guard imgW > 0, imgH > 0 else { return }
-                                                            let normX = min(max(value.location.x / imgW, 0.0), 1.0)
-                                                            let normY = min(max(value.location.y / imgH, 0.0), 1.0)
-                                                            viewModel.addHealedSpot(x: normX, y: normY)
+                                                            handleSpotHealingDragEnded(
+                                                                value: value,
+                                                                imgW: imgW,
+                                                                imgH: imgH
+                                                            )
                                                         }
                                                 )
                                             
@@ -439,54 +445,13 @@ public struct EditorView: View {
                     ProgressView()
                         .tint(PhotonColors.textPrimary)
                 }
-                
-                // MARK: - Floating Canvas Overlay Controls (Skin Mask Tag, Zoom Reset & High-Contrast Orijinal)
+                      // MARK: - Floating Canvas Overlay Controls (Zoom Reset & High-Contrast Orijinal)
                 if !viewModel.isLoupeActive {
                     VStack {
                         HStack(spacing: 8) {
-                            // 1. Skin Mask / Wizard Scan Active Tag
-                            if viewModel.activeCategory == .portrait && (viewModel.isShowingSkinMaskOverlay || viewModel.isWizardScanning) {
-                                HStack(spacing: 6) {
-                                    if viewModel.isWizardScanning {
-                                        ProgressView()
-                                            .scaleEffect(0.65)
-                                            .tint(Color.cyan)
-                                        Text("Yüz Taranıyor...")
-                                            .font(.system(size: 11, weight: .semibold))
-                                            .foregroundColor(.white)
-                                    } else {
-                                        Circle()
-                                            .fill(Color.cyan)
-                                            .frame(width: 7, height: 7)
-                                        Text("Cilt Maskesi")
-                                            .font(.system(size: 11, weight: .semibold))
-                                            .foregroundColor(.white)
-                                        
-                                        Button {
-                                            viewModel.applyWizardAndDismissMask()
-                                        } label: {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .font(.system(size: 13))
-                                                .foregroundColor(.white.opacity(0.85))
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                }
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(Color(red: 0.05, green: 0.20, blue: 0.35).opacity(0.92))
-                                .clipShape(Capsule())
-                                .overlay(
-                                    Capsule()
-                                        .strokeBorder(Color.cyan.opacity(0.6), lineWidth: 1.0)
-                                )
-                                .shadow(color: Color.black.opacity(0.35), radius: 8, x: 0, y: 3)
-                                .transition(.move(edge: .top).combined(with: .opacity))
-                            }
-                            
                             Spacer()
                             
-                            // 2. Zoom Reset Button (Visible when canvas is zoomed or panned)
+                            // 1. Zoom Reset Button (Visible when canvas is zoomed or panned)
                             if zoomScale > 1.05 || panOffset != .zero {
                                 Button {
                                     let generator = UIImpactFeedbackGenerator(style: .light)
@@ -496,7 +461,7 @@ public struct EditorView: View {
                                     HStack(spacing: 5) {
                                         Image(systemName: "arrow.down.right.and.arrow.up.left")
                                             .font(.system(size: 11, weight: .bold))
-                                        Text("Sıfırla")
+                                        Text("Orj.Boyut")
                                             .font(.system(size: 12, weight: .semibold))
                                     }
                                     .padding(.horizontal, 11)
@@ -907,35 +872,19 @@ public struct EditorView: View {
             }
             
         case .portrait:
-            if viewModel.selectedPortraitSubTool == .smoothing {
-                VerticalAdjustmentSlider(
-                    systemIcon: "sparkles",
-                    title: "Pürüzsüzlük",
-                    value: Binding(
-                        get: { viewModel.editState.skinSmoothing },
-                        set: { newVal in viewModel.updateSkinSmoothing(newVal) }
-                    ),
-                    range: 0.0...100.0,
-                    defaultValue: 0.0,
-                    step: 1.0,
-                    valueFormatter: { val in "\(Int(val))%" },
-                    onEditingEnded: { viewModel.recordHistorySnapshot() }
-                )
-            } else {
-                VerticalAdjustmentSlider(
-                    systemIcon: "circle.dashed",
-                    title: "Fırça Boyutu",
-                    value: Binding(
-                        get: { viewModel.healingBrushRadius },
-                        set: { newVal in viewModel.healingBrushRadius = newVal }
-                    ),
-                    range: 0.010...0.050,
-                    defaultValue: 0.022,
-                    step: 0.002,
-                    valueFormatter: { val in "\(Int(val * 1000)) px" },
-                    onEditingEnded: {}
-                )
-            }
+            VerticalAdjustmentSlider(
+                systemIcon: "circle.dashed",
+                title: "Fırça Boyutu",
+                value: Binding(
+                    get: { viewModel.healingBrushRadius },
+                    set: { newVal in viewModel.healingBrushRadius = newVal }
+                ),
+                range: 0.010...0.050,
+                defaultValue: 0.022,
+                step: 0.002,
+                valueFormatter: { val in "\(Int(val * 1000)) px" },
+                onEditingEnded: {}
+            )
             
         case .cinematic:
             if viewModel.editState.selectedLookId != nil {

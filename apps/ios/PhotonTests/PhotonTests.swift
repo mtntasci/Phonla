@@ -271,10 +271,10 @@ struct PhotonTests {
     
     @Test func testFaceDetectionMaskGenerationWithEmptyFaces() async throws {
         let faceService = FaceDetectionService.shared
-        let extent = CGRect(x: 0, y: 0, width: 640, height: 480)
+        let testCI = createTestCIImage(width: 200, height: 200)
         
-        // When no faces are present, generateSkinMask must return nil safely
-        let emptyMask = faceService.generateSkinMask(targetExtent: extent, faces: [])
+        // When no faces are present in a plain synthetic image, generateSkinMask must return nil safely
+        let emptyMask = faceService.generateSkinMask(for: testCI)
         #expect(emptyMask == nil)
     }
     
