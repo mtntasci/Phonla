@@ -71,6 +71,47 @@ public struct SmoothToolView: View {
             }
             .buttonStyle(.plain)
             
+            // MARK: - Bul & Temizle Button (AI Face & Spot Scanner)
+            Button {
+                viewModel.runAutoFindAndCleanBlemishes()
+            } label: {
+                HStack(spacing: 5) {
+                    if viewModel.isScanningBlemishes {
+                        ProgressView()
+                            .scaleEffect(0.65)
+                            .tint(PhotonColors.textInverted)
+                        Text("Taranıyor...")
+                            .font(.system(size: 11, weight: .bold))
+                    } else {
+                        Image(systemName: "sparkle.magnifyingglass")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Color.cyan)
+                        
+                        Text("Bul & Temizle")
+                            .font(.system(size: 12, weight: .bold))
+                    }
+                }
+                .padding(.horizontal, 13)
+                .padding(.vertical, 7)
+                .background(
+                    viewModel.isScanningBlemishes
+                    ? PhotonColors.textPrimary
+                    : PhotonColors.surfaceSecondary
+                )
+                .foregroundColor(
+                    viewModel.isScanningBlemishes
+                    ? PhotonColors.textInverted
+                    : PhotonColors.textPrimary
+                )
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule()
+                        .strokeBorder(Color.cyan.opacity(0.45), lineWidth: 1.0)
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(viewModel.isScanningBlemishes)
+            
             Spacer()
         }
         .padding(.horizontal, PhotonSpacing.xs)

@@ -143,6 +143,13 @@ public final class EditorViewModel {
     public var lastHealedRipplePoint: CGPoint? = nil
     public var isShowingRipple: Bool = false
     
+    // Automated Blemish Scanning (Bul & Temizle) & Facial Zones State
+    public var isScanningBlemishes: Bool = false
+    public var scanProgress: CGFloat = 0.0
+    public var showBlemishMarkers: Bool = true
+    public var detectedFacialZones: [FacialZoneBox] = []
+    public var isShowingFacialZones: Bool = false
+    
     // Export Status
     public var isExporting: Bool = false
     public var exportSuccessMessage: String?
@@ -323,6 +330,71 @@ public final class EditorViewModel {
         recordHistorySnapshot()
         self.editState.healedSpots.removeAll()
         requestPreviewRender()
+    }
+    
+    // MARK: - Auto Find & Clean Blemishes (Bul & Temizle)
+    
+    public func runAutoFindAndCleanBlemishes() {
+        guard let photo = loadedPhoto else { return }
+        guard !isScanningBlemishes else { return }
+        
+        self.isScanningBlemishes = true
+        self.scanProgress = 0.0
+        
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+        
+        Task {
+            // 1. Asynchronously detect blemishes and extract 3 facial zones
+            let orientation = CGImagePropertyOrientation(photo.previewUIImage.imageOrientation)
+            let result = await faceDetectionService.detectBlemishesAndZones(in: photo.previewCIImage, orientation: orientation)
+            
+            // 2. Animate the downward blue scan line smoothly over ~1.3s
+            let totalSteps = 45
+            let stepDuration: UInt64 = 1_300_000_000 / UInt64(totalSteps)
+            for i in 1...totalSteps {
+                try? await Task.sleep(nanoseconds: stepDuration)
+                await MainActor.run {
+                    self.scanProgress = CGFloat(i) / CGFloat(totalSteps)
+                }
+            }
+            
+            // 3. Scan complete: place circular markers and show 3 facial zones (White=Forehead, Green=Eyes, Red=Lips/Chin)
+            await MainActor.run {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                    self.isScanningBlemishes = false
+                    self.scanProgress = 0.0
+                    self.detectedFacialZones = result.facialZones
+                    self.isShowingFacialZones = !result.facialZones.isEmpty
+                }
+                
+                guard !result.detectedSpots.isEmpty else {
+                    let warnGen = UINotificationFeedbackGenerator()
+                    warnGen.notificationOccurred(.warning)
+                    return
+                }
+                
+                self.recordHistorySnapshot()
+                
+                // Add unique detected spots
+                for spot in result.detectedSpots {
+                    if !self.editState.healedSpots.contains(where: { hypot($0.x - spot.x, $0.y - spot.y) < 0.03 }) {
+                        self.editState.healedSpots.append(spot)
+                    }
+                }
+                
+                let successGen = UINotificationFeedbackGenerator()
+                successGen.notificationOccurred(.success)
+                
+                self.requestPreviewRender()
+            }
+        }
+    }
+    
+    public func toggleFacialZones() {
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.8)) {
+            self.isShowingFacialZones.toggle()
+        }
     }
     
     // MARK: - Asynchronous Metal / Core Image Preview Render

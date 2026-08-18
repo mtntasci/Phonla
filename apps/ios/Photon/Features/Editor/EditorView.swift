@@ -187,6 +187,147 @@ public struct EditorView: View {
         viewModel.addHealedSpot(x: normX, y: normY)
     }
     
+    // MARK: - Automated Blemish Scanning Laser Overlay
+    
+    @ViewBuilder
+    private func laserScanOverlay(width: CGFloat, height: CGFloat) -> some View {
+        if viewModel.isScanningBlemishes {
+            let scanY = height * viewModel.scanProgress
+            
+            ZStack(alignment: .top) {
+                // Soft trailing cyan glow above the laser line
+                LinearGradient(
+                    colors: [
+                        Color.cyan.opacity(0.0),
+                        Color.cyan.opacity(0.12),
+                        Color.cyan.opacity(0.35)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(width: width, height: max(15, scanY))
+                .position(x: width / 2.0, y: scanY / 2.0)
+                
+                // Neon Blue/Cyan Laser Beam Line across entire width (left to right)
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.cyan.opacity(0.2),
+                                Color.white,
+                                Color.cyan,
+                                Color.white,
+                                Color.cyan.opacity(0.2)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: width, height: 2.5)
+                    .shadow(color: Color.cyan, radius: 8, x: 0, y: 0)
+                    .shadow(color: Color.white, radius: 2, x: 0, y: 0)
+                    .position(x: width / 2.0, y: scanY)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous))
+            .allowsHitTesting(false)
+            .transition(.opacity)
+        }
+    }
+    
+    // MARK: - Detected Blemish Circle Markers (Slightly larger than the spot)
+    
+    @ViewBuilder
+    private func spotMarkersOverlay(width: CGFloat, height: CGFloat) -> some View {
+        if viewModel.activeCategory == .portrait && !viewModel.isScanningBlemishes && !viewModel.isComparingOriginal {
+            ForEach(viewModel.editState.healedSpots) { spot in
+                let spotX = spot.x * width
+                let spotY = spot.y * height
+                let baseRadius = CGFloat(spot.radius) * max(width, height)
+                let markerDiameter = max(18.0, baseRadius * 2.3)
+                
+                ZStack {
+                    // Soft translucent cyan fill
+                    Circle()
+                        .fill(Color.cyan.opacity(0.14))
+                        .frame(width: markerDiameter, height: markerDiameter)
+                    
+                    // Fine dashed circular perimeter
+                    Circle()
+                        .strokeBorder(
+                            Color.cyan.opacity(0.92),
+                            style: StrokeStyle(lineWidth: 1.3, dash: [4, 3])
+                        )
+                        .frame(width: markerDiameter, height: markerDiameter)
+                        .shadow(color: Color.black.opacity(0.4), radius: 2, x: 0, y: 1)
+                    
+                    // Glowing center target dot
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 3.5, height: 3.5)
+                        .shadow(color: Color.cyan, radius: 3)
+                }
+                .position(x: spotX, y: spotY)
+                .allowsHitTesting(false)
+                .transition(.scale(scale: 0.2).combined(with: .opacity))
+            }
+        }
+    }
+    
+    // MARK: - 3-Zone Facial Segmentation Overlay (White = Forehead, Green = Eyes/Midface, Red = Lips/Chin)
+    
+    @ViewBuilder
+    private func facialZonesOverlay(width: CGFloat, height: CGFloat) -> some View {
+        if viewModel.activeCategory == .portrait && viewModel.isShowingFacialZones && !viewModel.isScanningBlemishes && !viewModel.isComparingOriginal {
+            ForEach(viewModel.detectedFacialZones) { zone in
+                let zoneRect = CGRect(
+                    x: zone.rect.origin.x * width,
+                    y: zone.rect.origin.y * height,
+                    width: zone.rect.width * width,
+                    height: zone.rect.height * height
+                )
+                
+                let zoneColor: Color = {
+                    switch zone.colorType {
+                    case .white: return Color.white
+                    case .green: return Color(red: 0.15, green: 0.95, blue: 0.45)
+                    case .red: return Color(red: 1.0, green: 0.25, blue: 0.25)
+                    }
+                }()
+                
+                ZStack(alignment: .topLeading) {
+                    // Soft translucent zone fill
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(zoneColor.opacity(0.08))
+                        .frame(width: zoneRect.width, height: zoneRect.height)
+                    
+                    // Fine dashed zone bounding border
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(zoneColor.opacity(0.85), style: StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
+                        .frame(width: zoneRect.width, height: zoneRect.height)
+                        .shadow(color: Color.black.opacity(0.4), radius: 3, x: 0, y: 1)
+                    
+                    // Zone Tag Badge on Top-Left corner
+                    HStack(spacing: 3) {
+                        Circle()
+                            .fill(zoneColor)
+                            .frame(width: 5, height: 5)
+                        Text(zone.name)
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(Color.black.opacity(0.75))
+                    .clipShape(Capsule())
+                    .padding(4)
+                }
+                .position(x: zoneRect.midX, y: zoneRect.midY)
+                .allowsHitTesting(false)
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+            }
+        }
+    }
+    
     // MARK: - Top Toolbar
     
     private var topToolbar: some View {
@@ -294,6 +435,9 @@ public struct EditorView: View {
                                 RoundedRectangle(cornerRadius: PhotonCornerRadius.sm, style: .continuous)
                                     .strokeBorder(PhotonColors.border, lineWidth: 0.5)
                             )
+                            .overlay(facialZonesOverlay(width: fittedWidth, height: fittedHeight))
+                            .overlay(spotMarkersOverlay(width: fittedWidth, height: fittedHeight))
+                            .overlay(laserScanOverlay(width: fittedWidth, height: fittedHeight))
                             // Spot Healing interactive tap and drag overlay when Healing subtool is active
                             .overlay {
                                 if viewModel.activeCategory == .portrait && viewModel.selectedPortraitSubTool == .healing && !viewModel.isComparingOriginal {
@@ -445,10 +589,55 @@ public struct EditorView: View {
                     ProgressView()
                         .tint(PhotonColors.textPrimary)
                 }
-                      // MARK: - Floating Canvas Overlay Controls (Zoom Reset & High-Contrast Orijinal)
+                // MARK: - Floating Canvas Overlay Controls (Zoom Reset & High-Contrast Orijinal)
                 if !viewModel.isLoupeActive {
                     VStack {
                         HStack(spacing: 8) {
+                            if viewModel.isScanningBlemishes {
+                                HStack(spacing: 6) {
+                                    ProgressView()
+                                        .scaleEffect(0.65)
+                                        .tint(Color.cyan)
+                                    Text("Yüz ve Lekeler Taranıyor...")
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundColor(.white)
+                                }
+                                .padding(.horizontal, 11)
+                                .padding(.vertical, 6)
+                                .background(Color(red: 0.05, green: 0.18, blue: 0.32).opacity(0.92))
+                                .clipShape(Capsule())
+                                .overlay(
+                                    Capsule()
+                                        .strokeBorder(Color.cyan.opacity(0.6), lineWidth: 1.0)
+                                )
+                                .shadow(color: Color.black.opacity(0.35), radius: 8, x: 0, y: 3)
+                                .transition(.move(edge: .top).combined(with: .opacity))
+                            }
+                            
+                            if viewModel.activeCategory == .portrait && !viewModel.detectedFacialZones.isEmpty && !viewModel.isScanningBlemishes {
+                                Button {
+                                    viewModel.toggleFacialZones()
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Circle()
+                                            .fill(viewModel.isShowingFacialZones ? Color.cyan : Color.gray)
+                                            .frame(width: 6, height: 6)
+                                        Text("Bölgeler")
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .foregroundColor(.white)
+                                    }
+                                    .padding(.horizontal, 9)
+                                    .padding(.vertical, 6)
+                                    .background(Color(red: 0.12, green: 0.12, blue: 0.14).opacity(0.90))
+                                    .clipShape(Capsule())
+                                    .overlay(
+                                        Capsule()
+                                            .strokeBorder(Color.white.opacity(0.25), lineWidth: 1.0)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            
                             Spacer()
                             
                             // 1. Zoom Reset Button (Visible when canvas is zoomed or panned)
@@ -548,36 +737,6 @@ public struct EditorView: View {
                         
                         HStack(spacing: 8) {
                             // Brush Size Selector Chips
-                            HStack(spacing: 4) {
-                                ForEach(HealingBrushPreset.allCases) { preset in
-                                    let isPresetSelected = viewModel.selectedBrushPreset == preset
-                                    Button {
-                                        withAnimation(.spring(response: 0.22, dampingFraction: 0.8)) {
-                                            viewModel.selectedBrushPreset = preset
-                                        }
-                                    } label: {
-                                        HStack(spacing: 4) {
-                                            Circle()
-                                                .fill(isPresetSelected ? PhotonColors.textInverted : PhotonColors.textSecondary)
-                                                .frame(width: preset.iconSize * 0.45, height: preset.iconSize * 0.45)
-                                            
-                                            Text(preset.rawValue)
-                                                .font(.system(size: 12, weight: isPresetSelected ? .bold : .medium))
-                                        }
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 7)
-                                        .background(isPresetSelected ? PhotonColors.textPrimary : PhotonColors.surfaceSecondary.opacity(0.85))
-                                        .foregroundColor(isPresetSelected ? PhotonColors.textInverted : PhotonColors.textSecondary)
-                                        .clipShape(Capsule())
-                                        .overlay(
-                                            Capsule()
-                                                .strokeBorder(isPresetSelected ? Color.clear : PhotonColors.border.opacity(0.5), lineWidth: 0.8)
-                                        )
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                            
                             // Undo & Clear buttons if spots exist
                             if !viewModel.editState.healedSpots.isEmpty {
                                 HStack(spacing: 5) {
