@@ -436,34 +436,27 @@ public final class EditorViewModel {
         exportErrorMessage = nil
         exportSuccessMessage = nil
         
-        let isPro = SubscriptionService.shared.isProUser
+        // Present Rewarded Ad before export
+        let adResult = await RewardedAdService.shared.presentRewardedAd()
         
-        if isPro {
-            // Pro Subscriber -> Direct immediate export
+        switch adResult {
+        case .rewardEarned:
+            // User watched rewarded ad -> Export photo
             await performFullResolutionExport()
-        } else {
-            // Free User -> Present Rewarded Ad before export
-            let adResult = await RewardedAdService.shared.presentRewardedAd()
             
-            switch adResult {
-            case .rewardEarned:
-                // User watched rewarded ad -> Export photo
-                await performFullResolutionExport()
-                
-            case .failedOpen:
-                // Ad failed to load/present -> Fail-open policy: do not block user, proceed to export
-                await performFullResolutionExport()
-                
-            case .dismissedWithoutReward:
-                // User closed ad before reward was earned -> Do not export
-                self.exportErrorMessage = "Fotoğrafı kaydetmek için lütfen kısa reklamı tamamlayın veya Photonla Pro'ya geçin."
-                
-                // Auto-clear error after 4 seconds
-                Task {
-                    try? await Task.sleep(nanoseconds: 4_000_000_000)
-                    if self.exportErrorMessage != nil {
-                        self.exportErrorMessage = nil
-                    }
+        case .failedOpen:
+            // Ad failed to load/present -> Fail-open policy: do not block user, proceed to export
+            await performFullResolutionExport()
+            
+        case .dismissedWithoutReward:
+            // User closed ad before reward was earned -> Do not export
+            self.exportErrorMessage = "Fotoğrafı kaydetmek için lütfen kısa reklamı tamamlayın."
+            
+            // Auto-clear error after 4 seconds
+            Task {
+                try? await Task.sleep(nanoseconds: 4_000_000_000)
+                if self.exportErrorMessage != nil {
+                    self.exportErrorMessage = nil
                 }
             }
         }

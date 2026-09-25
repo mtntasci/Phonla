@@ -80,27 +80,4 @@ Bu doküman, Photon projesinin faz bazlı geliştirme yol haritasını tanımlar
 - Kaynak fotoğrafın asla üzerine yazılmadığının doğrulanması.
 - Export başarı bildirimi ve hata yönetimi.
 
----
 
-### Phase 10: Physical iPhone MVP Verification
-- Gerçek iPhone cihazda performans, FPS ve ısınma testleri.
-- Memory leak ve OOM profillemesi (Instruments).
-- Render renk doğruluğu ve export kalitesi doğrulaması.
-- MVP acceptance (kabul) onayı.
-
----
-
-### Phase 11: Android Parity
-- Kotlin + Jetpack Compose ile Android projesinin başlatılması.
-- Onaylanmış iOS MVP ürün davranışının ve mimarisinin Android platformuna birebir uyarlanması.
-
----
-
-## Gelecek Sürümler (Post-MVP / Later)
-
-- **Auto Enhancement**: Yapay zeka veya histogram tabanlı tek dokunuşla otomatik ışık iyileştirme.
-- **Ekstra Preset Paketleri**: İndirilebilir / satın alınabilir yeni sinematik renk paketleri.
-- **RAW Desteği**: Apple ProRAW ve DNG dosyalarını işleme yeteneği.
-- **Gelişmiş Renk Araçları**: Ton eğrileri (Curves), seçici renk (HSL), split toning.
-- **Kırpma ve Perspektif**: Crop, Rotate, Dikey/Yatay perspektif düzeltme.
-- **Cloud / Backend Servisleri**: Yalnızca gerçekten sunucu tarafı bir ihtiyaç doğduğunda değerlendirilecektir.

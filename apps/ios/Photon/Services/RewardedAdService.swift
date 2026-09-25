@@ -65,11 +65,7 @@ public final class RewardedAdService: NSObject {
     
     /// Preloads a rewarded ad in the background without blocking the UI.
     public func preloadAd() {
-        // Do not preload ads for Pro subscribers
-        guard !SubscriptionService.shared.isProUser else {
-            print("[RewardedAdService] Pro subscriber detected -> skipping rewarded ad preloading.")
-            return
-        }
+
         
         // Ensure consent status allows requesting ads
         guard ConsentManager.shared.canRequestAds else {

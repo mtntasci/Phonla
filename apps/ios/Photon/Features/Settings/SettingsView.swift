@@ -15,15 +15,14 @@ public struct SettingsView: View {
     @Environment(NavigationState.self) private var navigationState
     @Environment(\.scenePhase) private var scenePhase
     @State private var authService = AuthService.shared
-    @State private var subscriptionService = SubscriptionService.shared
+
     @State private var consentManager = ConsentManager.shared
     
     // Runtime Permission States
     @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
     @State private var photoLibraryStatus: PHAuthorizationStatus = .notDetermined
     
-    // Membership Sheet State
-    @State private var showMembershipSheet: Bool = false
+
     
     // Easter Egg State (3 quick taps on Privacy card)
     @State private var privacyTapCount: Int = 0
@@ -58,9 +57,7 @@ public struct SettingsView: View {
                         // MARK: - 2. Permissions Section
                         permissionsSection
                         
-                        // MARK: - 3. Membership Section
-                        membershipSection
-                        
+
                         // MARK: - 4. Privacy & Hardware Acceleration Card (with 3-Tap Easter Egg)
                         privacyCard
                         
@@ -72,9 +69,7 @@ public struct SettingsView: View {
                 }
             }
             .photonBackground()
-            .sheet(isPresented: $showMembershipSheet) {
-                MembershipView()
-            }
+
             .onAppear {
                 checkAllPermissions()
             }
@@ -404,60 +399,7 @@ public struct SettingsView: View {
         .buttonStyle(.plain)
     }
     
-    // MARK: - 3. Membership Section
-    
-    private var membershipSection: some View {
-        VStack(alignment: .leading, spacing: PhotonSpacing.sm) {
-            Text("Üyelik")
-                .font(PhotonTypography.caption)
-                .foregroundColor(PhotonColors.textTertiary)
-                .padding(.horizontal, PhotonSpacing.xs)
-            
-            Button {
-                showMembershipSheet = true
-            } label: {
-                HStack {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(subscriptionService.isProUser ? Color.yellow : PhotonColors.textPrimary)
-                        .frame(width: 28)
-                    
-                    Text("Photonla Pro & Planlar")
-                        .font(PhotonTypography.bodyMedium)
-                        .foregroundColor(PhotonColors.textPrimary)
-                    
-                    Spacer()
-                    
-                    if subscriptionService.isProUser {
-                        HStack(spacing: 4) {
-                            Image(systemName: "sparkles")
-                                .font(.system(size: 11))
-                            Text("Pro")
-                                .font(PhotonTypography.caption.weight(.bold))
-                        }
-                        .foregroundColor(PhotonColors.textInverted)
-                        .padding(.horizontal, PhotonSpacing.sm)
-                        .padding(.vertical, 3)
-                        .background(Color.black)
-                        .clipShape(Capsule())
-                    } else {
-                        Text("Standart")
-                            .font(PhotonTypography.caption.weight(.medium))
-                            .foregroundColor(PhotonColors.textSecondary)
-                    }
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(PhotonColors.textTertiary)
-                }
-                .padding(.horizontal, PhotonSpacing.md)
-                .padding(.vertical, PhotonSpacing.md)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .photonCard()
-        }
-    }
+
     
     // MARK: - 4. Privacy & Hardware Acceleration Card (with 3-Tap Easter Egg)
     

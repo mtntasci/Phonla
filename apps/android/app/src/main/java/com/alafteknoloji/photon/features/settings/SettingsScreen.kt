@@ -117,9 +117,7 @@ fun SettingsScreen(
         hasNotificationPermission = isGranted
     }
 
-    // Membership Sheet
-    var showMembershipSheet by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
 
     // Easter Egg (3 Taps within 1.5s)
     var privacyTapCount by remember { mutableIntStateOf(0) }
@@ -446,50 +444,6 @@ fun SettingsScreen(
                         }
 
                         Divider(color = PhotonColors.divider)
-
-                        // Memberships
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { showMembershipSheet = true }
-                                .padding(vertical = PhotonSpacing.md),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(PhotonSpacing.sm)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.EmojiEvents,
-                                    contentDescription = null,
-                                    tint = PhotonColors.textPrimary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Text(
-                                    text = "Üyelikler",
-                                    style = PhotonTypography.bodyMedium,
-                                    color = PhotonColors.textPrimary
-                                )
-                            }
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(PhotonSpacing.xs)
-                            ) {
-                                Text(
-                                    text = "Free",
-                                    style = PhotonTypography.caption,
-                                    color = PhotonColors.textSecondary
-                                )
-                                Icon(
-                                    imageVector = Icons.Default.ChevronRight,
-                                    contentDescription = null,
-                                    tint = PhotonColors.textTertiary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
                     }
                 }
 
@@ -578,15 +532,6 @@ fun SettingsScreen(
             }
         }
 
-        // Membership Modal Sheet
-        if (showMembershipSheet) {
-            ModalBottomSheet(
-                onDismissRequest = { showMembershipSheet = false },
-                sheetState = sheetState,
-                containerColor = PhotonColors.background
-            ) {
-                MembershipScreen(onDismiss = { showMembershipSheet = false })
-            }
-        }
+
     }
 }

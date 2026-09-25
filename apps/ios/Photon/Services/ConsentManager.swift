@@ -128,9 +128,8 @@ public final class ConsentManager: NSObject {
                 guard let self = self else { return }
                 print("[ConsentManager] Google Mobile Ads SDK initialized.")
                 
-                // Preload rewarded ad only if user is NOT Pro and ads are allowed
-                let isPro = SubscriptionService.shared.isProUser
-                if !isPro && self.canRequestAds {
+                // Preload rewarded ad if ads are allowed
+                if self.canRequestAds {
                     RewardedAdService.shared.preloadAd()
                 }
             }

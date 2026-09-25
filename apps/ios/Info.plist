@@ -4,6 +4,8 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Photonla</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -12,14 +14,10 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
-	<key>CFBundleDisplayName</key>
-	<string>Photonla</string>
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
-	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -32,27 +30,18 @@
 			</array>
 		</dict>
 	</array>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-9243885367570645~5136524567</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Düzenlenen fotoğraflarınızı galerinize kaydetmek için izin gereklidir.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Fotoğraflarınızı düzenlemek için fotoğraf seçmeniz gerekmektedir.</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>Bu izin, ücretsiz sürümde size uygun reklamların gösterilebilmesi için kullanılır.</string>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
-	<key>UIApplicationSceneManifest</key>
-	<dict>
-		<key>UIApplicationSupportsMultipleScenes</key>
-		<false/>
-	</dict>
-	<key>UILaunchScreen</key>
-	<dict/>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-	</array>
-	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-9243885367570645~5136524567</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>
@@ -83,6 +72,17 @@
 			<key>SKAdNetworkIdentifier</key>
 			<string>c6kgnbg943.skadnetwork</string>
 		</dict>
+	</array>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
 	</array>
 </dict>
 </plist>
