@@ -11,21 +11,7 @@ import Foundation
 /// Manage all StoreKit 2 In-App Purchase IDs and Google AdMob IDs from this single point.
 public enum AppConfig {
     
-    // MARK: - StoreKit 2 In-App Purchases & Subscriptions
-    public enum StoreKit {
-        /// Product identifier for the monthly auto-renewable Photonla Pro subscription.
-        /// TODO: CONFIG_REQUIRED - Set your App Store Connect Product ID here before App Store submission.
-        public static let proMonthlyProductID: String = "com.alafteknoloji.photon.pro.monthly"
-        
-        /// Subscription Group Identifier configured in App Store Connect.
-        /// TODO: CONFIG_REQUIRED - Set your App Store Connect Subscription Group ID here.
-        public static let subscriptionGroupID: String = "21689452"
-        
-        /// All product identifiers offered by Photonla.
-        public static let allProductIDs: Set<String> = [
-            proMonthlyProductID
-        ]
-    }
+
     
     // MARK: - Google AdMob
     public enum AdMob {
