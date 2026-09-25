@@ -1,13 +1,14 @@
 import React from 'react';
-import { Smartphone, Heart, Shield } from 'lucide-react';
+import { Smartphone, Heart, Shield, LifeBuoy } from 'lucide-react';
 import { PhotonLogo } from './PhotonLogo';
 
 interface FooterProps {
   onPrivacyClick?: () => void;
   onUserPrivacyClick?: () => void;
+  onSupportClick?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onUserPrivacyClick }) => {
+export const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onUserPrivacyClick, onSupportClick }) => {
   return (
     <footer
       style={{
@@ -79,6 +80,28 @@ export const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onUserPrivacyCli
             >
               <Shield size={15} />
               <span>User Privacy</span>
+            </button>
+
+            <button
+              onClick={onSupportClick}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#a0a5b5',
+                fontSize: '13px',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                padding: 0,
+                transition: 'color 0.2s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#a0a5b5')}
+            >
+              <LifeBuoy size={15} />
+              <span>Support</span>
             </button>
 
             <a

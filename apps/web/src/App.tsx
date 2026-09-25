@@ -10,9 +10,10 @@ import { PricingSection } from './components/PricingSection';
 import { Footer } from './components/Footer';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { UserPrivacyRights } from './components/UserPrivacyRights';
+import { Support } from './components/Support';
 
 export function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'privacy' | 'user-privacy'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'privacy' | 'user-privacy' | 'support'>('home');
 
   useEffect(() => {
     const handleNavigation = () => {
@@ -35,7 +36,12 @@ export function App() {
         cleanPath === '/user-privacy-rights' ||
         cleanPath === '/user-privacy.html'
       ) {
-        setCurrentPage('user-privacy');
+      } else if (
+        hash === '#support' ||
+        cleanPath === '/support' ||
+        cleanPath === '/support.html'
+      ) {
+        setCurrentPage('support');
       } else {
         setCurrentPage('home');
       }
@@ -69,6 +75,15 @@ export function App() {
     setCurrentPage('user-privacy');
   };
 
+  const navigateToSupport = () => {
+    try {
+      window.history.pushState(null, '', '/support');
+    } catch {
+      window.location.hash = '#support';
+    }
+    setCurrentPage('support');
+  };
+
   const navigateToHome = () => {
     try {
       window.history.pushState(null, '', '/');
@@ -84,6 +99,10 @@ export function App() {
 
   if (currentPage === 'user-privacy') {
     return <UserPrivacyRights onBack={navigateToHome} onNavigatePrivacyPolicy={navigateToPrivacy} />;
+  }
+
+  if (currentPage === 'support') {
+    return <Support onBack={navigateToHome} />;
   }
 
   return (
@@ -115,7 +134,7 @@ export function App() {
       </main>
 
       {/* Footer */}
-      <Footer onPrivacyClick={navigateToPrivacy} onUserPrivacyClick={navigateToUserPrivacy} />
+      <Footer onPrivacyClick={navigateToPrivacy} onUserPrivacyClick={navigateToUserPrivacy} onSupportClick={navigateToSupport} />
     </div>
   );
 }
